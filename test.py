@@ -14,7 +14,7 @@ for step in range(max_steps):
     action = np.zeros(env.action_space.shape)
     obs, reward, done, info = env.step(action)
     env.render()
-    time.sleep(1)
+    #time.sleep(1)
     if done:
         env.reset()
 
