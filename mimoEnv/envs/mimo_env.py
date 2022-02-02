@@ -120,10 +120,12 @@ class MIMoEnv(robot_env.RobotEnv):
         proprio_obs = self._get_proprio_obs()
 
         # robot touch sensors:
-        touch_obs = self._get_touch_obs().ravel()
+        if self.touch:
+            touch_obs = self._get_touch_obs().ravel()
 
         # robot vision:
-        vision_obs = self._get_vision_obs().ravel()
+        if self.vision:
+            vision_obs = self._get_vision_obs().ravel()
 
         # Others:
         # TODO
