@@ -1,7 +1,5 @@
 import os
 import numpy as np
-import matplotlib
-from mujoco_py import GlfwContext
 
 from gym import utils, spaces
 from gym.envs.robotics import robot_env
@@ -9,6 +7,9 @@ from gym.envs.robotics.utils import robot_get_obs
 
 from gymTouch.touch import DiscreteTouch, scale_linear
 from gymTouch.utils import plot_points
+
+from mimoVision.vision import SimpleVision, Vision
+
 
 # Ensure we get the path separator correct on windows
 MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "MIMo3.1.xml"))
@@ -26,10 +27,8 @@ TOUCH_PARAMS = {
 }
 
 VISION_PARAMS = {
-    "width": 400,
-    "height": 300,
-    "left_eye_cam": "eye_left",
-    "right_eye_cam": "eye_right",
+    "eye_left": {"width": 400, "height": 300},
+    "eye_right": {"width": 400, "height": 300}
 }
 
 
@@ -39,8 +38,19 @@ class MIMoEnv(robot_env.RobotEnv):
                  model_path,
                  initial_qpos={},
                  n_actions=41,  # Currently hardcoded
-                 n_substeps=20):
-        self.touch: DiscreteTouch = None
+                 n_substeps=5,
+                 touch_params=None,
+                 vision_params=None):
+
+        self.touch_params = touch_params
+        self.vision_params = vision_params
+
+        if self.touch_params is not None:
+            self.touch: DiscreteTouch = None
+
+        if self.vision_params is not None:
+            self.vision: Vision = None
+
         super().__init__(
             model_path,
             initial_qpos=initial_qpos,
@@ -49,16 +59,18 @@ class MIMoEnv(robot_env.RobotEnv):
         # super().__init__ calls _env_setup, which is where we put our own init
         # TODO: Make sure spaces are appropriate:
         # Observation space
-        # Action space
+        # Action space: Box with n_actions dims from -1 to +1
 
     def _env_setup(self, initial_qpos):
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
         # observation space and goals are not set yet
 
-        # Do touch setup
-        self._touch_setup()
+        # Do setups
+        if self.touch_params is not None:
+            self._touch_setup(self.touch_params)
+        if self.vision_params is not None:
+            self._vision_setup(self.vision_params)
 
-        self._vision_setup()
         # Do proprio setup
         # Do sound setup
         # Do whatever actuation setup
@@ -66,23 +78,17 @@ class MIMoEnv(robot_env.RobotEnv):
         # Should be able to produce all control inputs here
         pass
 
-    def _touch_setup(self):
+    def _touch_setup(self, touch_params):
         self.touch = DiscreteTouch(self)
-        for body_name in TOUCH_PARAMS:
+        for body_name in touch_params:
             body_id = self.sim.model.body_name2id(body_name)
-            self.touch.add_body(body_id, scale=TOUCH_PARAMS[body_name])
-
-        # Plot points for every geom, just to check
-        #for geom_id in self.touch.sensing_geoms:
-        #    plot_points(self.touch.sensor_positions[geom_id],
-        #                self.touch.plotting_limits[geom_id],
-        #                title="")
+            self.touch.add_body(body_id, scale=touch_params[body_name])
 
         # Get touch obs once to ensure all output arrays are initialized
         self._get_touch_obs()
 
-    def _vision_setup(self):
-        GlfwContext(offscreen=True)  # This fixes the GLEW initialization error
+    def _vision_setup(self, vision_params):
+        self.vision = SimpleVision(self, vision_params)  # This fixes the GLEW initialization error
 
     def _reset_sim(self):
         """Resets a simulation and indicates whether or not it was successful.
@@ -97,37 +103,21 @@ class MIMoEnv(robot_env.RobotEnv):
     def _get_proprio_obs(self):
         # Naive implementation: Joint positions and velocities
         robot_qpos, robot_qvel = robot_get_obs(self.sim)
-        # TODO: Torque about joints?
+        # Torque/forces will require sensors in mujoco
         return np.concatenate([robot_qpos, robot_qvel])
 
     def _get_touch_obs(self):
         touch_obs = self.touch.get_touch_obs(DiscreteTouch.get_force_relative, 3, scale_linear)
         return touch_obs
 
-    def _render_cam(self, width, height, camera_name):
-        img = self.sim.render(width=width, height=height, camera_name=camera_name, depth=False, device_id=-1)
-        return img[::-1, :, :]  # rendered image is inverted
-
-    def _get_vision_obs(self, flat=False):
-        # For some incomprehensible reason the onscreen buffer gets copied onto the first offscreen render, so we do a
-        # dummy render
-        img_dummy = self._render_cam(2, 2, None)
-        img_left = self._render_cam(VISION_PARAMS["width"], VISION_PARAMS["height"], VISION_PARAMS["left_eye_cam"])
-        img_right = self._render_cam(VISION_PARAMS["width"], VISION_PARAMS["height"], VISION_PARAMS["right_eye_cam"])
-        if not flat:
-            return {"left": img_left, "right": img_right}
-        else:
-            return np.concatenate([img_left, img_right]).ravel()
-
-    def print_vision_obs(self, obs):
-        matplotlib.image.imsave('left.png', obs["left"])
-        matplotlib.image.imsave('right.png', obs["right"])
+    def _get_vision_obs(self):
+        vision_obs = self.vision.get_vision_obs()
+        return vision_obs
 
     def _get_obs(self):
         """Returns the observation."""
         # robot vision:
-        vision_obs = self._get_vision_obs(flat=True)
-        #self.print_vision_obs(vision_obs)
+        vision_obs = self._get_vision_obs()
 
         # robot proprioception:
         proprio_obs = self._get_proprio_obs()
@@ -182,7 +172,6 @@ class MIMoEnv(robot_env.RobotEnv):
         """A custom callback that is called before rendering. Can be used
         to implement custom visualizations.
         """
-        # TODO: Visualize touch outputs for body / whole model
         # self.touch.plot_force_body(body_name="left_foot")
         pass
 
@@ -197,4 +186,6 @@ class MIMoTestEnv(MIMoEnv, utils.EzPickle):
         MIMoEnv.__init__(
             self,
             model_path=MIMO_XML,
+            touch_params=TOUCH_PARAMS,
+            vision_params=VISION_PARAMS
         )

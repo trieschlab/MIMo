@@ -6,7 +6,7 @@ setup(
     url='',
     license='',
     author='Dominik Mattern',
-    packages=['mimoEnv'],
+    packages=['mimoEnv', 'mimoVision'],
     author_email='domattee@yahoo.de',
     description='MIMo library'
 )
