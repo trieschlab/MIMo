@@ -58,7 +58,7 @@ class MIMoEnv(robot_env.RobotEnv):
             n_substeps=n_substeps)
         # super().__init__ calls _env_setup, which is where we put our own init
         # TODO: Make sure spaces are appropriate:
-        # Observation space
+        # Observation space: Vision should probably be treated differently from proprioception
         # Action space: Box with n_actions dims from -1 to +1
 
     def _env_setup(self, initial_qpos):
@@ -112,23 +112,23 @@ class MIMoEnv(robot_env.RobotEnv):
 
     def _get_vision_obs(self):
         vision_obs = self.vision.get_vision_obs()
-        return vision_obs
+        return np.concatenate([vision_obs[cam] for cam in vision_obs])
 
     def _get_obs(self):
         """Returns the observation."""
-        # robot vision:
-        vision_obs = self._get_vision_obs()
-
         # robot proprioception:
         proprio_obs = self._get_proprio_obs()
 
         # robot touch sensors:
         touch_obs = self._get_touch_obs().ravel()
 
+        # robot vision:
+        vision_obs = self._get_vision_obs().ravel()
+
         # Others:
         # TODO
 
-        obs = [proprio_obs, touch_obs, vision_obs]
+        obs = [proprio_obs]
 
         # dummy goal
         achieved_goal = np.zeros(proprio_obs.shape)
