@@ -22,11 +22,12 @@ class Vision:
 class SimpleVision(Vision):
     def __init__(self, env, camera_parameters):
         super().__init__(env, camera_parameters)
+
         self.on_windows = sys.platform == 'win32'  # Hacky check to try and intercept GLEW errors
+        self.offscreen_context = None
         if self.on_windows:
             self.offscreen_context = GlfwContext(offscreen=True)
-        else:
-            self.offscreen_context = mujoco_py.MjRenderContextOffscreen(self.env.sim, -1)
+
         self.obs = {}
 
     def render_camera(self, width, height, camera_name):
@@ -38,16 +39,19 @@ class SimpleVision(Vision):
         glfw.make_context_current(window)
 
     def get_vision_obs(self):
-        # Have to manage contexts ourselves to avoid buffer reuse issues
+        # Have to manage contexts ourselves to avoid buffer reuse issues on windows
         if self.on_windows:
             self.swap_context(self.offscreen_context.window)
+
         imgs = {}
         for camera in self.camera_parameters:
             width = self.camera_parameters[camera]["width"]
             height = self.camera_parameters[camera]["height"]
             imgs[camera] = self.render_camera(width, height, camera)
+
         if self.env.sim._render_context_window is not None and self.on_windows:
             self.swap_context(self.env.sim._render_context_window.window)
+
         self.obs = imgs
         return imgs
 
