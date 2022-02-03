@@ -5,7 +5,7 @@ import mimoEnv
 
 env = gym.make("MIMo-v0")
 
-max_steps = 1000
+max_steps = 125
 
 obs = env.reset()
 

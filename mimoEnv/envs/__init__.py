@@ -1,1 +1,1 @@
-from mimoEnv.envs.mimo_env import MIMoTestEnv
+from mimoEnv.envs.mimo_test import MIMoTestEnv

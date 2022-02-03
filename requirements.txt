@@ -1,3 +1,5 @@
 numpy
 gym
 mujoco_py
+matplotlib
+glfw

@@ -14,31 +14,14 @@ from mimoVision.vision import SimpleVision, Vision
 # Ensure we get the path separator correct on windows
 MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "MIMo3.1.xml"))
 
-# Dictionary with body_names as keys,
-TOUCH_PARAMS = {
-    "left_toes": 0.055,
-    "left_foot": 0.055,
-    "left_lleg": 0.15,
-    "left_uleg": 0.15,
-    "right_toes": 0.055,
-    "right_foot": 0.055,
-    "right_lleg": 0.15,
-    "right_uleg": 0.15,
-}
-
-VISION_PARAMS = {
-    "eye_left": {"width": 400, "height": 300},
-    "eye_right": {"width": 400, "height": 300}
-}
-
 
 class MIMoEnv(robot_env.RobotEnv):
 
     def __init__(self,
-                 model_path,
+                 model_path=MIMO_XML,
                  initial_qpos={},
                  n_actions=41,  # Currently hardcoded
-                 n_substeps=5,
+                 n_substeps=2,
                  touch_params=None,
                  vision_params=None):
 
@@ -46,10 +29,12 @@ class MIMoEnv(robot_env.RobotEnv):
         self.vision_params = vision_params
 
         if self.touch_params is not None:
-            self.touch: DiscreteTouch = None
+            self.touch = None
 
         if self.vision_params is not None:
-            self.vision: Vision = None
+            self.vision = None
+
+        self.steps = 0
 
         super().__init__(
             model_path,
@@ -133,10 +118,7 @@ class MIMoEnv(robot_env.RobotEnv):
         obs = [proprio_obs]
 
         # dummy goal
-        achieved_goal = np.zeros(proprio_obs.shape)
-        goal = np.zeros(proprio_obs.shape)
-
-        obs.append(achieved_goal)
+        achieved_goal = self._get_achieved_goal()
 
         observation = np.concatenate(
                obs
@@ -144,50 +126,22 @@ class MIMoEnv(robot_env.RobotEnv):
         return {
             "observation": observation.copy(),
             "achieved_goal": achieved_goal.copy(),
-            "desired_goal": goal.copy(),
+            "desired_goal": self.goal.copy(),
         }
 
     def _set_action(self, action):
-        ctrlrange = self.sim.model.actuator_ctrlrange
-        actuation_range = (ctrlrange[:, 1] - ctrlrange[:, 0]) / 2.0
-        actuation_center = (ctrlrange[:, 1] + ctrlrange[:, 0]) / 2.0
-        self.sim.data.ctrl[:] = actuation_center + action * actuation_range
-        self.sim.data.ctrl[:] = np.clip(
-            self.sim.data.ctrl, ctrlrange[:, 0], ctrlrange[:, 1]
-        )
+        raise NotImplementedError
 
     def _is_success(self, achieved_goal, desired_goal):
         """Indicates whether or not the achieved goal successfully achieved the desired goal."""
-        # TODO: All of it
-        return True
+        raise NotImplementedError
 
     def _sample_goal(self):
         """Samples a new goal and returns it."""
-        # TODO: Actually sample a goal
-        return np.zeros(self._get_obs()["observation"].shape)
+        raise NotImplementedError
+
+    def _get_achieved_goal(self):
+        raise NotImplementedError
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        # TODO: Actually compute a reward
-        return 0
-
-    def _render_callback(self):
-        """A custom callback that is called before rendering. Can be used
-        to implement custom visualizations.
-        """
-        # self.touch.plot_force_body(body_name="left_foot")
-        pass
-
-
-class MIMoTestEnv(MIMoEnv, utils.EzPickle):
-    def __init__(
-        self,
-    ):
-        utils.EzPickle.__init__(
-            self
-        )
-        MIMoEnv.__init__(
-            self,
-            model_path=MIMO_XML,
-            touch_params=TOUCH_PARAMS,
-            vision_params=VISION_PARAMS
-        )
+        raise NotImplementedError
