@@ -2,4 +2,6 @@
 *.pyc
 __pycache__/
 *egg-info/
+mimoEnv/test.py
+mimoEnv/envs/mimo_test.py
 
