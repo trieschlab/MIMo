@@ -1,5 +1,7 @@
-import os.path
+import os
+import sys
 
+import mujoco_py
 from mujoco_py import GlfwContext
 import matplotlib
 import glfw
@@ -20,23 +22,36 @@ class Vision:
 class SimpleVision(Vision):
     def __init__(self, env, camera_parameters):
         super().__init__(env, camera_parameters)
-        self.offscreen_context = GlfwContext(offscreen=True)
+
+        self.on_windows = sys.platform == 'win32'  # Hacky check to try and intercept GLEW errors
+        self.offscreen_context = None
+        if self.on_windows:
+            self.offscreen_context = GlfwContext(offscreen=True)
+
         self.obs = {}
 
     def render_camera(self, width, height, camera_name):
+        # Have to handle the contexts yourself if you are using this function on windows
         img = self.env.sim.render(width=width, height=height, camera_name=camera_name, depth=False, device_id=-1)
         return img[::-1, :, :]  # rendered image is inverted
 
+    def swap_context(self, window):
+        glfw.make_context_current(window)
+
     def get_vision_obs(self):
-        # Have to manage contexts ourselves to avoid buffer reuse issues
-        glfw.make_context_current(self.offscreen_context.window)
+        # Have to manage contexts ourselves to avoid buffer reuse issues on windows
+        if self.on_windows:
+            self.swap_context(self.offscreen_context.window)
+
         imgs = {}
         for camera in self.camera_parameters:
             width = self.camera_parameters[camera]["width"]
             height = self.camera_parameters[camera]["height"]
             imgs[camera] = self.render_camera(width, height, camera)
-        if self.env.sim._render_context_window is not None:
-            glfw.make_context_current(self.env.sim._render_context_window.window)
+
+        if self.env.sim._render_context_window is not None and self.on_windows:
+            self.swap_context(self.env.sim._render_context_window.window)
+
         self.obs = imgs
         return imgs
 
