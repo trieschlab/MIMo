@@ -304,8 +304,8 @@
 		<position name="left_foot2" gear="57.296" kp="1" joint="robot:left_foot2" ctrlrange="-30 20" forcelimited="true" forcerange="-0.05 0.05"/>
 		<position name="left_foot3" gear="57.296" kp="1" joint="robot:left_foot3" ctrlrange="-30 20" forcelimited="true" forcerange="-0.05 0.05"/>
 		
-		<!--<position name="right_toes" gear="57.296" kp="1" joint="robot:right_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-100 100"/>
-		<position name="left_toes" gear="57.296" kp="1" joint="robot:left_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-100 100"/> -->
+		<!--<position name="right_toes" gear="57.296" kp="1" joint="robot:right_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/>
+		<position name="left_toes" gear="57.296" kp="1" joint="robot:left_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/> -->
 	</actuator>
 	
 </mujoco>
