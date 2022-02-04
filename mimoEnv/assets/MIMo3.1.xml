@@ -112,17 +112,17 @@
 			<!-- <joint name="robot:forward" type="slide" pos="0 0 0" axis="1 0 0" stiffness="0" limited="false"/>
 			<joint name="robot:sideward" type="slide" pos="0 0 0" axis="0 1 0" stiffness="0" limited="false"/>
 			<joint name="robot:base_rot" type="hinge" pos="0 0 0" axis="0 0 1" stiffness="0" limited="false"/> -->
-			<geom type="capsule" size=".048 .043" material="pants_down" pos="-.002 0 0.003" euler="90 0 0"/>
+			<geom type="capsule" size=".048 .043" material="pants_down" pos="-.002 0 0.005" euler="90 0 0"/>
 			<site name="lowerBody_center" type="sphere" size=".01 .01 .01" pos="0 0 0"/>
 			<body name="lower_body" pos="0.002 0 0.076">
 				<joint name="robot:hip_rot1" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 30" damping="2" frictionloss=".5" armature=".1"/>
 				<joint name="robot:hipl_bend" type="hinge" pos="0 0 -0.05" axis="0 1 0" range="-25 20" damping="2" frictionloss="0.5" armature=".1"/>
-				<geom type="capsule" size=".045 .044" material="pants_up" pos="0 0 -.002" euler="90 0 0"/>
+				<geom type="capsule" size=".045 .044" material="pants_up" pos="0 0 -.003" euler="90 0 0"/>
 				
 				<body name="upper_body" pos="-.002 0 0.091">
 					<joint name="robot:hip_rot2" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 30" damping="2" frictionloss=".5" armature=".1"/>
 					<joint name="robot:hip_bend" type="hinge" pos="0 0 -.05" axis="0 1 0" range="-30 70" damping="2" frictionloss=".8" armature=".1"/>
-					<geom type="capsule" size=".047 .037" material="top_down" pos="0.002 0 -.032" euler="90 0 0"/>
+					<geom type="capsule" size=".047 .040" material="top_down" pos="0.002 0 -.032" euler="90 0 0"/>
 					<geom type="capsule" size=".046 .041" material="top_middle" pos="0 0 0.03" euler="90 0 0"/>
 					<geom type="capsule" size=".041 .047" material="top_up" pos="0 0 0.09" euler="90 0 0"/>
 					
@@ -197,7 +197,7 @@
 			
 			<body name="right_upper_leg" pos="0 -.051 -.007">
 				<!-- leg length is 32.9 cm -->
-				<joint name="robot:right_hip1" type="hinge" pos="0 0 0" axis="0 -1 0" range="-50 140" frictionloss=".25" armature=".1"/>
+				<joint name="robot:right_hip1" type="hinge" pos="0 0 0" axis="0 -1 0" range="-50 100" frictionloss=".25" armature=".1"/>
 				<joint name="robot:right_hip2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-25 45" stiffness="5" frictionloss=".125" armature=".1"/>
 				<joint name="robot:right_hip3" type="hinge" pos="0 0 0" axis="0 0 -1" range="-10 50" stiffness="4" frictionloss=".125" armature=".1"/>
 				<geom type="capsule" material="pants_leg" size=".037 .0625" pos="0 0 -.0645" euler="0 0 0"/>
@@ -223,7 +223,7 @@
 			
 			<body name="left_upper_leg" pos="0 .051 -.007">
 				<!-- leg length is 32.9 cm -->
-				<joint name="robot:left_hip1" type="hinge" pos="0 0 0" axis="0 -1 0" range="-50 140" frictionloss=".25" armature=".1"/>
+				<joint name="robot:left_hip1" type="hinge" pos="0 0 0" axis="0 -1 0" range="-50 100" frictionloss=".25" armature=".1"/>
 				<joint name="robot:left_hip2" type="hinge" pos="0 0 0" axis="1 0 0" range="-25 45" stiffness="5" frictionloss=".125" armature=".1"/>
 				<joint name="robot:left_hip3" type="hinge" pos="0 0 0" axis="0 0 1" range="-10 50" stiffness="4" frictionloss=".125" armature=".1"/>
 				<geom type="capsule" material="pants_leg" size=".037 .0625" pos="0 0 -.0645" euler="0 0 0"/>
@@ -291,7 +291,7 @@
 		<position name="left_hand3" gear="57.296" kp="1" joint="robot:left_hand3" ctrlrange="-40 40" forcelimited="true" forcerange="-.1 .1"/>
 		<position name="left_fingers" gear="57.296" kp="1" joint="robot:left_fingers" ctrlrange="-8 160" forcelimited="true" forcerange="-.2 .2"/>
 		
-		<position name="right_hip1" gear="57.296" kp="1" joint="robot:right_hip1" ctrlrange="-50 140" forcelimited="true" forcerange="-.275 .275"/>
+		<position name="right_hip1" gear="57.296" kp="1" joint="robot:right_hip1" ctrlrange="-50 100" forcelimited="true" forcerange="-.275 .275"/>
 		<position name="right_hip2" gear="57.296" kp="1" joint="robot:right_hip2" ctrlrange="-25 45" forcelimited="true" forcerange="-0.05 0.05"/>
 		<position name="right_hip3" gear="57.296" kp="1" joint="robot:right_hip3" ctrlrange="-10 50" forcelimited="true" forcerange="-0.05 0.05"/>
 		<position name="right_knee" gear="57.296" kp="1" joint="robot:right_knee" ctrlrange="0 160" forcelimited="true" forcerange="-0.2 0.2"/>
@@ -299,7 +299,7 @@
 		<position name="right_foot2" gear="57.296" kp="1" joint="robot:right_foot2" ctrlrange="-30 20" forcelimited="true" forcerange="-0.05 0.05"/>
 		<position name="right_foot3" gear="57.296" kp="1" joint="robot:right_foot3" ctrlrange="-30 20" forcelimited="true" forcerange="-0.05 0.05"/>
 	
-		<position name="left_hip1" gear="57.296" kp="1" joint="robot:left_hip1" ctrlrange="-50 140" forcelimited="true" forcerange="-0.275 0.275"/>
+		<position name="left_hip1" gear="57.296" kp="1" joint="robot:left_hip1" ctrlrange="-50 100" forcelimited="true" forcerange="-0.275 0.275"/>
 		<position name="left_hip2" gear="57.296" kp="1" joint="robot:left_hip2" ctrlrange="-25 45" forcelimited="true" forcerange="-0.05 0.05"/>
 		<position name="left_hip3" gear="57.296" kp="1" joint="robot:left_hip3" ctrlrange="-10 50" forcelimited="true" forcerange="-0.05 0.05"/>
 		<position name="left_knee" gear="57.296" kp="1" joint="robot:left_knee" ctrlrange="0 160" forcelimited="true" forcerange="-0.2 0.2"/>
