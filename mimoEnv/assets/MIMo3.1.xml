@@ -18,13 +18,13 @@
     <compiler inertiafromgeom="true" angle="degree"/>
 
     <default>
-        <joint limited="true" damping="1.5" stiffness="1" armature="0.001" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
-        <geom condim="3" material="skin" friction="1 0.005 0.0002" solimp="0.99 0.995 0.0003 0.5 1" solref="0.005 1"/>
+        <joint limited="true" damping="1.5" stiffness="1" armature="0.1" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
+        <geom condim="3" material="skin" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
         <motor ctrlrange="-.4 .4" ctrllimited="true"/>
 		<camera user="0 0 0"/>
     </default>
 
-    <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1"/>
+    <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.5"/>
 
     <size nconmax="1000" njmax="5000" nstack="10000000" nuser_cam="3"/>
 
@@ -44,7 +44,7 @@
             rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
 			
 		<!--<texture name="tex_head" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>-->
-		<texture name="tex_head" type="cube" fileright="tex/head_front_sad.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_head" type="cube" fileright="tex/head_front.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
 		<texture name="tex_eye_left" type="cube" fileright="tex/eye_pupil_left.png" rgb1="1 1 1"/>
 		<texture name="tex_eye_right" type="cube" fileright="tex/eye_pupil_right.png" rgb1="1 1 1"/>
 		<!---
@@ -67,6 +67,7 @@
 		<material name="buttons" rgba=".05 .05 .05 1" specular=".9" shininess=".9"/>
 		<material name="head" texture="tex_head" texuniform="true" specular=".0" shininess=".0"/>
 		<material name="top_up" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
+		<material name="top_middle" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
 		<material name="top_down" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
 		<material name="top_sleeve" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
 		<material name="pants_up" rgba="0.1 0.1 0.6 1" specular=".0" shininess=".0"/>
@@ -93,7 +94,7 @@
         <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
 
         <light directional="false" diffuse=".4 .4 .4" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="false"/>
-        <light mode="targetbodycom" target="lowerBody" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
+        <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
 		
 		<body name="test_object1" pos="1 0.3 0.7">
 			<freejoint/>
@@ -105,84 +106,87 @@
 			<geom type="sphere" material="matgeom" size="0.1" pos="0 0 0" condim="6" solimp="0.99 0.995 0.001 0.5 2" solref="-20000 -20"/>
 		</body>
 
-		<body name="lowerBody" pos="0 0 1.3">
+		<body name="hip" pos="0 0 1.3">
 			<freejoint name="robot:world"/>
 			<!-- <joint name="robot:forward" type="slide" pos="0 0 0" axis="1 0 0" stiffness="0" limited="false"/>
 			<joint name="robot:sideward" type="slide" pos="0 0 0" axis="0 1 0" stiffness="0" limited="false"/>
 			<joint name="robot:base_rot" type="hinge" pos="0 0 0" axis="0 0 1" stiffness="0" limited="false"/> -->
-			<geom type="capsule" size=".045 .056" material="pants_down" pos="0 0 0" euler="90 0 0"/>
+			<geom type="capsule" size=".045 .05" material="pants_down" pos="0 0 0" euler="90 0 0"/>
 			<site name="lowerBody_center" type="sphere" size=".01 .01 .01" pos="0 0 0"/>
-			<body name="lowerBody2" pos="0.002 0 0.074">
-				<joint name="robot:hip_rot1" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 30" frictionloss="0.3" armature=".1"/>
-				<joint name="robot:hipl_bend" type="hinge" pos="0 0 -0.05" axis="0 1 0" stiffness="1" range="-25 20" frictionloss="0.5" armature=".1"/>
-				<geom type="capsule" size=".046 .05" material="pants_up" pos="0 0 0" euler="90 0 0"/>
+			<body name="lower_body" pos="0.002 0 0.076">
+				<joint name="robot:hip_rot1" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 30" damping="2" frictionloss=".5" armature=".1"/>
+				<joint name="robot:hipl_bend" type="hinge" pos="0 0 -0.05" axis="0 1 0" range="-25 20" damping="2" frictionloss="0.5" armature=".1"/>
+				<geom type="capsule" size=".045 .044" material="pants_up" pos="0 0 -.002" euler="90 0 0"/>
 				
-				<body name="upperBody" pos="0.0 0 0.37">
-					<joint name="robot:hip_rot2" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 30" damping="5" frictionloss="250" armature=".1"/>
-					<joint name="robot:hip_bend" type="hinge" pos="0 0 -.08" axis="0 1 0" range="-30 70" frictionloss="300" armature=".1"/>
-					<geom type="capsule" size=".21 .15" material="top_up" pos="0 0 0" euler="90 0 0"/>
-					<geom type="capsule" size=".2 .16" material="top_down" pos="-0.015 0 0.27" euler="90 0 0"/>
+				<body name="upper_body" pos="-.002 0 0.091">
+					<joint name="robot:hip_rot2" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 30" damping="2" frictionloss=".5" armature=".1"/>
+					<joint name="robot:hip_bend" type="hinge" pos="0 0 -.05" axis="0 1 0" range="-30 70" damping="2" frictionloss=".8" armature=".1"/>
+					<geom type="capsule" size=".045 .039" material="top_down" pos="0.002 0 -.032" euler="90 0 0"/>
+					<geom type="capsule" size=".045 .041" material="top_middle" pos="0 0 0.025" euler="90 0 0"/>
+					<geom type="capsule" size=".042 .043" material="top_up" pos="0 0 0.08" euler="90 0 0"/>
 					
-					<body name="head" pos="0 0 .575">
+					<body name="head" pos="0 0 .120">
 						<geom type="sphere" material="head" size=".0735" pos="0 0 0.0735"/>
-						<joint name="robot:head_swivel" type="hinge" pos="0 0 0" axis="0 0 1" range="-90 90" frictionloss=".025" armature=".01"/>
-						<joint name="robot:head_tilt" type="hinge" pos="0 0 0.0123" axis="0 1 0" range="-70 70" frictionloss=".025" armature=".01"/>
-						<joint name="robot:head_tilt_side" type="hinge" pos="0 0 0.0245" axis="1 0 0" range="-70 70" frictionloss=".025" armature=".01"/>
-						<body name="left_eye" pos=".0588 .0245 .067375">
-							<joint name="robot:left_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 1" range="-45 45" stiffness=".02" damping=".5" frictionloss="0.001" armature=".1"/>
-							<joint name="robot:left_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 28" stiffness=".02" damping=".5" frictionloss="0.001" armature=".1"/>
+						<joint name="robot:head_swivel" type="hinge" pos="0 0 0" axis="0 0 1" range="-90 90" frictionloss=".025" armature=".1"/>
+						<joint name="robot:head_tilt" type="hinge" pos="0 0 0.0123" axis="0 1 0" range="-70 70" frictionloss=".025" armature=".1"/>
+						<joint name="robot:head_tilt_side" type="hinge" pos="0 0 0.0245" axis="1 0 0" range="-70 70" frictionloss=".025" armature=".1"/>
+						<body name="left_eye" pos=".06 .0245 .067375">
+							<joint name="robot:left_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 1" range="-45 45" stiffness=".05" damping="2" frictionloss="0.005" armature=".1"/>
+							<joint name="robot:left_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".05" damping="2" frictionloss="0.005" armature=".1"/>
 							<geom type="sphere" material="eye_left" size=".01125" pos="0 0 0"/>
 							<camera name="eye_left" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
 						</body>
-						<body name="right_eye" pos=".059 -.0245 .067375">
-							<joint name="robot:right_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 -1" range="-45 45" stiffness=".02" damping=".5" frictionloss="0.001" armature=".1"/>
-							<joint name="robot:right_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 28" stiffness=".02" damping=".5" frictionloss="0.001" armature=".1"/>
+						<body name="right_eye" pos=".06 -.0245 .067375">
+							<joint name="robot:right_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 -1" range="-45 45" stiffness=".05" damping="2" frictionloss="0.005" armature=".1"/>
+							<joint name="robot:right_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".05" damping="2" frictionloss="0.005" armature=".1"/>
 							<geom type="sphere" material="eye_right" size=".01125" pos="0 0 0"/>
 							<camera name="eye_right" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
 						</body>
 					</body>
 				
-					<body name="right_upper_arm" pos="-.03 -0.425 0.39" euler="160 0 0">
-						<joint name="robot:right_shoulder1" type="hinge" pos="0 -.05 0" axis="0 -1 2" range="-120 80" frictionloss="100" armature=".1" />
-						<joint name="robot:right_shoulder2" type="hinge" pos="0 0 0" axis="1 0 0" range="-180 50" frictionloss="100" armature=".1" />
-						<joint name="robot:right_shoulder3" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 110" frictionloss="25" armature=".1" />
-						<geom name="right_uarm1" type="capsule" material="top_sleeve" size="0.11 0.13" pos="0 0 .24" euler="0 0 0"/>
-						<body name="right_lower_arm" pos="0 0 .4" >
-							<joint name="robot:right_elbow" type="hinge" pos="0 0 0" axis="2 1 0" range="0 160" frictionloss="25" armature=".1" />
-							<geom name="right_larm" type="capsule" size=".1 0.12" pos="0 0 .24"/>
-							<body name="right_hand" pos="0 0 .45" euler="0 0 -70">
-								<joint name="robot:right_hand1" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 100" frictionloss="25" armature=".1"/>
-								<joint name="robot:right_hand2" type="hinge" pos="0 0 0" axis="1 0 0" range="-70 85" frictionloss="25" armature=".1"/>
-								<joint name="robot:right_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-40 40" frictionloss="25" armature=".1"/>
-								<geom type="box" size=".07 .03 .06" pos="0 0 0.06"/>
-								<body name="right_fingers" pos="0 0 .12">
-									<joint name="robot:right_fingers" type="hinge" pos="0 0 0" axis="1 0 0" range="-8 160" frictionloss="25" armature=".1"/>
-									<geom type="cylinder" size=".08 .0295" pos=".01 0 .08" euler="90 0 0" friction="5 0.02 0.01"/>
-									<geom type="box" size=".08 .03 .04" pos=".01 0 .04" friction="5 0.02 0.01"/>
-									<geom type="cylinder" size=".03 .079" pos=".01 0 0" euler="0 90 0"/>
+					<body name="right_upper_arm" pos="-.007 -0.105 .085" euler="160 0 0">
+						<joint name="robot:right_shoulder1" type="hinge" pos="0 -.024 0" axis="0 -1 4" range="-120 80" frictionloss=".08" armature=".1" />
+						<joint name="robot:right_shoulder2" type="hinge" pos="0 0 0" axis="1 0 0" range="-180 50" frictionloss=".08" armature=".1" />
+						<joint name="robot:right_shoulder3" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 110" frictionloss=".005" armature=".1" />
+						<geom name="right_uarm1" type="capsule" material="top_sleeve" size="0.024 0.0536" pos="0 0 .0536" euler="0 0 0"/>
+						<body name="right_lower_arm" pos="0 0 .1076" euler="0 0 -70">
+							<joint name="robot:right_elbow" type="hinge" pos="0 0 0" axis="0 1 0" range="0 160" frictionloss=".005" armature=".1" />
+							<geom name="right_larm" type="capsule" size=".023 0.037" pos="0 0 .037"/>
+							<body name="right_hand" pos="0 -.007 .087" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
+								<joint name="robot:right_hand1" type="hinge" pos="0 0 0" axis="0 0 1" range="-30 100" frictionloss=".002" armature=".1"/>
+								<joint name="robot:right_hand2" type="hinge" pos="0 0 0" axis="1 0 0" range="-70 85" frictionloss=".002" armature=".1"/>
+								<joint name="robot:right_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-40 40" frictionloss=".002" armature=".1"/>
+								<geom type="box" size=".0281 .01 .0208" pos=".005 0 .0208"/>
+								<geom type="cylinder" size=".01 .0279" pos=".005 0 .0416" euler="0 90 0"/>
+								<body name="right_fingers" pos="0 0 .0416"> <!-- Finger length is 5.14 cm, 1 cm overlap between palm and fingers -->
+									<joint name="robot:right_fingers" type="hinge" pos="0 0 0" axis="1 0 0" range="-8 160" frictionloss=".003" armature=".1"/>
+									<!-- <geom type="cylinder" size=".023 .0099" pos="0 0 .023" euler="90 0 0" friction="5 0.02 0.01"/> -->
+									<geom type="box" size=".0229 .01 .0207" pos="0 0 .0207" friction="5 0.02 0.01"/>
+									<geom type="cylinder" size=".01 .023" pos="0 0 .0414" euler="0 90 0" friction="5 0.02 0.01"/>
 								</body>
 							</body>
 						</body>
 					</body>
 				
-					<body name="left_upper_arm" pos="-.03 0.425 0.39" euler="-160 0 0">
-						<joint name="robot:left_shoulder1" type="hinge" pos="0 .05 0" axis="0 -1 -2" range="-120 80" frictionloss="100" armature=".1" />
-						<joint name="robot:left_shoulder2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-180 50" frictionloss="100" armature=".1" />
-						<joint name="robot:left_shoulder3" type="hinge" pos="0 0 0" axis="0 0 -1" range="-30 110" frictionloss="25" armature=".1" />
-						<geom name="left_uarm1" type="capsule" material="top_sleeve" size="0.11 0.13" pos="0 0 .24" euler="0 0 0"/>
-						<body name="left_lower_arm" pos="0 0 .4" >
-							<joint name="robot:left_elbow" type="hinge" pos="0 0 0" axis="-2 1 0" range="0 160" frictionloss="25" armature=".1" />
-							<geom name="left_larm" type="capsule" size=".1 0.12" pos="0 0 .24"/>
-							<body name="left_hand" pos="0 0 .45" euler="0 0 70">
-								<joint name="robot:left_hand1" type="hinge" pos="0 0 0" axis="0 0 -1" range="-30 100" frictionloss="25" armature=".1"/>
-								<joint name="robot:left_hand2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-70 85" frictionloss="25" armature=".1"/>
-								<joint name="robot:left_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-40 40" frictionloss="25" armature=".1"/>
-								<geom type="box" size=".07 .03 .06" pos="0 0 0.06"/>
-								<body name="left_fingers" pos="0 0 .12">
-									<joint name="robot:left_fingers" type="hinge" pos="0 0 0" axis="-1 0 0" range="-8 160" frictionloss="25" armature=".1"/>
-									<geom type="cylinder" size=".08 .0295" pos=".01 0 .08" euler="90 0 0" friction="5 0.02 0.01"/>
-									<geom type="box" size=".08 .03 .04" pos=".01 0 .04" friction="5 0.02 0.01"/>
-									<geom type="cylinder" size=".03 .079" pos=".01 0 0" euler="0 90 0"/>
+					<body name="left_upper_arm" pos="-.007 0.105 .085" euler="-160 0 0">
+						<joint name="robot:left_shoulder1" type="hinge" pos="0 .024 0" axis="0 -1 -4" range="-120 80" frictionloss=".08" armature=".1" />
+						<joint name="robot:left_shoulder2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-180 50" frictionloss=".08" armature=".1" />
+						<joint name="robot:left_shoulder3" type="hinge" pos="0 0 0" axis="0 0 -1" range="-30 110" frictionloss=".005" armature=".1" />
+						<geom name="left_uarm1" type="capsule" material="top_sleeve" size="0.024 0.0536" pos="0 0 .0536" euler="0 0 0"/>
+						<body name="left_lower_arm" pos="0 0 .1076" euler="0 0 70">
+							<joint name="robot:left_elbow" type="hinge" pos="0 0 0" axis="0 1 0" range="0 160" frictionloss=".005" armature=".1" />
+							<geom name="left_larm" type="capsule" size=".023 0.037" pos="0 0 .037"/>
+							<body name="left_hand" pos="0 -.007 .087" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
+								<joint name="robot:left_hand1" type="hinge" pos="0 0 0" axis="0 0 -1" range="-30 100" frictionloss=".002" armature=".1"/>
+								<joint name="robot:left_hand2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-70 85" frictionloss=".002" armature=".1"/>
+								<joint name="robot:left_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-40 40" frictionloss=".002" armature=".1"/>
+								<geom type="box" size=".0281 .01 .0208" pos=".005 0 .0208"/>
+								<geom type="cylinder" size=".01 .0279" pos=".005 0 .0416" euler="0 90 0"/>
+								<body name="left_fingers" pos="0 0 .0416"> <!-- Finger length is 5.14 cm, 1 cm overlap between palm and fingers -->
+									<joint name="robot:left_fingers" type="hinge" pos="0 0 0" axis="-1 0 0" range="-8 160" frictionloss=".003" armature=".1"/>
+									<!-- <geom type="cylinder" size=".023 .0099" pos="0 0 .023" euler="90 0 0" friction="5 0.02 0.01"/> -->
+									<geom type="box" size=".0229 .01 .0207" pos="0 0 .0207" friction="5 0.02 0.01"/>
+									<geom type="cylinder" size=".01 .023" pos="0 0 .0414" euler="0 90 0" friction="5 0.02 0.01"/>
 								</body>
 							</body>
 						</body>
@@ -190,12 +194,12 @@
 				</body>
 			</body>
 			
-			<body name="right_uleg" pos="0 -.059 -.01">
+			<body name="right_upper_leg" pos="0 -.053 -.007">
 				<joint name="robot:right_hip1" type="hinge" pos="0 0 0" axis="0 -1 0" range="-50 140" frictionloss=".25" armature=".1"/>
-				<joint name="robot:right_hip2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-25 45" frictionloss=".125" armature=".1"/>
-				<joint name="robot:right_hip3" type="hinge" pos="0 0 0" axis="0 0 -1" range="-10 50" frictionloss=".125" armature=".1"/>
+				<joint name="robot:right_hip2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-25 45" stiffness="5" frictionloss=".125" armature=".1"/>
+				<joint name="robot:right_hip3" type="hinge" pos="0 0 0" axis="0 0 -1" range="-10 50" stiffness="4" frictionloss=".125" armature=".1"/>
 				<geom type="capsule" material="pants_leg" size=".037 .0625" pos="0 0 -.0645" euler="0 0 0"/>
-				<body name="right_lleg" pos="0 0 -.135">
+				<body name="right_lower_leg" pos="0 0 -.135">
 					<joint name="robot:right_knee" type="hinge" pos="0 0 0" axis="0 1 0" range="0 160" frictionloss=".15" armature=".1"/>
 					<geom type="capsule" size=".029 .044" pos="0 0 -.044" euler="0 0 0"/>
 					<geom type="capsule" size=".021 .028" pos="0 0 -.134" euler="0 0 0"/>
@@ -203,11 +207,11 @@
 						<joint name="robot:right_foot1" type="hinge" pos="0 0 .015" axis="0 -1 0" range="-50 20" frictionloss=".02" armature=".1"/>
 						<joint name="robot:right_foot2" type="hinge" pos="0 0 .015" axis="-1 0 0" range="-30 20" frictionloss=".02" armature=".1"/>
 						<joint name="robot:right_foot3" type="hinge" pos="0 0 .015" axis="0 0 -1" range="-30 20" frictionloss=".02" armature=".1"/>
-						<geom type="cylinder" size=".0249 .0099" pos="-0.016 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+						<geom type="cylinder" size=".0249 .0099" pos="-0.016 0 0" euler="0 0 0"/>
 						<geom type="box" size=".035  .025 .01" pos="0.019 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 						<geom type="cylinder" size=".0099 .0248" pos=".054 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 						<body name="right_toes" pos=".054 0 0">
-							<joint name="robot:right_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-30 80" frictionloss=".02" armature=".1" stiffness="3"/>
+							<joint name="robot:right_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-30 80" frictionloss=".002" armature=".1" stiffness="2"/>
 							<geom type="box" size=".007 .0249 .0099" pos=".007 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 							<geom type="cylinder" size=".01 .025" pos=".014 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 						</body>
@@ -215,12 +219,12 @@
 				</body>
 			</body>
 			
-			<body name="left_uleg" pos="0 .059 -.01">
+			<body name="left_upper_leg" pos="0 .053 -.007">
 				<joint name="robot:left_hip1" type="hinge" pos="0 0 0" axis="0 -1 0" range="-50 140" frictionloss=".25" armature=".1"/>
-				<joint name="robot:left_hip2" type="hinge" pos="0 0 0" axis="1 0 0" range="-25 45" frictionloss=".125" armature=".1"/>
-				<joint name="robot:left_hip3" type="hinge" pos="0 0 0" axis="0 0 1" range="-10 50" frictionloss=".125" armature=".1"/>
+				<joint name="robot:left_hip2" type="hinge" pos="0 0 0" axis="1 0 0" range="-25 45" stiffness="5" frictionloss=".125" armature=".1"/>
+				<joint name="robot:left_hip3" type="hinge" pos="0 0 0" axis="0 0 1" range="-10 50" stiffness="4" frictionloss=".125" armature=".1"/>
 				<geom type="capsule" material="pants_leg" size=".037 .0625" pos="0 0 -.0645" euler="0 0 0"/>
-				<body name="left_lleg" pos="0 0 -.135">
+				<body name="left_lower_leg" pos="0 0 -.135">
 					<joint name="robot:left_knee" type="hinge" pos="0 0 0" axis="0 1 0" range="0 160" frictionloss=".15" armature=".1"/>
 					<geom type="capsule" size=".029 .044" pos="0 0 -.044" euler="0 0 0"/>
 					<geom type="capsule" size=".021 .028" pos="0 0 -.134" euler="0 0 0"/>
@@ -228,11 +232,11 @@
 						<joint name="robot:left_foot1" type="hinge" pos="0 0 .015" axis="0 -1 0" range="-50 20" frictionloss=".02" armature=".1"/>
 						<joint name="robot:left_foot2" type="hinge" pos="0 0 .015" axis="1 0 0" range="-30 20" frictionloss=".02" armature=".1"/>
 						<joint name="robot:left_foot3" type="hinge" pos="0 0 .015" axis="0 0 1" range="-30 20" frictionloss=".02" armature=".1"/>
-						<geom type="cylinder" size=".0249 .0099" pos="-0.016 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+						<geom type="cylinder" size=".0249 .0099" pos="-0.016 0 0" euler="0 0 0"/>
 						<geom type="box" size=".035  .025 .01" pos="0.019 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 						<geom type="cylinder" size=".0099 .0248" pos=".054 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 						<body name="left_toes" pos=".054 0 0">
-							<joint name="robot:left_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-30 80" frictionloss=".02" armature=".1" stiffness="3"/>
+							<joint name="robot:left_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-30 80" frictionloss=".002" armature=".1" stiffness="2"/>
 							<geom type="box" size=".007 .0249 .0099" pos=".007 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 							<geom type="cylinder" size=".01 .025" pos=".014 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 						</body>
@@ -252,37 +256,37 @@
 		<velocity name="forwards" gear="100 0 0 0 0 0" kv="1" site="lowerBody_center" forcelimited="true" forcerange="-300 300" ctrlrange="-50 100"/>
 		<velocity name="sideways" gear="0 100 0 0 0 0" kv="1" site="lowerBody_center" forcelimited="true" forcerange="-300 300" ctrlrange="-50 50"/> -->
 
-		<position name="hipl_bend" gear="57.296" kp="2" joint="robot:hipl_bend" ctrlrange="-25 20" forcelimited="true" forcerange="-.50 .50"/>
-		<position name="hip_bend" gear="57.296" kp="2" joint="robot:hip_bend" ctrlrange="-30 70" forcelimited="true" forcerange="-5.0 5.0"/>
-		<position name="hip_twist1" gear="57.296" kp="3" joint="robot:hip_rot1" ctrlrange="-30 30" forcelimited="true" forcerange="-0.2 0.2"/>
-		<position name="hip_twist2" gear="57.296" kp="3" joint="robot:hip_rot2" ctrlrange="-30 30" forcelimited="true" forcerange="-3.0 3.0"/>
+		<position name="hipl_bend" gear="57.296" kp="2" joint="robot:hipl_bend" ctrlrange="-25 20" forcelimited="true" forcerange="-.5 .5"/>
+		<position name="hip_bend" gear="57.296" kp="2" joint="robot:hip_bend" ctrlrange="-30 70" forcelimited="true" forcerange="-.6 .6"/>
+		<position name="hip_twist1" gear="57.296" kp="3" joint="robot:hip_rot1" ctrlrange="-30 30" forcelimited="true" forcerange="-.4 .4"/>
+		<position name="hip_twist2" gear="57.296" kp="3" joint="robot:hip_rot2" ctrlrange="-30 30" forcelimited="true" forcerange="-.4 .4"/>
 		
 		<position name="head_swivel" gear="57.296" kp="1" joint="robot:head_swivel" ctrlrange="-90 90" forcelimited="true" forcerange="-.1 .1"/>
 		<position name="head_tilt" gear="57.296" kp="1" joint="robot:head_tilt" ctrlrange="-70 70" forcelimited="true" forcerange="-.1 .1"/>
 		<position name="head_tilt_side" gear="57.296" kp="1" joint="robot:head_tilt_side" ctrlrange="-70 70" forcelimited="true" forcerange="-.1 .1"/>
 		
-		<position name="left_eye_horizontal" gear="57.296" kp="1.5" joint="robot:left_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.03 .03"/>
-		<position name="left_eye_vertical" gear="57.296" kp="1.5" joint="robot:left_eye_vertical" ctrlrange="-46 27" forcelimited="true" forcerange="-.03 .03"/>
-		<position name="right_eye_horizontal" gear="57.296" kp="1.5" joint="robot:right_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.03 .03"/>
-		<position name="right_eye_vertical" gear="57.296" kp="1.5" joint="robot:right_eye_vertical" ctrlrange="-46 27" forcelimited="true" forcerange="-.03 .03"/>
+		<position name="left_eye_horizontal" gear="57.296" kp="2" joint="robot:left_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.6 .6"/>
+		<position name="left_eye_vertical" gear="57.296" kp="2" joint="robot:left_eye_vertical" ctrlrange="-46 32" forcelimited="true" forcerange="-.6 .6"/>
+		<position name="right_eye_horizontal" gear="57.296" kp="2" joint="robot:right_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.6 .6"/>
+		<position name="right_eye_vertical" gear="57.296" kp="2" joint="robot:right_eye_vertical" ctrlrange="-46 32" forcelimited="true" forcerange="-.6 .6"/>
 		
-		<position name="right_shoulder1" gear="57.296" kp="1" joint="robot:right_shoulder1" ctrlrange="-120 80" forcelimited="true" forcerange="-20 20"/>
-		<position name="right_shoulder2" gear="57.296" kp="1" joint="robot:right_shoulder2" ctrlrange="-180 50" forcelimited="true" forcerange="-20 20"/>
-		<position name="right_shoulder3" gear="57.296" kp="1" joint="robot:right_shoulder3" ctrlrange="-30 110" forcelimited="true" forcerange="-10 10"/>
-		<position name="right_elbow" gear="57.296" kp="1" joint="robot:right_elbow" ctrlrange="0 160" forcelimited="true" forcerange="-10 10"/>
-		<position name="right_hand1" gear="57.296" kp="1" joint="robot:right_hand1" ctrlrange="-30 100" forcelimited="true" forcerange="-10 10"/>
-		<position name="right_hand2" gear="57.296" kp="1" joint="robot:right_hand2" ctrlrange="-70 85" forcelimited="true" forcerange="-10 10"/>
-		<position name="right_hand3" gear="57.296" kp="1" joint="robot:right_hand3" ctrlrange="-40 40" forcelimited="true" forcerange="-10 10"/>
-		<position name="right_fingers" gear="57.296" kp="1" joint="robot:right_fingers" ctrlrange="-8 160" forcelimited="true" forcerange="-10 10"/>
+		<position name="right_shoulder1" gear="57.296" kp="1" joint="robot:right_shoulder1" ctrlrange="-120 80" forcelimited="true" forcerange="-.25 .25"/>
+		<position name="right_shoulder2" gear="57.296" kp="1" joint="robot:right_shoulder2" ctrlrange="-180 50" forcelimited="true" forcerange="-.20 .20"/>
+		<position name="right_shoulder3" gear="57.296" kp="1" joint="robot:right_shoulder3" ctrlrange="-30 110" forcelimited="true" forcerange="-.15 .15"/>
+		<position name="right_elbow" gear="57.296" kp="1" joint="robot:right_elbow" ctrlrange="0 160" forcelimited="true" forcerange="-.15 .15"/>
+		<position name="right_hand1" gear="57.296" kp="1" joint="robot:right_hand1" ctrlrange="-30 100" forcelimited="true" forcerange="-.1 .1"/>
+		<position name="right_hand2" gear="57.296" kp="1" joint="robot:right_hand2" ctrlrange="-70 85" forcelimited="true" forcerange="-.1 .1"/>
+		<position name="right_hand3" gear="57.296" kp="1" joint="robot:right_hand3" ctrlrange="-40 40" forcelimited="true" forcerange="-.1 .1"/>
+		<position name="right_fingers" gear="57.296" kp="1" joint="robot:right_fingers" ctrlrange="-8 160" forcelimited="true" forcerange="-.2 .2"/>
 		
-		<position name="left_shoulder1" gear="57.296" kp="1" joint="robot:left_shoulder1" ctrlrange="-120 80" forcelimited="true" forcerange="-20 20"/>
-		<position name="left_shoulder2" gear="57.296" kp="1" joint="robot:left_shoulder2" ctrlrange="-180 50" forcelimited="true" forcerange="-20 20"/>
-		<position name="left_shoulder3" gear="57.296" kp="1" joint="robot:left_shoulder3" ctrlrange="-30 110" forcelimited="true" forcerange="-10 10"/>
-		<position name="left_elbow" gear="57.296" kp="1" joint="robot:left_elbow" ctrlrange="0 160" forcelimited="true" forcerange="-10 10"/>
-		<position name="left_hand1" gear="57.296" kp="1" joint="robot:left_hand1" ctrlrange="-30 100" forcelimited="true" forcerange="-10 10"/>
-		<position name="left_hand2" gear="57.296" kp="1" joint="robot:left_hand2" ctrlrange="-70 85" forcelimited="true" forcerange="-10 10"/>
-		<position name="left_hand3" gear="57.296" kp="1" joint="robot:left_hand3" ctrlrange="-40 40" forcelimited="true" forcerange="-10 10"/>
-		<position name="left_fingers" gear="57.296" kp="1" joint="robot:left_fingers" ctrlrange="-8 160" forcelimited="true" forcerange="-10 10"/>
+		<position name="left_shoulder1" gear="57.296" kp="1" joint="robot:left_shoulder1" ctrlrange="-120 80" forcelimited="true" forcerange="-.25 .25"/>
+		<position name="left_shoulder2" gear="57.296" kp="1" joint="robot:left_shoulder2" ctrlrange="-180 50" forcelimited="true" forcerange="-.20 .20"/>
+		<position name="left_shoulder3" gear="57.296" kp="1" joint="robot:left_shoulder3" ctrlrange="-30 110" forcelimited="true" forcerange="-.15 .15"/>
+		<position name="left_elbow" gear="57.296" kp="1" joint="robot:left_elbow" ctrlrange="0 160" forcelimited="true" forcerange="-.15 .15"/>
+		<position name="left_hand1" gear="57.296" kp="1" joint="robot:left_hand1" ctrlrange="-30 100" forcelimited="true" forcerange="-.1 .1"/>
+		<position name="left_hand2" gear="57.296" kp="1" joint="robot:left_hand2" ctrlrange="-70 85" forcelimited="true" forcerange="-.1 .1"/>
+		<position name="left_hand3" gear="57.296" kp="1" joint="robot:left_hand3" ctrlrange="-40 40" forcelimited="true" forcerange="-.1 .1"/>
+		<position name="left_fingers" gear="57.296" kp="1" joint="robot:left_fingers" ctrlrange="-8 160" forcelimited="true" forcerange="-.2 .2"/>
 		
 		<position name="right_hip1" gear="57.296" kp="1" joint="robot:right_hip1" ctrlrange="-50 140" forcelimited="true" forcerange="-.275 .275"/>
 		<position name="right_hip2" gear="57.296" kp="1" joint="robot:right_hip2" ctrlrange="-25 45" forcelimited="true" forcerange="-0.05 0.05"/>
