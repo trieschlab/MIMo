@@ -267,17 +267,11 @@
 
     <actuator>
 	
-		<!-- <velocity name="base_rotation" gear="50" kv="1" joint="robot:base_rot" forcelimited="true" forcerange="-200 200" ctrlrange="-250 250"/>
-		
-		<velocity name="forwards" gear="100 0 0 0 0 0" kv="1" site="lowerBody_center" forcelimited="true" forcerange="-300 300" ctrlrange="-50 100"/>
-		<velocity name="sideways" gear="0 100 0 0 0 0" kv="1" site="lowerBody_center" forcelimited="true" forcerange="-300 300" ctrlrange="-50 50"/> -->
-
 		<position name="hip_bend_lower" gear="57.296" kp="2" joint="robot:hipl_bend" ctrlrange="-25 20" forcelimited="true" forcerange="-.5 .5"/>
 		<position name="hip_bend" gear="57.296" kp="2" joint="robot:hip_bend" ctrlrange="-30 70" forcelimited="true" forcerange="-.6 .6"/>
 		<position name="hip_twist" gear="57.296" kp="3" joint="robot:hip_rot1" ctrlrange="-30 30" forcelimited="true" forcerange="-.4 .4"/>
 		<position name="hip_lean" gear="57.296" kp="3" joint="robot:hip_lean1" ctrlrange="-5 5" forcelimited="true" forcerange="-.4 .4"/>
-		<!--<position name="hip_twist2" gear="57.296" kp="3" joint="robot:hip_rot2" ctrlrange="-30 30" forcelimited="true" forcerange="-.4 .4"/> -->
-		
+
 		<position name="head_swivel" gear="57.296" kp="1" joint="robot:head_swivel" ctrlrange="-90 90" forcelimited="true" forcerange="-.1 .1"/>
 		<position name="head_tilt" gear="57.296" kp="1" joint="robot:head_tilt" ctrlrange="-70 70" forcelimited="true" forcerange="-.1 .1"/>
 		<position name="head_tilt_side" gear="57.296" kp="1" joint="robot:head_tilt_side" ctrlrange="-70 70" forcelimited="true" forcerange="-.1 .1"/>
@@ -321,8 +315,6 @@
 		<position name="left_foot2" gear="57.296" kp="1" joint="robot:left_foot2" ctrlrange="-30 20" forcelimited="true" forcerange="-0.05 0.05"/>
 		<position name="left_foot3" gear="57.296" kp="1" joint="robot:left_foot3" ctrlrange="-30 20" forcelimited="true" forcerange="-0.05 0.05"/>
 		
-		<!--<position name="right_toes" gear="57.296" kp="1" joint="robot:right_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/>
-		<position name="left_toes" gear="57.296" kp="1" joint="robot:left_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/> -->
 	</actuator>
 	
 </mujoco>
