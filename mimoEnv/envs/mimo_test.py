@@ -3,18 +3,34 @@ import numpy as np
 from gym import utils, spaces
 
 from mimoEnv.envs.mimo_env import MIMoEnv
+from gymTouch.touch import DiscreteTouch
+from gymTouch.utils import plot_points
 
 
 # Dictionary with body_names as keys,
 TOUCH_PARAMS = {
-    "left_toes": 0.055,
-    "left_foot": 0.055,
-    "left_lleg": 0.15,
-    "left_uleg": 0.15,
-    "right_toes": 0.055,
-    "right_foot": 0.055,
-    "right_lleg": 0.15,
-    "right_uleg": 0.15,
+    "left_toes": 0.010,
+    "right_toes": 0.010,
+    "left_foot": 0.015,
+    "right_foot": 0.015,
+    "left_lower_leg": 0.038,
+    "right_lower_leg": 0.038,
+    "left_upper_leg": 0.027,
+    "right_upper_leg": 0.027,
+    "hip": 0.025,
+    "lower_body": 0.025,
+    "upper_body": 0.030,
+    "head": 0.013,
+    "left_eye": 1.0,
+    "right_eye": 1.0,
+    "left_upper_arm": 0.024,
+    "right_upper_arm": 0.024,
+    "left_lower_arm": 0.024,
+    "right_lower_arm": 0.024,
+    "left_hand": 0.007,
+    "right_hand": 0.007,
+    "left_fingers": 0.002,
+    "right_fingers": 0.002,
 }
 
 VISION_PARAMS = {
@@ -38,6 +54,18 @@ class MIMoEnvDummy(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params)
 
+    def _touch_setup(self, touch_params):
+        self.touch = DiscreteTouch(self)
+        for body_name in touch_params:
+            body_id = self.sim.model.body_name2id(body_name)
+            self.touch.add_body(body_id, scale=touch_params[body_name])
+
+        #for geom_id in self.touch.sensor_positions:
+        #    plot_points(self.touch.sensor_positions[geom_id], self.touch.plotting_limits[geom_id])
+
+        # Get touch obs once to ensure all output arrays are initialized
+        self._get_touch_obs()
+
     def _get_obs(self):
         """Returns the observation."""
         # robot proprioception:
@@ -51,7 +79,7 @@ class MIMoEnvDummy(MIMoEnv):
         if self.vision:
             vision_obs = self._get_vision_obs().ravel()
 
-        self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+        #self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
         self.steps += 1
         # Others:
         # TODO
