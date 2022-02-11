@@ -1,0 +1,161 @@
+<!-- Copyright 2021 DeepMind Technologies Limited
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<mujoco model="MIMo">
+
+	<body name="hip" pos="0 0 0">
+		<!--<joint name="dummy" type="slide" pos="0 0 0" axis="1 0 0" range="-.001 .001"/> -->
+		<!--<joint name="dummy_rot" type="hinge" pos="0 0 0" axis="0 1 0" limited="false"/> -->
+		<!-- Whole body height is 77.8 cm -->
+		<geom name="lb" type="capsule" density="850" size=".048 .043" material="pants_down" pos="-.002 0 0.005" euler="90 0 0"/>
+		<site name="lowerBody_center" type="sphere" size=".01 .01 .01" pos="0 0 0"/>
+		<body name="lower_body" pos="0.002 0 0.076">
+			<joint name="robot:hip_lean1" type="hinge" pos="0 0 -.05" axis="1 0 0" range="-14 14" stiffness="1.69" damping="0.38" frictionloss=".024"/>
+			<joint name="robot:hip_rot1" type="hinge" pos="0 0 0" axis="0 0 1" range="-18 18" stiffness="1.45" damping="0.29" frictionloss=".018"/>
+			<joint name="robot:hip_bend1" type="hinge" pos="0 0 -0.05" axis="0 1 0" range="-17 30.5" stiffness="2.20" damping="0.84" frictionloss="0.040"/>
+			<geom name="cb" type="capsule" size=".053 .035" density="900" material="pants_up" contype="0" pos="0.005 0 -.008" euler="90 0 0"/>
+				
+			<body name="upper_body" pos="-.002 0 0.091">
+				<joint name="robot:hip_lean2" type="hinge" pos="0 0 -.05" axis="1 0 0" range="-27 27" stiffness="3.38" damping="0.77" frictionloss=".049"/>
+				<joint name="robot:hip_rot2" type="hinge" pos="0 0 0" axis="0 0 1" range="-18 18" stiffness="1.45" damping="0.29" frictionloss=".018"/>
+				<joint name="robot:hip_bend2" type="hinge" pos="0 0 -.05" axis="0 1 0" range="-17 30.5" stiffness="2.20" damping="0.84" frictionloss="0.040"/>
+				<geom name="ub1" type="capsule" size=".052 .035" density="900" material="top_down" pos="0.007 0 -.032" euler="90 0 0"/>
+				<geom name="ub2" type="capsule" size=".048 .039" density="900" material="top_middle" pos="0.004 0 0.03" euler="90 0 0"/>
+				<geom name="ub3" type="capsule" size=".041 .047" density="900" material="top_up" pos="0 0 0.09" euler="90 0 0"/>
+					
+				<body name="head" pos="0 0 .135">
+					<geom type="sphere" material="head" size=".0735" pos="0.01 0 0.0735"/>
+					<joint name="robot:head_swivel" type="hinge" pos="0 0 0" axis="0 0 1" range="-111 111" stiffness=".08" damping=".1" frictionloss=".007"/>
+					<joint name="robot:head_tilt" type="hinge" pos="0 0 0.0123" axis="0 1 0" range="-70 81" stiffness=".16" damping=".19" frictionloss=".007"/>
+					<joint name="robot:head_tilt_side" type="hinge" pos="0 0 0.0245" axis="1 0 0" range="-70 70" stiffness=".13" damping=".1" frictionloss=".007"/>
+					<body name="left_eye" pos=".07 .0245 .067375">
+						<joint name="robot:left_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 1" range="-45 45" stiffness=".10" damping=".015" frictionloss=".001"/>
+						<joint name="robot:left_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".10" damping=".015" frictionloss=".001"/>
+						<geom type="sphere" material="eye_left" size=".01125" pos="0 0 0"/>
+						<camera name="eye_left" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
+					</body>
+					<body name="right_eye" pos=".07 -.0245 .067375">
+						<joint name="robot:right_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 -1" range="-45 45" stiffness=".10" damping=".015" frictionloss=".001"/>
+						<joint name="robot:right_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".10" damping=".015" frictionloss=".001"/>
+						<geom type="sphere" material="eye_right" size=".01125" pos="0 0 0"/>
+						<camera name="eye_right" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
+					</body>
+				</body>
+				
+				<body name="right_upper_arm" pos="-.005 -0.105 .093" euler="170 0 0">
+					<!-- Arm length is 31.36cm -->
+					<joint name="robot:right_shoulder_horizontal" type="hinge" pos="0 -.024 0" axis="0 1 -4" range="-28 118" stiffness=".09" damping=".05" frictionloss=".0009"/>
+					<joint name="robot:right_shoulder_ad_ab" type="hinge" pos="0 0 0" axis="-1 0 0" range="-84 193" stiffness=".11" damping=".10" frictionloss=".0014"/>
+					<joint name="robot:right_shoulder_rotation" type="hinge" pos="0 0 0" axis="0 0 -1" range="-99 67" stiffness=".12" damping=".07" frictionloss=".0008"/>
+					<geom name="right_uarm1" type="capsule" material="top_sleeve" size="0.024 0.0536" pos="0 0 .0536" euler="0 0 0"/>
+					<body name="right_lower_arm" pos="0 0 .1076" euler="0 0 0">
+						<joint name="robot:right_elbow" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-20" range="-146 5" stiffness=".13" damping=".11" frictionloss=".030"/>
+						<geom name="right_larm" type="capsule" size=".023 0.037" pos="0 0 .037"/>
+						<body name="right_hand" pos="0 -.007 .087" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
+							<joint name="robot:right_hand1" type="hinge" pos="0 0 0" axis="0 0 -1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
+							<joint name="robot:right_hand2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007"/>
+							<joint name="robot:right_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007"/>
+							<geom type="box" size=".0281 .01 .0208" pos=".005 0 .0208"/>
+							<geom type="cylinder" size=".01 .0278" pos=".005 0 .0416" euler="0 90 0"/>
+							<body name="right_fingers" pos="0 0 .0416"> <!-- Finger length is 5.14 cm, 1 cm overlap between palm and fingers -->
+								<joint name="robot:right_fingers" type="hinge" pos="0 0 0" axis="-1 0 0" springref="-40" range="-160 8" stiffness=".017" damping=".018" frictionloss=".0023"/>
+								<geom type="box" size=".0229 .01 .0207" pos="0 0 .0207" friction="5 0.02 0.01"/>
+								<geom type="cylinder" size=".01 .023" pos="0 0 .0414" euler="0 90 0" friction="5 0.02 0.01"/>
+							</body>
+						</body>
+					</body>
+				</body>
+				
+				<body name="left_upper_arm" pos="-.005 0.105 .093" euler="-170 0 0">
+					<!-- Arm length is 31.36cm -->
+					<joint name="robot:left_shoulder_horizontal" type="hinge" pos="0 .024 0" axis="0 1 4" range="-28 118" stiffness=".09" damping=".05" frictionloss=".0009"/>
+					<joint name="robot:left_shoulder_ab_ad" type="hinge" pos="0 0 0" axis="1 0 0" range="-84 193" stiffness=".11" damping=".10" frictionloss=".0014"/>
+					<joint name="robot:left_shoulder_rotation" type="hinge" pos="0 0 0" axis="0 0 1" range="-99 67" stiffness=".12" damping=".07" frictionloss=".0008"/>
+					<geom name="left_uarm1" type="capsule" material="top_sleeve" size="0.024 0.0536" pos="0 0 .0536" euler="0 0 0"/>
+					<body name="left_lower_arm" pos="0 0 .1076" euler="0 0 0">
+						<joint name="robot:left_elbow" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-20" range="-146 5" stiffness=".13" damping=".11" frictionloss=".030"/>
+						<geom name="left_larm" type="capsule" size=".023 0.037" pos="0 0 .037"/>
+						<body name="left_hand" pos="0 -.007 .087" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
+							<joint name="robot:left_hand1" type="hinge" pos="0 0 0" axis="0 0 1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
+							<joint name="robot:left_hand2" type="hinge" pos="0 0 0" axis="1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007"/>
+							<joint name="robot:left_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007"/>
+							<geom type="box" size=".0281 .01 .0208" pos=".005 0 .0208"/>
+							<geom type="cylinder" size=".01 .0278" pos=".005 0 .0416" euler="0 90 0"/>
+							<body name="left_fingers" pos="0 0 .0416"> <!-- Finger length is 5.14 cm, 1 cm overlap between palm and fingers -->
+								<joint name="robot:left_fingers" type="hinge" pos="0 0 0" axis="1 0 0" springref="-40" range="-160 8" stiffness=".017" damping=".018" frictionloss=".0023"/>
+								<geom type="box" size=".0229 .01 .0207" pos="0 0 .0207" friction="5 0.02 0.01"/>
+								<geom type="cylinder" size=".01 .023" pos="0 0 .0414" euler="0 90 0" friction="5 0.02 0.01"/>
+							</body>
+						</body>
+					</body>
+				</body>
+			</body>
+		</body>
+			
+		<body name="right_upper_leg" pos="0.005 -.051 -.007">
+			<!-- leg length is 32.9 cm -->
+			<joint name="robot:right_hip1" type="hinge" pos="0 0 0" axis="0 1 0" springref="-10" range="-133 20" stiffness="1.72" damping="1.27" frictionloss=".08"/>
+			<joint name="robot:right_hip2" type="hinge" pos="0 0 0" axis="1 0 0" range="-51 17" stiffness="3.51" damping="1.99" frictionloss=".062"/>
+			<joint name="robot:right_hip3" type="hinge" pos="0 0 0" axis="0 0 -1" range="-32 41" stiffness="2.16" damping="0.75" frictionloss=".027"/>
+			<geom type="capsule" material="pants_leg" contype="2 "conaffinity="3" size=".037 .0625" pos="0 0 -.0645" euler="0 0 0"/>
+			<body name="right_lower_leg" pos="0 0 -.135">
+				<joint name="robot:right_knee" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-30" range="-145 4" stiffness="1.63" damping="0.53" frictionloss=".065"/>
+				<geom type="capsule" size=".029 .044" pos="0 0 -.044" euler="0 0 0"/>
+				<geom type="capsule" size=".021 .028" pos="0 0 -.134" euler="0 0 0"/>
+				<body name="right_foot" pos="0 0 -.177">
+					<joint name="robot:right_foot1" type="hinge" pos="0 0 .015" axis="0 -1 0" springref="-10" range="-63 32" stiffness="1.29" damping="0.6" frictionloss=".019"/>
+					<joint name="robot:right_foot2" type="hinge" pos="0 0 .015" axis="1 0 0" range="-20 35" stiffness="1.64" damping="0.64" frictionloss=".02"/>
+					<joint name="robot:right_foot3" type="hinge" pos="0 0 .015" axis="0 0 1" range="-20 30" stiffness="1.91" damping="0.64" frictionloss=".02"/>
+					<geom type="cylinder" size=".0249 .0099" pos="-0.016 0 0" euler="0 0 0"/>
+					<geom type="box" size=".035  .025 .01" pos="0.019 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+					<geom type="cylinder" size=".0099 .0248" pos=".054 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+					<body name="right_toes" pos=".054 0 0">
+						<joint name="robot:right_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-30 80" frictionloss=".02" armature=".01" stiffness="3"/>
+						<geom type="box" size=".007 .0249 .0099" pos=".007 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+						<geom type="cylinder" size=".01 .025" pos=".014 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+					</body>
+				</body>
+			</body>
+		</body>
+			
+		<body name="left_upper_leg" pos="0.005 .051 -.007">
+			<!-- leg length is 32.9 cm -->
+			<joint name="robot:left_hip1" type="hinge" pos="0 0 0" axis="0 1 0" springref="-10" range="-133 20" stiffness="1.72" damping="1.27" frictionloss=".08"/>
+			<joint name="robot:left_hip2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-51 17" stiffness="3.51" damping="1.99" frictionloss=".062"/>
+			<joint name="robot:left_hip3" type="hinge" pos="0 0 0" axis="0 0 1" range="-32 41" stiffness="2.16" damping="0.75" frictionloss=".027"/>
+			<geom type="capsule" material="pants_leg" contype="2 "conaffinity="3" size=".037 .0625" pos="0 0 -.0645" euler="0 0 0"/>
+			<body name="left_lower_leg" pos="0 0 -.135">
+				<joint name="robot:left_knee" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-30" range="-145 4" stiffness="1.63" damping="0.53" frictionloss=".065"/>
+				<geom type="capsule" size=".029 .044" pos="0 0 -.044" euler="0 0 0"/>
+				<geom type="capsule" size=".021 .028" pos="0 0 -.134" euler="0 0 0"/>
+				<body name="left_foot" pos="0 0 -.177">
+					<joint name="robot:left_foot1" type="hinge" pos="0 0 .015" axis="0 -1 0" springref="-10" range="-63 32" stiffness="1.29" damping="0.6" frictionloss=".019"/>
+					<joint name="robot:left_foot2" type="hinge" pos="0 0 .015" axis="-1 0 0" range="-20 35" stiffness="1.64" damping="0.64" frictionloss=".02"/>
+					<joint name="robot:left_foot3" type="hinge" pos="0 0 .015" axis="0 0 -1" range="-20 30" stiffness="1.91" damping="0.64" frictionloss=".02"/>
+					<geom type="cylinder" size=".0249 .0099" pos="-0.016 0 0" euler="0 0 0"/>
+					<geom type="box" size=".035  .025 .01" pos="0.019 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+					<geom type="cylinder" size=".0099 .0248" pos=".054 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+					<body name="left_toes" pos=".054 0 0">
+						<joint name="robot:left_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-30 80" frictionloss=".02" armature=".01" stiffness="3"/>
+						<geom type="box" size=".007 .0249 .0099" pos=".007 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+						<geom type="cylinder" size=".01 .025" pos=".014 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+					</body>
+				</body>
+			</body>
+		</body>
+		
+	</body>
+
+</mujoco>
