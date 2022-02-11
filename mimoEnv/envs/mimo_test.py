@@ -79,7 +79,7 @@ class MIMoEnvDummy(MIMoEnv):
         if self.vision:
             vision_obs = self._get_vision_obs().ravel()
 
-        #self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+        self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
         self.steps += 1
         # Others:
         # TODO

@@ -23,9 +23,9 @@ class SimpleVision(Vision):
     def __init__(self, env, camera_parameters):
         super().__init__(env, camera_parameters)
 
-        self.on_windows = sys.platform == 'win32'  # Hacky check to try and intercept GLEW errors
+        self.not_on_mac = sys.platform != 'darwin'  # Hacky check to try and intercept GLEW errors
         self.offscreen_context = None
-        if self.on_windows:
+        if self.not_on_mac:
             self.offscreen_context = GlfwContext(offscreen=True)
 
         self.obs = {}
@@ -40,7 +40,7 @@ class SimpleVision(Vision):
 
     def get_vision_obs(self):
         # Have to manage contexts ourselves to avoid buffer reuse issues on windows
-        if self.on_windows:
+        if self.not_on_mac:
             self.swap_context(self.offscreen_context.window)
 
         imgs = {}
@@ -49,7 +49,7 @@ class SimpleVision(Vision):
             height = self.camera_parameters[camera]["height"]
             imgs[camera] = self.render_camera(width, height, camera)
 
-        if self.env.sim._render_context_window is not None and self.on_windows:
+        if self.env.sim._render_context_window is not None and self.not_on_mac:
             self.swap_context(self.env.sim._render_context_window.window)
 
         self.obs = imgs
