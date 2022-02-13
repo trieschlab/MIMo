@@ -56,6 +56,7 @@ class SimpleVision(Vision):
         return imgs
 
     def save_obs_to_file(self, directory, suffix: str = ""):
+        os.makedirs(directory, exist_ok = True)
         if self.obs is None or len(self.obs) == 0:
             raise RuntimeWarning("No image observations to save!")
         for camera_name in self.obs:
