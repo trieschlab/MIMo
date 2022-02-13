@@ -60,4 +60,5 @@ class SimpleVision(Vision):
             raise RuntimeWarning("No image observations to save!")
         for camera_name in self.obs:
             file_name = camera_name + suffix + ".png"
+            os.makedirs(directory, exist_ok = True)
             matplotlib.image.imsave(os.path.join(directory, file_name), self.obs[camera_name])
