@@ -31,8 +31,6 @@ class MIMoEnv(robot_env.RobotEnv):
         self.touch = None
         self.vision = None
 
-        self.steps = 0
-
         super().__init__(
             model_path,
             initial_qpos=initial_qpos,
@@ -41,6 +39,26 @@ class MIMoEnv(robot_env.RobotEnv):
         # super().__init__ calls _env_setup, which is where we put our own init
         # TODO: Make sure spaces are appropriate:
         # Observation space: Vision should probably be treated differently from proprioception
+        obs = self._get_obs()
+        self.observation_space = spaces.Dict(
+            dict(
+                desired_goal=spaces.Box(
+                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
+                ),
+                achieved_goal=spaces.Box(
+                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
+                ),
+                observation=spaces.Box(
+                    -np.inf, np.inf, shape=obs["observation"].shape, dtype="float32"
+                ),
+                touch=spaces.Box(
+                    -np.inf, np.inf, shape=obs["touch"].shape, dtype="float32"
+                ),
+                vision=spaces.Box(
+                    0, 256, shape=obs["vision"].shape, dtype="uint8"
+                ),
+            )
+        )
         # Action space: Box with n_actions dims from -1 to +1
 
     def _env_setup(self, initial_qpos):
@@ -93,38 +111,40 @@ class MIMoEnv(robot_env.RobotEnv):
         return touch_obs
 
     def _get_vision_obs(self):
+        """ Output renders from the camera. Multiple cameras are concatenated along the first axis"""
         vision_obs = self.vision.get_vision_obs()
-        return np.concatenate([vision_obs[cam] for cam in vision_obs])
+        return np.concatenate([vision_obs[cam] for cam in vision_obs], axis=0)
 
     def _get_obs(self):
         """Returns the observation."""
         # robot proprioception:
         proprio_obs = self._get_proprio_obs()
 
-        # robot touch sensors:
-        if self.touch:
-            touch_obs = self._get_touch_obs().ravel()
-
-        # robot vision:
-        if self.vision:
-            vision_obs = self._get_vision_obs().ravel()
-
-        # Others:
-        # TODO
-
-        obs = [proprio_obs]
-
-        # dummy goal
         achieved_goal = self._get_achieved_goal()
 
-        observation = np.concatenate(
-               obs
-            )
-        return {
-            "observation": observation.copy(),
+        observation_dict = {
+            "observation": proprio_obs,
             "achieved_goal": achieved_goal.copy(),
             "desired_goal": self.goal.copy(),
         }
+
+        # robot touch sensors:
+        if self.touch:
+            touch_obs = self._get_touch_obs().ravel()
+            observation_dict["touch"] = touch_obs
+        else:
+            observation_dict["touch"] = None
+
+        # robot vision:
+        if self.vision:
+            vision_obs = self._get_vision_obs()
+            observation_dict["vision"] = vision_obs
+        else:
+            observation_dict["vision"] = None
+
+        # Others:
+        # TODO
+        return observation_dict
 
     def _set_action(self, action):
         raise NotImplementedError

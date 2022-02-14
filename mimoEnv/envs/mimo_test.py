@@ -56,52 +56,16 @@ class MIMoEnvDummy(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params)
 
-    def _touch_setup(self, touch_params):
-        self.touch = DiscreteTouch(self)
-        for body_name in touch_params:
-            body_id = self.sim.model.body_name2id(body_name)
-            self.touch.add_body(body_id, scale=touch_params[body_name])
-
-        #for geom_id in self.touch.sensor_positions:
-        #    plot_points(self.touch.sensor_positions[geom_id], self.touch.plotting_limits[geom_id])
-
-        # Get touch obs once to ensure all output arrays are initialized
-        self._get_touch_obs()
+        self.steps = 0
 
     def _get_obs(self):
-        """Returns the observation."""
-        # robot proprioception:
-        proprio_obs = self._get_proprio_obs()
+        """Returns the observations."""
+        obs = super()._get_obs()
 
-        # robot touch sensors:
-        if self.touch:
-            touch_obs = self._get_touch_obs().ravel()
-
-        # robot vision:
-        if self.vision:
-            vision_obs = self._get_vision_obs().ravel()
-            self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
-            
+        self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
         self.steps += 1
-        # Others:
-        # TODO
 
-        obs = [proprio_obs]
-
-        # dummy goal for now
-        achieved_goal = np.zeros(proprio_obs.shape)
-        goal = np.zeros(proprio_obs.shape)
-
-        obs.append(achieved_goal)
-
-        observation = np.concatenate(
-               obs
-            )
-        return {
-            "observation": observation.copy(),
-            "achieved_goal": achieved_goal.copy(),
-            "desired_goal": goal.copy(),
-        }
+        return obs
 
     def _set_action(self, action):
         ctrlrange = self.sim.model.actuator_ctrlrange
@@ -120,12 +84,12 @@ class MIMoEnvDummy(MIMoEnv):
     def _sample_goal(self):
         """Samples a new goal and returns it."""
         # TODO: Actually sample a goal
-        return np.zeros(self._get_obs()["observation"].shape)
+        return np.zeros(self._get_proprio_obs().shape)
 
     def _get_achieved_goal(self):
         """Get the goal state actually achieved in this episode/timeframe."""
         # TODO: All of it
-        return np.zeros(self._get_obs()["observation"].shape)
+        return np.zeros(self._get_proprio_obs().shape)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         # TODO: Actually compute a reward
