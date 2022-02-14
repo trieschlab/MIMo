@@ -2,7 +2,7 @@ import numpy as np
 
 from gym import utils, spaces
 
-from mimoEnv.envs.mimo_env import MIMoEnv
+from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML
 from gymTouch.touch import DiscreteTouch
 from gymTouch.utils import plot_points
 
@@ -42,13 +42,15 @@ VISION_PARAMS = {
 class MIMoEnvDummy(MIMoEnv):
 
     def __init__(self,
+                 model_path=MIMO_XML,
                  initial_qpos={},
-                 n_actions=41,  # Currently hardcoded
+                 n_actions=40,  # Currently hardcoded
                  n_substeps=2,
                  touch_params=None,
                  vision_params=None):
 
-        super().__init__(initial_qpos=initial_qpos,
+        super().__init__(model_path=model_path,
+                         initial_qpos=initial_qpos,
                          n_actions=n_actions,
                          n_substeps=n_substeps,
                          touch_params=touch_params,
@@ -78,8 +80,8 @@ class MIMoEnvDummy(MIMoEnv):
         # robot vision:
         if self.vision:
             vision_obs = self._get_vision_obs().ravel()
-
-        self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+            self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+            
         self.steps += 1
         # Others:
         # TODO
@@ -151,6 +153,7 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
         )
         MIMoEnvDummy.__init__(
             self,
+            model_path=MIMO_XML,
             touch_params=TOUCH_PARAMS,
             vision_params=VISION_PARAMS
         )

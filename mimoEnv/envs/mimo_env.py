@@ -12,7 +12,7 @@ from mimoVision.vision import SimpleVision, Vision
 
 
 # Ensure we get the path separator correct on windows
-MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "MIMo3.1.xml"))
+MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "MIMo3.2.xml"))
 
 
 class MIMoEnv(robot_env.RobotEnv):
@@ -20,7 +20,7 @@ class MIMoEnv(robot_env.RobotEnv):
     def __init__(self,
                  model_path=MIMO_XML,
                  initial_qpos={},
-                 n_actions=41,  # Currently hardcoded
+                 n_actions=40,  # Currently hardcoded
                  n_substeps=2,
                  touch_params=None,
                  vision_params=None):
@@ -28,11 +28,8 @@ class MIMoEnv(robot_env.RobotEnv):
         self.touch_params = touch_params
         self.vision_params = vision_params
 
-        if self.touch_params is not None:
-            self.touch = None
-
-        if self.vision_params is not None:
-            self.vision = None
+        self.touch = None
+        self.vision = None
 
         self.steps = 0
 
