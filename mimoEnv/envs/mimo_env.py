@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import mujoco_py
+import copy
 
 from gym import utils, spaces
 from gym.envs.robotics import robot_env
@@ -23,7 +25,9 @@ class MIMoEnv(robot_env.RobotEnv):
                  n_actions=40,  # Currently hardcoded
                  n_substeps=2,
                  touch_params=None,
-                 vision_params=None):
+                 vision_params=None,
+                 goals_in_observation=True,
+                 done_active=False):
 
         self.touch_params = touch_params
         self.vision_params = vision_params
@@ -31,35 +35,54 @@ class MIMoEnv(robot_env.RobotEnv):
         self.touch = None
         self.vision = None
 
-        super().__init__(
-            model_path,
-            initial_qpos=initial_qpos,
-            n_actions=n_actions,
-            n_substeps=n_substeps)
-        # super().__init__ calls _env_setup, which is where we put our own init
-        # TODO: Make sure spaces are appropriate:
-        # Observation space: Vision should probably be treated differently from proprioception
+        self.goals_in_observation = goals_in_observation
+        self.done_active = done_active
+
+        fullpath = os.path.abspath(model_path)
+        if not os.path.exists(fullpath):
+            raise IOError("File {} does not exist".format(fullpath))
+
+        model = mujoco_py.load_model_from_path(fullpath)
+        self.sim = mujoco_py.MjSim(model, nsubsteps=n_substeps)
+        self.viewer = None
+        self._viewers = {}
+
+        self.metadata = {
+            "render.modes": ["human", "rgb_array"],
+            "video.frames_per_second": int(np.round(1.0 / self.dt)),
+        }
+
+        self.seed()
+        self._env_setup(initial_qpos=initial_qpos)
+        self.initial_state = copy.deepcopy(self.sim.get_state())
+
+        self.goal = self._sample_goal()
+        self.action_space = spaces.Box(-1.0, 1.0, shape=(n_actions,), dtype="float32")
+
         obs = self._get_obs()
+        # Observation spaces
         self.observation_space = spaces.Dict(
             dict(
+                observation=spaces.Box(
+                    -np.inf, np.inf, shape=obs["observation"].shape, dtype="float32"
+                ),
                 desired_goal=spaces.Box(
                     -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
                 ),
                 achieved_goal=spaces.Box(
                     -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
-                ),
-                observation=spaces.Box(
-                    -np.inf, np.inf, shape=obs["observation"].shape, dtype="float32"
-                ),
-                touch=spaces.Box(
-                    -np.inf, np.inf, shape=obs["touch"].shape, dtype="float32"
-                ),
-                vision=spaces.Box(
-                    0, 256, shape=obs["vision"].shape, dtype="uint8"
-                ),
+                )
             )
         )
-        # Action space: Box with n_actions dims from -1 to +1
+        if self.touch:
+            self.observation_space["touch"] = spaces.Box(
+                    -np.inf, np.inf, shape=obs["touch"].shape, dtype="float32"
+                )
+        if self.vision:
+            for sensor in self.vision_params:
+                self.observation_space[sensor] = spaces.Box(
+                        0, 256, shape=obs[sensor].shape, dtype="uint8"
+                    )
 
     def _env_setup(self, initial_qpos):
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
@@ -90,6 +113,33 @@ class MIMoEnv(robot_env.RobotEnv):
     def _vision_setup(self, vision_params):
         self.vision = SimpleVision(self, vision_params)  # This fixes the GLEW initialization error
 
+    def step(self, action):
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+        self._set_action(action)
+        self.sim.step()
+        self._step_callback()
+        obs = self._get_obs()
+
+        achieved_goal = self._get_achieved_goal()
+
+        # Done always false if not done_active, else either of is_success or is_failure must be true
+        is_success = self._is_success(achieved_goal, self.goal)
+        is_failure = self._is_failure(achieved_goal, self.goal)
+
+        info = {
+            "is_success": is_success,
+            "is_failure": is_failure,
+        }
+
+        if not self.goals_in_observation:
+            info["achieved_goal"] = achieved_goal.copy()
+            info["desired_goal"] = self.goal.copy()
+
+        done = self._is_done(achieved_goal, self.goal, info)
+
+        reward = self.compute_reward(achieved_goal, self.goal, info)
+        return obs, reward, done, info
+
     def _reset_sim(self):
         """Resets a simulation and indicates whether or not it was successful.
         If a reset was unsuccessful (e.g. if a randomized state caused an error in the
@@ -113,37 +163,35 @@ class MIMoEnv(robot_env.RobotEnv):
     def _get_vision_obs(self):
         """ Output renders from the camera. Multiple cameras are concatenated along the first axis"""
         vision_obs = self.vision.get_vision_obs()
-        return np.concatenate([vision_obs[cam] for cam in vision_obs], axis=0)
+        return vision_obs
 
     def _get_obs(self):
         """Returns the observation."""
         # robot proprioception:
         proprio_obs = self._get_proprio_obs()
 
-        achieved_goal = self._get_achieved_goal()
-
         observation_dict = {
             "observation": proprio_obs,
-            "achieved_goal": achieved_goal.copy(),
-            "desired_goal": self.goal.copy(),
+            "achieved_goal": np.empty(shape=(0,)),
+            "desired_goal": np.empty(shape=(0,))
         }
 
         # robot touch sensors:
         if self.touch:
             touch_obs = self._get_touch_obs().ravel()
             observation_dict["touch"] = touch_obs
-        else:
-            observation_dict["touch"] = np.empty(shape=(0,))
 
         # robot vision:
         if self.vision:
             vision_obs = self._get_vision_obs()
-            observation_dict["vision"] = vision_obs
-        else:
-            observation_dict["vision"] = np.empty(shape=(0,))
+            for sensor in vision_obs:
+                observation_dict[sensor] = vision_obs[sensor]
 
-        # Others:
-        # TODO
+        if self.goals_in_observation:
+            achieved_goal = self._get_achieved_goal()
+            observation_dict["achieved_goal"] = achieved_goal.copy()
+            observation_dict["desired_goal"] = self.goal.copy()
+
         return observation_dict
 
     def _set_action(self, action):
@@ -153,6 +201,13 @@ class MIMoEnv(robot_env.RobotEnv):
         """Indicates whether or not the achieved goal successfully achieved the desired goal."""
         raise NotImplementedError
 
+    def _is_failure(self, achieved_goal, desired_goal):
+        """Indicates that we reached a failure state."""
+        raise NotImplementedError
+
+    def _is_done(self, achieved_goal, desired_goal, info):
+        return self.done_active and (info["is_success"] or info["is_failure"])
+
     def _sample_goal(self):
         """Samples a new goal and returns it."""
         raise NotImplementedError
@@ -161,4 +216,21 @@ class MIMoEnv(robot_env.RobotEnv):
         raise NotImplementedError
 
     def compute_reward(self, achieved_goal, desired_goal, info):
+        """Compute the step reward. This externalizes the reward function and makes
+        it dependent on a desired goal and the one that was achieved. If you wish to include
+        additional rewards that are independent of the goal, you can include the necessary values
+        to derive it in 'info' and compute it accordingly.
+
+        Args:
+            achieved_goal (object): the goal that was achieved during execution
+            desired_goal (object): the desired goal that we asked the agent to attempt to achieve
+            info (dict): an info dictionary with additional information
+
+        Returns:
+            float: The reward that corresponds to the provided achieved goal w.r.t. to the desired
+            goal. Note that the following should always hold true:
+
+                ob, reward, done, info = env.step()
+                assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
+        """
         raise NotImplementedError
