@@ -1,10 +1,8 @@
 import numpy as np
 
-from gym import utils, spaces
+from gym import utils
 
 from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML
-from gymTouch.touch import DiscreteTouch
-from gymTouch.utils import plot_points
 
 
 # Dictionary with body_names as keys,
@@ -47,7 +45,9 @@ class MIMoEnvDummy(MIMoEnv):
                  n_actions=40,  # Currently hardcoded
                  n_substeps=2,
                  touch_params=None,
-                 vision_params=None):
+                 vision_params=None,
+                 goals_in_observation=True,
+                 done_active=False):
 
         self.steps = 0
 
@@ -56,7 +56,9 @@ class MIMoEnvDummy(MIMoEnv):
                          n_actions=n_actions,
                          n_substeps=n_substeps,
                          touch_params=touch_params,
-                         vision_params=vision_params)
+                         vision_params=vision_params,
+                         goals_in_observation=goals_in_observation,
+                         done_active=done_active)
 
     def _get_obs(self):
         """Returns the observations."""
@@ -79,7 +81,10 @@ class MIMoEnvDummy(MIMoEnv):
     def _is_success(self, achieved_goal, desired_goal):
         """Indicates whether or not the achieved goal successfully achieved the desired goal."""
         # TODO: All of it
-        return True
+        return False
+
+    def _is_failure(self, achieved_goal, desired_goal):
+        return False
 
     def _sample_goal(self):
         """Samples a new goal and returns it."""
@@ -119,5 +124,7 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
             self,
             model_path=MIMO_XML,
             touch_params=TOUCH_PARAMS,
-            vision_params=VISION_PARAMS
+            vision_params=VISION_PARAMS,
+            goals_in_observation=False,
+            done_active=True
         )
