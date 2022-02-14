@@ -133,14 +133,14 @@ class MIMoEnv(robot_env.RobotEnv):
             touch_obs = self._get_touch_obs().ravel()
             observation_dict["touch"] = touch_obs
         else:
-            observation_dict["touch"] = None
+            observation_dict["touch"] = np.empty(shape=(0,))
 
         # robot vision:
         if self.vision:
             vision_obs = self._get_vision_obs()
             observation_dict["vision"] = vision_obs
         else:
-            observation_dict["vision"] = None
+            observation_dict["vision"] = np.empty(shape=(0,))
 
         # Others:
         # TODO

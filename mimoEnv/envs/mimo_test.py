@@ -49,6 +49,8 @@ class MIMoEnvDummy(MIMoEnv):
                  touch_params=None,
                  vision_params=None):
 
+        self.steps = 0
+
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
                          n_actions=n_actions,
@@ -56,13 +58,11 @@ class MIMoEnvDummy(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params)
 
-        self.steps = 0
-
     def _get_obs(self):
         """Returns the observations."""
         obs = super()._get_obs()
 
-        self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+        #self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
         self.steps += 1
 
         return obs
@@ -119,5 +119,5 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
             self,
             model_path=MIMO_XML,
             touch_params=TOUCH_PARAMS,
-            vision_params=VISION_PARAMS
+            vision_params=None
         )
