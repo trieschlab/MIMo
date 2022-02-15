@@ -1,4 +1,5 @@
 import os
+import sys
 
 import mujoco_py
 import matplotlib
@@ -23,7 +24,10 @@ class SimpleVision(Vision):
         self.viewer = None
         self._viewers = {}
 
-        self.offscreen_context = self._get_viewer('rgb_array').opengl_context
+        if sys.platform == "win32":
+            self.offscreen_context = mujoco_py.GlfwContext(offscreen=True)
+        else:
+            self.offscreen_context = self._get_viewer('rgb_array').opengl_context
 
         self.obs = {}
 
