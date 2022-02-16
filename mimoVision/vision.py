@@ -31,15 +31,6 @@ class SimpleVision(Vision):
 
         self.obs = {}
 
-    # def render_camera_legacy(self, width, height, camera_name):
-    #     img = self.env.sim.render(
-    #         width=width,
-    #         height=height,
-    #         camera_name=camera_name,
-    #         depth=False,
-    #         device_id=-1)
-    #     return img[::-1, :, :]  # rendered image is inverted
-
     def render_camera(self, width, height, camera_name):
         mode = "rgb_array"
         self._get_viewer(mode).render(
