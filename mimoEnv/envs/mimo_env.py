@@ -3,14 +3,13 @@ import numpy as np
 import mujoco_py
 import copy
 
-from gym import utils, spaces
+from gym import spaces
 from gym.envs.robotics import robot_env
 from gym.envs.robotics.utils import robot_get_obs
 
 from gymTouch.touch import DiscreteTouch, scale_linear
-from gymTouch.utils import plot_points
 
-from mimoVision.vision import SimpleVision, Vision
+from mimoVision.vision import SimpleVision
 
 
 # Ensure we get the path separator correct on windows
@@ -61,28 +60,29 @@ class MIMoEnv(robot_env.RobotEnv):
 
         obs = self._get_obs()
         # Observation spaces
-        self.observation_space = spaces.Dict(
-            dict(
-                observation=spaces.Box(
-                    -np.inf, np.inf, shape=obs["observation"].shape, dtype="float32"
-                ),
-                desired_goal=spaces.Box(
-                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
-                ),
-                achieved_goal=spaces.Box(
-                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
-                )
-            )
-        )
+        spaces_dict = {
+            "observation": spaces.Box(
+                -np.inf, np.inf, shape=obs["observation"].shape, dtype="float32"
+            ),
+            "desired_goal": spaces.Box(
+                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
+            ),
+            "achieved_goal": spaces.Box(
+                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
+            ),
+        }
+
         if self.touch:
-            self.observation_space["touch"] = spaces.Box(
+            spaces_dict["touch"] = spaces.Box(
                     -np.inf, np.inf, shape=obs["touch"].shape, dtype="float32"
                 )
         if self.vision:
             for sensor in self.vision_params:
-                self.observation_space[sensor] = spaces.Box(
+                spaces_dict[sensor] = spaces.Box(
                         0, 256, shape=obs[sensor].shape, dtype="uint8"
                     )
+
+        self.observation_space = spaces.Dict(spaces_dict)
 
     def _env_setup(self, initial_qpos):
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
