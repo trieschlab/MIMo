@@ -24,7 +24,7 @@ class SimpleVision(Vision):
         self.viewer = None
         self._viewers = {}
 
-        if sys.platform == "win32":
+        if sys.platform != "darwin":
             self.offscreen_context = mujoco_py.GlfwContext(offscreen=True)
         else:
             self.offscreen_context = self._get_viewer('rgb_array').opengl_context
