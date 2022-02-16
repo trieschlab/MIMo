@@ -8,3 +8,7 @@ register(id='MIMoReach-v0',
          entry_point='mimoEnv.envs:MIMoReachEnv',
          max_episode_steps=1000,
          )
+
+register(id='MIMoStandup-v0',
+         entry_point='mimoEnv.envs:MIMoStandupEnv',
+         )
