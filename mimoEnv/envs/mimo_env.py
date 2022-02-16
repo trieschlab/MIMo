@@ -144,6 +144,14 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             spaces_dict["achieved_goal"] = spaces.Box(
                 -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32")
 
+        if self.goals_in_observation:
+            spaces_dict["desired_goal"] = spaces.Box(
+                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
+                )
+            spaces_dict["achieved_goal"] = spaces.Box(
+                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
+                )
+
         self.observation_space = spaces.Dict(spaces_dict)
 
     def _env_setup(self, initial_qpos):
