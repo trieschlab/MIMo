@@ -14,7 +14,7 @@ from mimoProprioception.proprio import SimpleProprioception
 
 
 # Ensure we get the path separator correct on windows
-MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "seperation_example", "Sample_Scene.xml"))
+MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "Sample_Scene.xml"))
 
 
 class MIMoEnv(robot_env.RobotEnv):
