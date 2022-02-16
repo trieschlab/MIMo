@@ -103,6 +103,38 @@
 			<joint joint="robot:head_tilt" coef="-1"/>
 		</fixed>
 	</tendon>
+	
+	<sensor>
+		<accelerometer name="vestibular_acc" site="vestibular"/>
+		<gyro name="vestibular_gyro" site="vestibular"/>
+		
+		<torque name="proprio:neck" site="torque_neck"/>
+		<torque name="proprio:left_eye" site="torque_left_eye"/>
+		<torque name="proprio:right_eye" site="torque_right_eye"/>
+		
+		<torque name="proprio:trunk_upper" site="torque_ub"/>
+		<torque name="proprio:trunk_lower" site="torque_lb"/>
+		
+		<torque name="proprio:right_shoulder" site="torque_right_shoulder"/>
+		<torque name="proprio:right_elbow" site="torque_right_elbow"/>
+		<torque name="proprio:right_wrist" site="torque_right_wrist"/>
+		<torque name="proprio:right_fingers" site="torque_right_fingers"/>
+		
+		<torque name="proprio:left_shoulder" site="torque_left_shoulder"/>
+		<torque name="proprio:left_elbow" site="torque_left_elbow"/>
+		<torque name="proprio:left_wrist" site="torque_left_wrist"/>
+		<torque name="proprio:left_fingers" site="torque_left_fingers"/>
+		
+		<torque name="proprio:right_hip" site="torque_right_hip"/>
+		<torque name="proprio:right_knee" site="torque_right_knee"/>
+		<torque name="proprio:right_ankle" site="torque_right_ankle"/>
+		<torque name="proprio:right_toes" site="torque_right_toes"/>
+		
+		<torque name="proprio:left_hip" site="torque_left_hip"/>
+		<torque name="proprio:left_knee" site="torque_left_knee"/>
+		<torque name="proprio:left_ankle" site="torque_left_ankle"/>
+		<torque name="proprio:left_toes" site="torque_left_toes"/>
+	</sensor>
 
     <actuator>
 	
@@ -142,16 +174,16 @@
 		<motor name="right_hip_rotation" 		joint="robot:right_hip3" 		gear="3.54" forcerange="-.75 1"/>
 		<motor name="right_knee" 				joint="robot:right_knee" 		gear="10" 	forcerange="-.65 1"/>
 		<motor name="right_foot_flexion" 		joint="robot:right_foot1" 		gear="3.78"	forcerange="-1 .5"/>
-		<motor name="right_foot_inversion" 		joint="robot:right_foot2" 		gear="2"	forcerange="-1 1"/>
-		<motor name="right_foot_rotation" 		joint="robot:right_foot3"	 	gear="2"	forcerange="-1 1"/>
+		<motor name="right_foot_inversion" 		joint="robot:right_foot2" 		gear="1.16"	forcerange="-.91 1"/>
+		<motor name="right_foot_rotation" 		joint="robot:right_foot3"	 	gear="1.2"	forcerange="-1 1"/>
 	
 		<motor name="left_hip_flex" 			joint="robot:left_hip1" 		gear="8" 	forcerange="-1 1"/>
 		<motor name="left_hip_abduction" 		joint="robot:left_hip2" 		gear="6.24" forcerange="-1 1"/>
 		<motor name="left_hip_rotation" 		joint="robot:left_hip3"			gear="3.54" forcerange="-.75 1"/>
 		<motor name="left_knee" 				joint="robot:left_knee" 		gear="10" 	forcerange="-.65 1"/>
 		<motor name="left_foot_flexion" 		joint="robot:left_foot1" 		gear="3.78"	forcerange="-1 .5"/>
-		<motor name="left_foot_inversion" 		joint="robot:left_foot2" 		gear="2"	forcerange="-1 1"/>
-		<motor name="left_foot_rotation" 		joint="robot:left_foot3" 		gear="2"	forcerange="-1 1"/>
+		<motor name="left_foot_inversion" 		joint="robot:left_foot2" 		gear="1.16"	forcerange="-.91 1"/>
+		<motor name="left_foot_rotation" 		joint="robot:left_foot3" 		gear="1.2"	forcerange="-1 1"/>
 		
 		<!--<position name="right_toes" gear="57.296" kp="1" joint="robot:right_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/>
 		<position name="left_toes" gear="57.296" kp="1" joint="robot:left_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/> -->
