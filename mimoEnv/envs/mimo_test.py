@@ -70,7 +70,8 @@ class MIMoEnvDummy(MIMoEnv):
         """Returns the observations."""
         obs = super()._get_obs()
 
-        self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+	if self.vision_params:
+	        self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
         self.steps += 1
 
         return obs
