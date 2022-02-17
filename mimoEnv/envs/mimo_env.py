@@ -6,7 +6,7 @@ import copy
 from gym import spaces
 from gym.envs.robotics import robot_env
 
-from mimoTouch.touch import DiscreteTouch
+from mimoTouch.touch import DiscreteTouch, scale_linear
 from mimoVision.vision import SimpleVision
 from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception

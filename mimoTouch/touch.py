@@ -2,7 +2,6 @@ import math
 import numpy as np
 import mujoco_py
 
-
 import mimoEnv.utils as env_utils
 from mimoEnv.utils import mulRotT, mulRot, EPS
 from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spread_points_cylinder, \
@@ -37,6 +36,7 @@ class Touch:
         env should be an openAI gym environment using mujoco. Critically env should have an attribute sim which is a
         mujoco-py sim object
 
+<<<<<<< HEAD
         Sensor positions is a dictionary where each key is the index of a sensing object and the corresponding value
         is a numpy array storing the sensor positions on that object: {object_id: ndarray((n_sensors, 3))}
         Sensor positions should be in relative coordinates for the object.
@@ -135,7 +135,6 @@ class DiscreteTouch(Touch):
 
         if self.m_model.geom_contype[geom_id] == 0:
             raise RuntimeWarning("Added sensors to geom with collisions disabled!")
-
         return self._add_sensorpoints(geom_id, scale)
 
     @property

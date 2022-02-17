@@ -18,6 +18,7 @@ def mulRot(vector, rot_matrix):
 def weighted_sum_vectors(vector1, vector2, weight1, weight2):
     return (vector1 * weight1 + vector2 * weight2) / (weight1 + weight2)
 
+
 # ======================== Mujoco access utils ====================================
 # =================================================================================
 
@@ -42,6 +43,7 @@ def get_body_id(mujoco_model, body_id=None, body_name=None):
         body_id = mujoco_model.body_name2id(body_name)
 
     return body_id
+
 
 # ======================== Mujoco frame utils =====================================
 # =================================================================================
