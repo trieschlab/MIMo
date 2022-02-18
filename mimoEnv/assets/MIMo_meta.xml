@@ -161,7 +161,7 @@
 		<motor name="right_fingers" 			joint="robot:right_fingers" 			gear=""		forcerange="-1 .33"/>
 		
 		<motor name="left_shoulder_horizontal" 	joint="robot:left_shoulder_horizontal" 	gear="1.8" 	forcerange="-1 1"/>
-		<motor name="left_shoulder_abduction" 	joint="robot:left_shoulder_ab_ad" 		gear="4" 	forcerange="-.6875 1"/>
+		<motor name="left_shoulder_abduction" 	joint="robot:left_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
 		<motor name="left_shoulder_internal" 	joint="robot:left_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
 		<motor name="left_elbow" 				joint="robot:left_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
 		<motor name="left_wrist_rotation" 		joint="robot:left_hand1"  				gear=".7"	forcerange="-1 1"/>
