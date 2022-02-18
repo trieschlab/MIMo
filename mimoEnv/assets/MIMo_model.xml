@@ -91,7 +91,7 @@
 				<body name="left_upper_arm" pos="-.005 0.105 .093" euler="-170 0 0">
 					<!-- Arm length is 31.36cm -->
 					<joint name="robot:left_shoulder_horizontal" type="hinge" pos="0 .024 0" axis="0 1 4" range="-28 118" stiffness=".09" damping=".05" frictionloss=".0009"/>
-					<joint name="robot:left_shoulder_ab_ad" type="hinge" pos="0 0 0" axis="1 0 0" range="-84 183" stiffness=".11" damping=".10" frictionloss=".0014"/>
+					<joint name="robot:left_shoulder_ad_ab" type="hinge" pos="0 0 0" axis="1 0 0" range="-84 183" stiffness=".11" damping=".10" frictionloss=".0014"/>
 					<joint name="robot:left_shoulder_rotation" type="hinge" pos="0 0 0" axis="0 0 1" range="-99 67" stiffness=".12" damping=".07" frictionloss=".0008"/>
 					<site name="torque_left_shoulder" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 					<geom name="left_uarm1" type="capsule" material="top_sleeve" size="0.024 0.0536" pos="0 0 .0536" euler="0 0 0"/>
