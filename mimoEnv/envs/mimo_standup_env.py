@@ -41,7 +41,7 @@ VESTIBULAR_PARAMS = {
     "sensors": ["vestibular_acc", "vestibular_gyro"]
 }
 
-MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "Sample_Scene.xml"))
+MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "standup_scene.xml"))
 
 class MIMoEnvDummy(MIMoEnv):
 
@@ -137,15 +137,16 @@ class MIMoStandupEnv(MIMoEnvDummy, utils.EzPickle):
             vision_params=None,
             vestibular_params=VESTIBULAR_PARAMS,
             goals_in_observation=False,
-            done_active=True
+            done_active=False,
         )
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        body_height = self.sim.data.qpos[16]
-        reward = body_height
+        head_height = self.sim.data.get_body_xpos('head')[2]
+        reward = head_height - 0.05
         return reward
 
-    def _is_failure(self, achieved_goal, desired_goal):
-        body_height = self.sim.data.qpos[16]
-        failure = (body_height < 0.25)
-        return failure
+    def _is_success(self, achieved_goal, desired_goal):
+        """Indicates whether or not the achieved goal successfully achieved the desired goal."""
+        head_height = self.sim.data.get_body_xpos('head')[2]
+        success = (head_height >= 0.5)
+        return success

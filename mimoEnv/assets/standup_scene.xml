@@ -1,0 +1,62 @@
+<!-- Copyright 2021 DeepMind Technologies Limited
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<mujoco model="MIMo">
+
+    <compiler inertiafromgeom="true" angle="degree"/>
+
+    <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
+
+    <size nconmax="1000" njmax="5000" nstack="10000000" nuser_cam="3"/>
+
+    <visual>
+        <map force="0.1" zfar="30" znear="0.005"/>
+        <rgba haze="0.15 0.25 0.35 1"/>
+        <quality shadowsize="4096"/>
+        <global offwidth="800" offheight="800"/>
+    </visual>
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+
+        <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278"
+            rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
+
+        <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+
+        <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
+		
+		<material name="matmocap" texture="texgeom" texuniform="true" rgba="0.5 0 0.5 0.5"/>
+    </asset>
+	
+	<!-- Import everything except the kinematic tree -->
+	<include file="MIMo_meta.xml"></include>
+
+    <worldbody>
+        <geom name="floor" friction="1 .1 .1" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
+
+        <light directional="false" diffuse=".4 .4 .4" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="false"/>
+        <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
+		
+		<!-- The location and orientation of the base model can be set using this body -->
+		<body name="mimo_location" pos="0 0 .05" euler="0 270 0">
+			<freejoint/>
+			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
+		</body>
+		
+    </worldbody>
+</mujoco>

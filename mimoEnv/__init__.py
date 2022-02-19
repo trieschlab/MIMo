@@ -11,4 +11,5 @@ register(id='MIMoReach-v0',
 
 register(id='MIMoStandup-v0',
          entry_point='mimoEnv.envs:MIMoStandupEnv',
+         max_episode_steps=1000, 
          )
