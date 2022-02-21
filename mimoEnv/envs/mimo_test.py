@@ -36,6 +36,10 @@ VISION_PARAMS = {
     "eye_right": {"width": 400, "height": 300}
 }
 
+VESTIBULAR_PARAMS = {
+    "sensors": ["vestibular_acc", "vestibular_gyro"]
+}
+
 
 class MIMoEnvDummy(MIMoEnv):
 
@@ -46,6 +50,7 @@ class MIMoEnvDummy(MIMoEnv):
                  n_substeps=2,
                  touch_params=None,
                  vision_params=None,
+                 vestibular_params=None,
                  goals_in_observation=True,
                  done_active=False):
 
@@ -57,6 +62,7 @@ class MIMoEnvDummy(MIMoEnv):
                          n_substeps=n_substeps,
                          touch_params=touch_params,
                          vision_params=vision_params,
+                         vestibular_params=vestibular_params,
                          goals_in_observation=goals_in_observation,
                          done_active=done_active)
 
@@ -64,8 +70,10 @@ class MIMoEnvDummy(MIMoEnv):
         """Returns the observations."""
         obs = super()._get_obs()
 
-        if self.vision:
+
+        if self.vision_params:
             self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+
         self.steps += 1
 
         return obs
@@ -125,7 +133,8 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
             self,
             model_path=MIMO_XML,
             touch_params=TOUCH_PARAMS,
-            # vision_params=VISION_PARAMS,
+            vision_params=VISION_PARAMS,
+            vestibular_params=VESTIBULAR_PARAMS,
             goals_in_observation=False,
             done_active=True
         )

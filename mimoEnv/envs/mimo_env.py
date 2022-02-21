@@ -5,15 +5,17 @@ import copy
 
 from gym import spaces
 from gym.envs.robotics import robot_env
-from gym.envs.robotics.utils import robot_get_obs
 
 from gymTouch.touch import DiscreteTouch, scale_linear
 
 from mimoVision.vision import SimpleVision
+from mimoVestibular.vestibular import SimpleVestibular
+from mimoProprioception.proprio import SimpleProprioception
 
 
 # Ensure we get the path separator correct on windows
-MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "MIMo3.3.xml"))
+
+MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "Sample_Scene.xml"))
 
 
 class MIMoEnv(robot_env.RobotEnv):
@@ -25,14 +27,17 @@ class MIMoEnv(robot_env.RobotEnv):
                  n_substeps=2,
                  touch_params=None,
                  vision_params=None,
+                 vestibular_params=None,
                  goals_in_observation=True,
                  done_active=False):
 
         self.touch_params = touch_params
         self.vision_params = vision_params
+        self.vestibular_params = vestibular_params
 
         self.touch = None
         self.vision = None
+        self.vestibular = None
 
         self.goals_in_observation = goals_in_observation
         self.done_active = done_active
@@ -79,19 +84,28 @@ class MIMoEnv(robot_env.RobotEnv):
                 spaces_dict[sensor] = spaces.Box(
                         0, 256, shape=obs[sensor].shape, dtype="uint8"
                     )
+        if self.vestibular:
+            spaces_dict["vestibular"] = spaces.Box(
+                    -np.inf, np.inf, shape=obs["vestibular"].shape, dtype="float32"
+                )
+
         self.observation_space = spaces.Dict(spaces_dict)
 
     def _env_setup(self, initial_qpos):
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
         # observation space and goals are not set yet
 
+        # Always do proprioception
+        self.proprioception = SimpleProprioception(self, {})
+
         # Do setups
         if self.touch_params is not None:
             self._touch_setup(self.touch_params)
         if self.vision_params is not None:
             self._vision_setup(self.vision_params)
+        if self.vestibular_params is not None:
+            self._vestibular_setup(self.vestibular_params)
 
-        # Do proprio setup
         # Do sound setup
         # Do whatever actuation setup
         # Should be able to get all types of sensor outputs here
@@ -109,6 +123,9 @@ class MIMoEnv(robot_env.RobotEnv):
 
     def _vision_setup(self, vision_params):
         self.vision = SimpleVision(self, vision_params)  # This fixes the GLEW initialization error
+
+    def _vestibular_setup(self, vestibular_params):
+        self.vestibular = SimpleVestibular(self, vestibular_params)
 
     def step(self, action):
         action = np.clip(action, self.action_space.low, self.action_space.high)
@@ -149,9 +166,7 @@ class MIMoEnv(robot_env.RobotEnv):
 
     def _get_proprio_obs(self):
         # Naive implementation: Joint positions and velocities
-        robot_qpos, robot_qvel = robot_get_obs(self.sim)
-        # Torque/forces will require sensors in mujoco
-        return np.concatenate([robot_qpos, robot_qvel])
+        return self.proprioception.get_proprioception_obs()
 
     def _get_touch_obs(self):
         touch_obs = self.touch.get_touch_obs(DiscreteTouch.get_force_relative, 3, scale_linear)
@@ -161,6 +176,14 @@ class MIMoEnv(robot_env.RobotEnv):
         """ Output renders from the camera. Multiple cameras are concatenated along the first axis"""
         vision_obs = self.vision.get_vision_obs()
         return vision_obs
+
+    def _get_vestibular_obs(self):
+        vestibular_obs = self.vestibular.get_vestibular_obs()
+        return vestibular_obs
+
+    def _get_vestibular_obs(self):
+        vestibular_obs = self.vestibular.get_vestibular_obs()
+        return vestibular_obs
 
     def _get_obs(self):
         """Returns the observation."""
@@ -182,6 +205,12 @@ class MIMoEnv(robot_env.RobotEnv):
             vision_obs = self._get_vision_obs()
             for sensor in vision_obs:
                 observation_dict[sensor] = vision_obs[sensor]
+
+        # vestibular
+        if self.vestibular:
+            vestibular_obs = self._get_vestibular_obs()
+            observation_dict["vestibular"] = vestibular_obs
+
         if self.goals_in_observation:
             achieved_goal = self._get_achieved_goal()
             observation_dict["achieved_goal"] = achieved_goal.copy()
