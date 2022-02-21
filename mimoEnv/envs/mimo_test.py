@@ -64,7 +64,8 @@ class MIMoEnvDummy(MIMoEnv):
         """Returns the observations."""
         obs = super()._get_obs()
 
-        self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+        if self.vision:
+            self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
         self.steps += 1
 
         return obs
@@ -124,7 +125,7 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
             self,
             model_path=MIMO_XML,
             touch_params=TOUCH_PARAMS,
-            vision_params=VISION_PARAMS,
+            # vision_params=VISION_PARAMS,
             goals_in_observation=False,
             done_active=True
         )

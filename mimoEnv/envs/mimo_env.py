@@ -13,7 +13,7 @@ from mimoVision.vision import SimpleVision
 
 
 # Ensure we get the path separator correct on windows
-MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "MIMo3.2.xml"))
+MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "MIMo3.3.xml"))
 
 
 class MIMoEnv(robot_env.RobotEnv):
@@ -57,7 +57,6 @@ class MIMoEnv(robot_env.RobotEnv):
 
         self.goal = self._sample_goal()
         self.action_space = spaces.Box(-1.0, 1.0, shape=(n_actions,), dtype="float32")
-
         obs = self._get_obs()
         # Observation spaces
         spaces_dict = {
@@ -71,7 +70,6 @@ class MIMoEnv(robot_env.RobotEnv):
                 -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
             ),
         }
-
         if self.touch:
             spaces_dict["touch"] = spaces.Box(
                     -np.inf, np.inf, shape=obs["touch"].shape, dtype="float32"
@@ -81,7 +79,6 @@ class MIMoEnv(robot_env.RobotEnv):
                 spaces_dict[sensor] = spaces.Box(
                         0, 256, shape=obs[sensor].shape, dtype="uint8"
                     )
-
         self.observation_space = spaces.Dict(spaces_dict)
 
     def _env_setup(self, initial_qpos):
@@ -180,13 +177,11 @@ class MIMoEnv(robot_env.RobotEnv):
         if self.touch:
             touch_obs = self._get_touch_obs().ravel()
             observation_dict["touch"] = touch_obs
-
         # robot vision:
         if self.vision:
             vision_obs = self._get_vision_obs()
             for sensor in vision_obs:
                 observation_dict[sensor] = vision_obs[sensor]
-
         if self.goals_in_observation:
             achieved_goal = self._get_achieved_goal()
             observation_dict["achieved_goal"] = achieved_goal.copy()
