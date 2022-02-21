@@ -12,7 +12,6 @@ obs = env.reset()
 for step in range(max_steps):
     #action = env.action_space.sample()
     action = np.zeros(env.action_space.shape)
-    env.render()
     obs, reward, done, info = env.step(action)
     env.render()
     #time.sleep(1)
