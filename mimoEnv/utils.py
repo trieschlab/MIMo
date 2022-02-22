@@ -18,6 +18,30 @@ def mulRot(vector, rot_matrix):
 def weighted_sum_vectors(vector1, vector2, weight1, weight2):
     return (vector1 * weight1 + vector2 * weight2) / (weight1 + weight2)
 
+# ======================== Mujoco access utils ====================================
+# =================================================================================
+
+
+def get_geom_id(mujoco_model, geom_id=None, geom_name=None):
+    """ Allows access to mujoco geoms using either the id or the name of the geom """
+    if geom_id is None and geom_name is None:
+        raise RuntimeError("DiscreteTouch.add_geom called without name or id")
+
+    if geom_id is None:
+        geom_id = mujoco_model.geom_name2id(geom_name)
+
+    return geom_id
+
+
+def get_body_id(mujoco_model, body_id=None, body_name=None):
+    """ Allows access to mujoco bodies using either the id or the name of the geom """
+    if body_id is None and body_name is None:
+        raise RuntimeError("DiscreteTouch.add_body called without name or id")
+
+    if body_id is None:
+        body_id = mujoco_model.body_name2id(body_name)
+
+    return body_id
 
 # ======================== Mujoco access utils ====================================
 # =================================================================================

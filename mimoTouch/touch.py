@@ -36,7 +36,6 @@ class Touch:
         env should be an openAI gym environment using mujoco. Critically env should have an attribute sim which is a
         mujoco-py sim object
 
-<<<<<<< HEAD
         Sensor positions is a dictionary where each key is the index of a sensing object and the corresponding value
         is a numpy array storing the sensor positions on that object: {object_id: ndarray((n_sensors, 3))}
         Sensor positions should be in relative coordinates for the object.
