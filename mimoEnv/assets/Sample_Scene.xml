@@ -41,6 +41,22 @@
         <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
 		
 		<material name="matmocap" texture="texgeom" texuniform="true" rgba="0.5 0 0.5 0.5"/>
+
+
+        <!--- Objects assets -->
+		<mesh file="meshes/ball_004.stl" name="ball_004_mesh" scale="0.05 0.05 0.05"/>
+    	<texture file="object_tex/ball_orange.png" type="2d" name="tex-ball" />
+    	<material name="ball" reflectance="0.7" texture="tex-ball" texuniform="true"/>
+
+		<mesh file="meshes/banana_000.stl" name="banana_000_mesh" scale="0.05 0.05 0.05"/>
+    	<texture file="object_tex/banana.png" type="2d" name="tex-banana" />
+    	<material name="banana" reflectance="0.9" texture="tex-banana" texuniform="true"/>
+
+		<mesh file="meshes/truck_000.stl" name="truck_000_mesh" scale="0.05 0.05 0.05"/>
+    	<material name="truck" reflectance="0.9" shininess="0.9" specular="0.9" rgba=".9 .9 .9 1"/>
+		
+		<mesh file="meshes/cow_001.stl" name="cow_001_mesh" scale="0.05 0.05 0.05"/>
+
     </asset>
 	
 	<!-- Import everything except the kinematic tree -->
@@ -61,6 +77,27 @@
 			<freejoint/>
 			<geom type="sphere" material="matgeom" size="0.1" pos="0 0 0" condim="6" solimp="0.99 0.995 0.001 0.5 2" solref="-20000 -20"/>
 		</body>
+
+        <body name="test_ball_toys4k" pos="0.5 -0.3 0.4">
+			<freejoint/>
+			<geom mesh="ball_004_mesh" type="mesh" size="0.1" pos="0 0 0" material="ball" condim="6"/>
+		</body>
+
+		<body name="test_banana_toys4k" pos="0 -0.3 0.7">
+			<freejoint/>
+			<geom mesh="banana_000_mesh" type="mesh" size="0.1" pos="-0.1 -0.1 -0.1" material="banana" condim="6"/>
+		</body>
+		
+		<body name="test_cow_toys4k" pos="0 0.3 0.7">
+			<freejoint/>
+			<geom mesh="cow_001_mesh" type="mesh" size="0.1" pos="-0.1 -0.1 -0.1" material="truck" condim="6"/>
+		</body>
+		
+		<body name="test_truck_toys4k" pos="0.5 0.3 0.7">
+			<freejoint/>
+			<geom mesh="truck_000_mesh" type="mesh" size="0.1" pos="-0.1 -0.1 -0.1" material="truck" condim="6"/>
+		</body>
+
 
 		<!-- The location and orientation of the base model can be set using this body -->
 		<body name="mimo_location" pos="0 0 .5" euler="0 0 0">

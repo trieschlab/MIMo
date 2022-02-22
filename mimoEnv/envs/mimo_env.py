@@ -61,7 +61,6 @@ class MIMoEnv(robot_env.RobotEnv):
 
         self.goal = self._sample_goal()
         self.action_space = spaces.Box(-1.0, 1.0, shape=(n_actions,), dtype="float32")
-
         obs = self._get_obs()
         # Observation spaces
         spaces_dict = {
@@ -75,7 +74,6 @@ class MIMoEnv(robot_env.RobotEnv):
                 -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
             ),
         }
-
         if self.touch:
             spaces_dict["touch"] = spaces.Box(
                     -np.inf, np.inf, shape=obs["touch"].shape, dtype="float32"
@@ -201,7 +199,6 @@ class MIMoEnv(robot_env.RobotEnv):
         if self.touch:
             touch_obs = self._get_touch_obs().ravel()
             observation_dict["touch"] = touch_obs
-
         # robot vision:
         if self.vision:
             vision_obs = self._get_vision_obs()
