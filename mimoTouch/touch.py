@@ -15,7 +15,6 @@ from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spre
 #   Figures out where to put sensor points
 #   Stores sensor locations for each geom
 #   Function to get normal vectors at sensor points
-#   TODO: Handles observation space automatically (???)
 #   Function to read out contacts
 #   TODO: Convenience functions for cleanup of automatic sensor placement: Remove sensors located within another geom
 #   TODO: Function for "slippage" at sensor point: Direction + magnitude
@@ -24,7 +23,6 @@ from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spre
 #   Function to adjust force based on distance between contact and sensor point
 #   TODO: Rework (with trimesh?). Sensor points should have well defined frames with normal vector
 #   TODO: Biologically accurate outputs/delays(?)
-#   TODO: Properly encapsulate the sensor plotting
 
 GEOM_TYPES = {"PLANE": 0, "HFIELD": 1, "SPHERE": 2, "CAPSULE": 3, "ELLIPSOID": 4, "CYLINDER": 5, "BOX": 6, "MESH": 7}
 
@@ -36,13 +34,25 @@ class Touch:
 
     def __init__(self, env, touch_params):
         """
-        :param env: Mujoco Gym Environment
-        :param touch_params: A special dictionary containing three entries:
-                                "scale": A dictionary with mujoco body names as keys and the distance between sensor
-                                         points as values
-                                "touch_function": One of VALID_TOUCH_TYPES, determines the type of output force
-                                "adjustment_function": One of VALID_ADJUSTMENTS, determines how the force is spread
-                                                       between sensor points
+        env should be an openAI gym environment using mujoco. Critically env should have an attribute sim which is a
+        mujoco-py sim object
+
+        Sensor positions is a dictionary where each key is the index of a sensing object and the corresponding value
+        is a numpy array storing the sensor positions on that object: {object_id: ndarray((n_sensors, 3))}
+        Sensor positions should be in relative coordinates for the object.
+
+        The sensor position dictionary should be populated when an object is added.
+
+        The sensor scale dictionary stores the "scale" parameter from the input. This is used to determine the distance
+        between sensor points and to to scale the force based on the distance between a contact and the sensor.
+        touch_type, touch_function and touch_size all relate to the touch output of the sensors. touch_type determines
+        the function used to compute the output, touch_size should match the size of that output for a single sensor.
+        VALID_TOUCH_TYPES should thus contain function members of this class that can be used to compute sensor outputs,
+        with the size of those outputs as values.
+        adjustment_type and adjustment_function relate to the post processing that is done on the raw mujoco force.
+        They operate like touch_type and touch_function, but for the post processing.
+        Usually this would be used to spread the mujoco point contacts out over a larger area, to support "area"
+        sensing.
         """
         self.env = env
 
@@ -87,17 +97,9 @@ class DiscreteTouch(Touch):
 
     def __init__(self, env, touch_params):
         """
-        env should be an openAI gym environment using mujoco. Critically env should have an attribute sim which is a
-        mujoco-py sim object
-
-        Sensor positions is a dictionary where each key is the index of a geom with sensors and the corresponding value
-        is a numpy array storing the sensor positions on that geom: {geom_id: ndarray((n_sensors, 3))}
-        Sensor positions are in relative coordinates for the geom.
-
-        The sensor position dictionary is populated when a body/geom is added and can be overwritten afterwards.
-
-        sensor_params stores geom-specific sensor parameters, such as the scale. This is used to scale the force
-        based on the distance between a contact and the sensor
+        A specific implementation of the Touch class, that uses mujoco geoms as the basic sensor object. Sensor points
+        are simply spread evenly over individual geoms, with no care taken for intersections. Nearest sensors are
+        determined by direct euclidean distance.
         """
         super().__init__(env, touch_params)
         self.m_data = env.sim.data
@@ -116,11 +118,7 @@ class DiscreteTouch(Touch):
     def add_body(self, body_id: int = None, body_name: str = None, scale: float = math.inf):
         """Adds sensors to all geoms belonging to the given body. Returns the number of sensor points added. Scale is
         the approximate distance between sensor points"""
-        if body_id is None and body_name is None:
-            raise RuntimeError("DiscreteTouch.add_body called without name or id")
-            
-        if body_id is None:
-            body_id = self.m_model.body_name2id(body_name)
+        body_id = env_utils.get_body_id(self.m_model, body_id=body_id, body_name=body_name)
 
         n_sensors = 0
 
@@ -133,11 +131,7 @@ class DiscreteTouch(Touch):
         return n_sensors
 
     def add_geom(self, geom_id: int = None, geom_name: str = None, scale: float = math.inf):
-        if geom_id is None and geom_name is None:
-            raise RuntimeError("DiscreteTouch.add_geom called without name or id")
-            
-        if geom_id is None:
-            geom_id = self.m_model.geom_name2id(geom_name)
+        geom_id = env_utils.get_geom_id(self.m_model, geom_id=geom_id, geom_name=geom_name)
 
         if self.m_model.geom_contype[geom_id] == 0:
             raise RuntimeWarning("Added sensors to geom with collisions disabled!")
@@ -277,7 +271,7 @@ class DiscreteTouch(Touch):
         forces_t = np.concatenate(forces)
         return points_t, forces_t
 
-    # TODO: Plot forces for single body
+    # Plot forces for single body
     def plot_force_body(self, body_id: int = None, body_name: str = None):
         body_id = env_utils.get_body_id(self.m_model, body_id=body_id, body_name=body_name)
 
@@ -334,10 +328,9 @@ class DiscreteTouch(Touch):
         return global_forces
 
     def force_vector(self, contact_id, geom_id):
-        """ Returns full contact force in the frame of the body that geom_id belongs to. Output is a 3-d vector"""
+        """ Returns full contact force in the frame of the geom. Output is a 3-d vector"""
         global_forces = self.force_vector_global(contact_id, geom_id)
-        body_id = self.m_model.geom_bodyid[geom_id]
-        relative_forces = mulRotT(global_forces, env_utils.get_body_rotation(self.m_data, body_id))
+        relative_forces = mulRotT(global_forces, env_utils.get_geom_rotation(self.m_data, geom_id))
         return relative_forces
 
     # =============== Output functions ================================================
@@ -363,7 +356,7 @@ class DiscreteTouch(Touch):
                     continue
 
                 for rel_geom in rel_geoms:
-                    forces = self.touch_function(i, rel_geoms)
+                    forces = self.touch_function(i, rel_geom)
                     contact_tuples.append((i, rel_geom, forces))
 
         return contact_tuples
