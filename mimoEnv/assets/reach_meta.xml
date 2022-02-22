@@ -1,0 +1,154 @@
+<!-- Copyright 2021 DeepMind Technologies Limited
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<mujoco model="MIMo">
+
+	<default>
+        <joint limited="true" damping="1" stiffness="1" armature="0.01" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
+        <geom condim="3" material="skin" density="985" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
+        <motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
+		<camera user="0 0 0"/>
+    </default>
+
+    <asset>
+		<!--<texture name="tex_head" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>-->
+		<texture name="tex_head" type="cube" fileright="tex/head_front.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_eye_left" type="cube" fileright="tex/eye_pupil_left.png" rgb1="1 1 1"/>
+		<texture name="tex_eye_right" type="cube" fileright="tex/eye_pupil_right.png" rgb1="1 1 1"/>
+		<!---
+		<texture name="tex_top_up" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_top_down" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_top_sleeve" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_pants_up" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_pants_down" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_pants_leg" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" rgb1="0.95 .8 .5"/>
+		
+		-->		
+		<material name="skin" rgba="0.95 0.8 0.5 1" specular=".15" shininess=".7"/>
+		<material name="buttons" rgba=".05 .05 .05 1" specular=".9" shininess=".9"/>
+		<material name="head" texture="tex_head" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="top_up" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
+		<material name="top_middle" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
+		<material name="top_down" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
+		<material name="top_sleeve" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
+		<material name="pants_up" rgba="0.1 0.1 0.6 1" specular=".0" shininess=".0"/>
+		<material name="pants_down" rgba="0.1 0.1 0.6 1" specular=".0" shininess=".0"/>
+		<material name="pants_leg" rgba="0.1 0.1 0.6 1" specular=".0" shininess=".0"/>
+		<material name="eye_left" texture="tex_eye_left" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="eye_right" texture="tex_eye_right" texuniform="true" specular=".0" shininess=".0"/>
+		<!--
+		<material name="top_up" texture="tex_top_up" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="top_down" texture="tex_top_down" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="top_sleeve" texture="tex_top_sleeve" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="pants_up" texture="tex_pants_up" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="pants_down" texture="tex_pants_down" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="pants_leg" texture="tex_pants_leg" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="eye_left" texture="tex_eye_left" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="eye_right" texture="tex_eye_right" texuniform="true" specular=".0" shininess=".0"/>
+		-->
+    </asset>
+	
+	<!-- Internal contacts should not have friction to reduce "getting stuck" on ourselves-->
+	<contact>
+		<pair geom1="lb" geom2="ub1" condim="1"/>
+	</contact>
+	
+	<tendon>
+		<fixed name="hip_bend" limited="true" range="-.01 .01">
+			<joint joint="robot:hip_bend1" coef="1"/>
+			<joint joint="robot:hip_bend2" coef="-1"/>
+		</fixed>
+		<fixed name="hip_rotation" limited="true" range="-.01 .01">
+			<joint joint="robot:hip_rot1" coef="1"/>
+			<joint joint="robot:hip_rot2" coef="-1"/>
+		</fixed>
+		<fixed name="hip_lean" limited="true" range="-.01 .01">
+			<joint joint="robot:hip_lean1" coef="1"/>
+			<joint joint="robot:hip_lean2" coef="-.5"/>
+		</fixed>
+		<fixed name="head_limits1" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_swivel" coef="1"/>
+			<joint joint="robot:head_tilt_side" coef="1"/>
+		</fixed>
+		<fixed name="head_limits2" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_tilt" coef="1"/>
+			<joint joint="robot:head_tilt_side" coef="1"/>
+		</fixed>
+		<fixed name="head_limits3" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_swivel" coef="1"/>
+			<joint joint="robot:head_tilt" coef="1"/>
+		</fixed>
+		<fixed name="head_limits1_sym" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_swivel" coef="1"/>
+			<joint joint="robot:head_tilt_side" coef="-1"/>
+		</fixed>
+		<fixed name="head_limits2_sym" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_tilt" coef="1"/>
+			<joint joint="robot:head_tilt_side" coef="-1"/>
+		</fixed>
+		<fixed name="head_limits3_sym" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_swivel" coef="1"/>
+			<joint joint="robot:head_tilt" coef="-1"/>
+		</fixed>
+	</tendon>
+	
+	<sensor>
+		<accelerometer name="vestibular_acc" site="vestibular"/>
+		<gyro name="vestibular_gyro" site="vestibular"/>
+		
+		<torque name="proprio:neck" site="torque_neck"/>
+		<torque name="proprio:left_eye" site="torque_left_eye"/>
+		<torque name="proprio:right_eye" site="torque_right_eye"/>
+		
+		<torque name="proprio:trunk_upper" site="torque_ub"/>
+		<torque name="proprio:trunk_lower" site="torque_lb"/>
+		
+		<torque name="proprio:right_shoulder" site="torque_right_shoulder"/>
+		<torque name="proprio:right_elbow" site="torque_right_elbow"/>
+		<torque name="proprio:right_wrist" site="torque_right_wrist"/>
+		<torque name="proprio:right_fingers" site="torque_right_fingers"/>
+		
+		<torque name="proprio:left_shoulder" site="torque_left_shoulder"/>
+		<torque name="proprio:left_elbow" site="torque_left_elbow"/>
+		<torque name="proprio:left_wrist" site="torque_left_wrist"/>
+		<torque name="proprio:left_fingers" site="torque_left_fingers"/>
+		
+		<torque name="proprio:right_hip" site="torque_right_hip"/>
+		<torque name="proprio:right_knee" site="torque_right_knee"/>
+		<torque name="proprio:right_ankle" site="torque_right_ankle"/>
+		<torque name="proprio:right_toes" site="torque_right_toes"/>
+		
+		<torque name="proprio:left_hip" site="torque_left_hip"/>
+		<torque name="proprio:left_knee" site="torque_left_knee"/>
+		<torque name="proprio:left_ankle" site="torque_left_ankle"/>
+		<torque name="proprio:left_toes" site="torque_left_toes"/>
+	</sensor>
+
+    <actuator>
+
+		<motor name="right_shoulder_horizontal" joint="robot:right_shoulder_horizontal" gear="3.6" 	forcerange="-1 1"/>
+		<motor name="right_shoulder_abduction" 	joint="robot:right_shoulder_ad_ab" 		gear="8" 	forcerange="-.6875 1"/>
+		<motor name="right_shoulder_internal" 	joint="robot:right_shoulder_rotation" 	gear="5" 	forcerange="-.64 1"/>
+		<motor name="right_elbow" 				joint="robot:right_elbow" 				gear="7.2" 	forcerange="-1 .83"/>
+		<motor name="right_wrist_rotation" 		joint="robot:right_hand1" 				gear="1.4"	forcerange="-1 1"/>
+		<motor name="right_wrist_flexion" 		joint="robot:right_hand2" 				gear="2.8"	forcerange="-1 .5"/>
+		<motor name="right_wrist_ulnar" 		joint="robot:right_hand3" 				gear="1.4"	forcerange="-1 1"/>
+		<motor name="right_fingers" 			joint="robot:right_fingers" 			gear=""		forcerange="-1 .33"/>
+		
+		<!--<position name="right_toes" gear="57.296" kp="1" joint="robot:right_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/>
+		<position name="left_toes" gear="57.296" kp="1" joint="robot:left_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/> -->
+	</actuator>
+	
+</mujoco>
