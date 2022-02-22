@@ -1,11 +1,12 @@
 import math
 import numpy as np
 import mujoco_py
-from matplotlib import pyplot as plt
 
-from mimoEnv.utils import mulRotT, mulRot, plot_forces, get_geoms_for_body, get_geom_rotation, get_body_rotation, \
-                           world_pos_to_geom, geom_pos_to_body, EPS
-from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spread_points_cylinder, spread_points_capsule
+
+import mimoEnv.utils as env_utils
+from mimoEnv.utils import mulRotT, mulRot, EPS
+from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spread_points_cylinder, \
+                                   spread_points_capsule
 
 # Class that handles all of this
 #   Initialized as part of gym env, links to gym env
@@ -25,14 +26,66 @@ from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spre
 #   TODO: Biologically accurate outputs/delays(?)
 #   TODO: Properly encapsulate the sensor plotting
 
-
 GEOM_TYPES = {"PLANE": 0, "HFIELD": 1, "SPHERE": 2, "CAPSULE": 3, "ELLIPSOID": 4, "CYLINDER": 5, "BOX": 6, "MESH": 7}
-CONTACT_NEAREST_K = 3
 
 
-class DiscreteTouch:
+class Touch:
 
-    def __init__(self, env, verbose=False):
+    VALID_TOUCH_TYPES = {}
+    VALID_ADJUSTMENTS = []
+
+    def __init__(self, env, touch_params):
+        """
+        :param env: Mujoco Gym Environment
+        :param touch_params: A special dictionary containing three entries:
+                                "scale": A dictionary with mujoco body names as keys and the distance between sensor
+                                         points as values
+                                "touch_function": One of VALID_TOUCH_TYPES, determines the type of output force
+                                "adjustment_function": One of VALID_ADJUSTMENTS, determines how the force is spread
+                                                       between sensor points
+        """
+        self.env = env
+
+        print(touch_params)
+        self.sensor_scales = {}
+        for body_name in touch_params["scales"]:
+            body_id = env.sim.model.body_name2id(body_name)
+            self.sensor_scales[body_id] = touch_params["scales"][body_name]
+
+        # Get all information for the touch force function: Function name, reference to function, output size
+        self.touch_type = touch_params["touch_function"]
+        assert self.touch_type in self.VALID_TOUCH_TYPES
+        assert hasattr(self, self.touch_type)
+        self.touch_function = getattr(self, self.touch_type)
+        self.touch_size = self.VALID_TOUCH_TYPES[self.touch_type]
+
+        # Get all information for the surface adjustment function: function name, reference to function
+        self.adjustment_type = touch_params["adjustment_function"]
+        assert self.adjustment_type in self.VALID_ADJUSTMENTS
+        self.adjustment_function = getattr(self, self.adjustment_type)
+
+        self.sensor_positions = {}
+        self.sensor_outputs = {}
+
+    def get_touch_obs(self):
+        """
+
+        :return: Touch obsevations
+        """
+        raise NotImplementedError
+
+
+class DiscreteTouch(Touch):
+
+    VALID_TOUCH_TYPES = {
+        "normal": 1,
+        "force_vector": 3,
+        "force_vector_global": 3,
+    }
+
+    VALID_ADJUSTMENTS = ["nearest", "spread_linear"]
+
+    def __init__(self, env, touch_params):
         """
         env should be an openAI gym environment using mujoco. Critically env should have an attribute sim which is a
         mujoco-py sim object
@@ -46,17 +99,19 @@ class DiscreteTouch:
         sensor_params stores geom-specific sensor parameters, such as the scale. This is used to scale the force
         based on the distance between a contact and the sensor
         """
-        self.env = env
+        super().__init__(env, touch_params)
         self.m_data = env.sim.data
         self.m_model = env.sim.model
 
-        self.sensor_positions = {}
-        self.sensor_params = {}
-        self.sensor_outputs = {}
-
         self.plotting_limits = {}
         self.plots = {}
-        self.verbose = verbose
+
+        # Add sensors to bodies
+        for body_id in self.sensor_scales:
+            self.add_body(body_id, scale=self.sensor_scales[body_id])
+
+        # Get touch obs once to ensure all output arrays are initialized
+        self.get_touch_obs()
         
     def add_body(self, body_id: int = None, body_name: str = None, scale: float = math.inf):
         """Adds sensors to all geoms belonging to the given body. Returns the number of sensor points added. Scale is
@@ -69,7 +124,7 @@ class DiscreteTouch:
 
         n_sensors = 0
 
-        for geom_id in get_geoms_for_body(self.m_model, body_id):
+        for geom_id in env_utils.get_geoms_for_body(self.m_model, body_id):
             g_body_id = self.m_model.geom_bodyid[geom_id]
             contype = self.m_model.geom_contype[geom_id]
             # Add a geom if it belongs to body and has collisions enabled (at least potentially)
@@ -86,12 +141,6 @@ class DiscreteTouch:
 
         if self.m_model.geom_contype[geom_id] == 0:
             raise RuntimeWarning("Added sensors to geom with collisions disabled!")
-
-        if self.verbose:
-            print("Geom {} name {} type {} ".format(
-                  geom_id,
-                  self.m_model.geom_id2name(geom_id),
-                  self.m_model.geom_type[geom_id]))
 
         return self._add_sensorpoints(geom_id, scale)
 
@@ -146,15 +195,9 @@ class DiscreteTouch:
             points = spread_points_sphere(scale, size)
         else:
             return None
-        if self.verbose:
-            print("Added {} points to geom".format(points.shape[0]))
 
         self.plotting_limits[geom_id] = limit
         self.sensor_positions[geom_id] = points
-        if geom_id in self.sensor_params:
-            self.sensor_params[geom_id]["scale"] = 2*scale
-        else:
-            self.sensor_params[geom_id] = {"scale": 2*scale}
 
         return points.shape[0]  # Return the number of points we added
 
@@ -174,6 +217,14 @@ class DiscreteTouch:
         sorted_idxs = np.argpartition(distances, k)
         return sorted_idxs[:k], distances[sorted_idxs[:k]]
 
+    def get_sensors_within_distance(self, contact_id, geom_id, distance):
+        relative_position = self.get_contact_position_relative(contact_id, geom_id)
+        sensor_points = self.sensor_positions[geom_id]
+        distances = np.linalg.norm(sensor_points - relative_position, axis=1)
+        within_distance = distances < distance
+        idx_within_distance = within_distance.nonzero()[0]
+        return idx_within_distance, distances[within_distance]
+
     # ======================== Positions and rotations ================================
     # =================================================================================
 
@@ -183,18 +234,23 @@ class DiscreteTouch:
 
     def get_contact_position_relative(self, contact_id, geom_id: int):
         """ Get the position of a contact in the geom frame """
-        return world_pos_to_geom(self.m_data, self.get_contact_position_world(contact_id), geom_id)
+        return env_utils.world_pos_to_geom(self.m_data, self.get_contact_position_world(contact_id), geom_id)
 
     # =============== Visualizations ==================================================
     # =================================================================================
 
+    # Plot sensor points for single geom
+    def plot_sensors_geom(self, geom_id: int = None, geom_name: str = None):
+        geom_id = env_utils.get_geom_id(self.m_model, geom_id=geom_id, geom_name=geom_name)
+
+        points = self.sensor_positions[geom_id]
+        limit = self.plotting_limits[geom_id]
+        title = self.m_model.geom_id2name(geom_id)
+        env_utils.plot_points(points, limit=limit, title=title)
+
     # Plot forces for single geom
     def plot_force_geom(self, geom_id: int = None, geom_name: str = None):
-        if geom_id is None and geom_name is None:
-            raise RuntimeError("DiscreteTouch.add_geom called without name or id")
-
-        if geom_id is None:
-            geom_id = self.m_model.geom_name2id(geom_name)
+        geom_id = env_utils.get_geom_id(self.m_model, geom_id=geom_id, geom_name=geom_name)
 
         sensor_points = self.sensor_positions[geom_id]
         force_vectors = self.sensor_outputs[geom_id]
@@ -202,20 +258,20 @@ class DiscreteTouch:
             # TODO: Need proper sensor normals, can't do this until trimesh rework
             raise RuntimeWarning("Plotting of scalar forces not implemented!")
         else:
-            plot_forces(sensor_points, force_vectors, limit=np.max(sensor_points) + 0.5)
+            env_utils.plot_forces(sensor_points, force_vectors, limit=np.max(sensor_points) + 0.5)
 
     def _get_plot_info_body(self, body_id):
         points = []
         forces = []
-        for geom_id in get_geoms_for_body(self.m_model, body_id):
-            points_in_body = geom_pos_to_body(self.m_data, self.sensor_positions[geom_id], geom_id, body_id)
+        for geom_id in env_utils.get_geoms_for_body(self.m_model, body_id):
+            points_in_body = env_utils.geom_pos_to_body(self.m_data, self.sensor_positions[geom_id], geom_id, body_id)
             points.append(points_in_body)
-            force_vectors = self.sensor_outputs[geom_id] / 10000
+            force_vectors = self.sensor_outputs[geom_id] / 100
             if force_vectors.shape[1] == 1:
                 # TODO: Need proper sensor normals, can't do this until trimesh rework
                 raise RuntimeWarning("Plotting of scalar forces not implemented!")
-            world_forces = mulRot(np.transpose(force_vectors), get_geom_rotation(self.m_data, geom_id))
-            body_forces = np.transpose(mulRotT(world_forces, get_body_rotation(self.m_data, body_id)))
+            world_forces = mulRot(np.transpose(force_vectors), env_utils.get_geom_rotation(self.m_data, geom_id))
+            body_forces = np.transpose(mulRotT(world_forces, env_utils.get_body_rotation(self.m_data, body_id)))
             forces.append(body_forces)
         points_t = np.concatenate(points)
         forces_t = np.concatenate(forces)
@@ -223,24 +279,19 @@ class DiscreteTouch:
 
     # TODO: Plot forces for single body
     def plot_force_body(self, body_id: int = None, body_name: str = None):
-
-        if body_id is None and body_name is None:
-            raise RuntimeError("DiscreteTouch.add_body called without name or id")
-
-        if body_id is None:
-            body_id = self.m_model.body_name2id(body_name)
+        body_id = env_utils.get_body_id(self.m_model, body_id=body_id, body_name=body_name)
 
         points, forces = self._get_plot_info_body(body_id)
         # For every geom: Convert sensor points and forces to body frame ->
 
-        plot_forces(points, forces, limit=np.max(points) + 0.5)
+        env_utils.plot_forces(points, forces, limit=np.max(points) + 0.5)
 
     # TODO: Plot forces for body subtree
 
-    # =============== Various types of forces in various frames =======================
+    # =============== Raw force and contact normal ====================================
     # =================================================================================
 
-    def get_force(self, contact_id, geom_id):
+    def get_raw_force(self, contact_id, geom_id):
         """ Returns the full contact force in mujocos own contact frame. Output is a 3-d vector"""
         forces = np.zeros(6, dtype=np.float64)
         mujoco_py.functions.mj_contactForce(self.m_model, self.m_data, contact_id, forces)
@@ -253,10 +304,6 @@ class DiscreteTouch:
             RuntimeError("Mismatch between contact and geom")
         return forces[:3]
 
-    def get_force_normal(self, contact_id, geom_id) -> float:
-        """ Returns the normal force as a scalar"""
-        return self.get_force(contact_id, geom_id)[0]
-
     def get_contact_normal(self, contact_id, geom_id):
         """ Returns the normal vector (unit vector in direction of normal) in geom frame"""
         contact = self.m_data.contact[contact_id]
@@ -268,41 +315,39 @@ class DiscreteTouch:
         else:
             RuntimeError("Mismatch between contact and geom")
         # contact frame is in global coordinate frame, rotate to geom frame
-        normal_vector = mulRot(normal_vector, get_geom_rotation(self.m_data, geom_id))
+        normal_vector = mulRot(normal_vector, env_utils.get_geom_rotation(self.m_data, geom_id))
         return normal_vector
 
-    def get_force_world(self, contact_id, geom_id):
+    # =============== Valid touch force functions =====================================
+    # =================================================================================
+
+    def normal(self, contact_id, geom_id) -> float:
+        """ Returns the normal force as a scalar"""
+        return self.get_raw_force(contact_id, geom_id)[0]
+
+    def force_vector_global(self, contact_id, geom_id):
         """ Returns full contact force in world frame. Output is a 3-d vector"""
         contact = self.m_data.contact[contact_id]
-        forces = self.get_force(contact_id, geom_id)
+        forces = self.get_raw_force(contact_id, geom_id)
         force_rot = np.reshape(contact.frame, (3, 3))
         global_forces = mulRotT(forces, force_rot)
         return global_forces
 
-    def get_force_relative(self, contact_id, geom_id):
-        """ Returns full contact force in geom frame. Output is a 3-d vector"""
-        global_forces = self.get_force_world(contact_id, geom_id)
-        relative_forces = mulRotT(global_forces, get_geom_rotation(self.m_data, geom_id))
+    def force_vector(self, contact_id, geom_id):
+        """ Returns full contact force in the frame of the body that geom_id belongs to. Output is a 3-d vector"""
+        global_forces = self.force_vector_global(contact_id, geom_id)
+        body_id = self.m_model.geom_bodyid[geom_id]
+        relative_forces = mulRotT(global_forces, env_utils.get_body_rotation(self.m_data, body_id))
         return relative_forces
 
-    def _adjust_force_for_sensor(self, force, contact_id, geom_id, sensor_id, adjustment_function, adjustment_params):
-        """
-        Adjusts contact forces based on the distance between the contact and the sensor. Additional parameters for the
-        adjustment function can be passed using adjustment_params.
-        i.e. output force = adjustment_function(force, distance, **adjustment_params)
-        """
-        contact_position = self.get_contact_position_relative(contact_id, geom_id)
-        sensor_position = self.sensor_positions[geom_id][sensor_id]
-        distance = np.linalg.norm(contact_position - sensor_position, ord=2)
-        return adjustment_function(force, distance, **adjustment_params)
+    # =============== Output functions ================================================
+    # =================================================================================
 
-    def get_contacts(self, verbose: bool = None):
-        """ Returns a tuple containing (contact_id, geom_id, sensor_ids) for each active contact with a sensing geom,
-        where contact_id is the index of the contact in the mujoco arrays, geom_id is the index of the geom in the
-        arrays and sensor_ids are the indices of the k sensors on the geom nearest to the contact"""
-        if verbose is None:
-            verbose = self.verbose
-        contact_geom_tuples = []
+    def get_contacts(self):
+        """ Returns a tuple containing (contact_id, geom_id, forces) for each active contact with a sensing geom,
+        where contact_id is the index of the contact in the mujoco arrays, geom_id is the index of the geom and forces
+        is a numpy array of the raw output force, determined by self.touch_type"""
+        contact_tuples = []
         for i in range(self.m_data.ncon):
             contact = self.m_data.contact[i]
             # Do we sense this contact at all
@@ -313,23 +358,15 @@ class DiscreteTouch:
                 if self.has_sensors(contact.geom2):
                     rel_geoms.append(contact.geom2)
 
-                forces = self.get_force(i, contact.geom1)
-                if abs(forces[0]) < 1e-8:  # Contact probably inactive
+                raw_forces = self.get_raw_force(i, contact.geom1)
+                if abs(raw_forces[0]) < 1e-9:  # Contact probably inactive
                     continue
 
                 for rel_geom in rel_geoms:
-                    rel_pos = self.get_contact_position_relative(i, rel_geom)
-                    nearest_sensor_ids, distances = self.get_k_nearest_sensors(i, rel_geom, CONTACT_NEAREST_K)
-                    contact_geom_tuples.append((i, rel_geom, nearest_sensor_ids))
+                    forces = self.touch_function(i, rel_geoms)
+                    contact_tuples.append((i, rel_geom, forces))
 
-                    if verbose:
-                        print("Sensing with geom: ", rel_geom, self.m_model.geom_id2name(rel_geom))
-                        print("Relative position: ", rel_pos)
-                        print("Nearest sensors {} at position {} with distances {}".format(
-                              nearest_sensor_ids,
-                              self.sensor_positions[rel_geom][nearest_sensor_ids],
-                              distances))
-        return contact_geom_tuples
+        return contact_tuples
 
     def get_empty_sensor_dict(self, size):
         """ Returns a dictionary with empty sensor outputs. Keys are geom ids, corresponding values are the output
@@ -347,44 +384,49 @@ class DiscreteTouch:
             sensor_arrays.append(sensor_dict[geom_id])
         return np.concatenate(sensor_arrays)
 
-    def get_touch_obs(self, force_function, sensor_shape, adjustment_function=None) -> np.ndarray:
-        """ Does the full contact getting-processing process, such that we get the force as a full vector on each sensor
-        point for every sensor in the model.
+    def get_touch_obs(self) -> np.ndarray:
+        """ Does the full contact getting-processing process, such that we get the forces, as determined by the touch
+        type and the adjustments, for each sensor.
+        """
+        contact_tuples = self.get_contacts()
+        self.sensor_outputs = self.get_empty_sensor_dict(self.touch_size)  # Initialize output dictionary
 
-        Forces are adjusted to nearby sensors using adjustment function. See _adjust_force_for_sensor for more.
-        If adjustment function is None we default to linear scaling.
-        sensor_shape must match the size of a single sensor output for the given force function,
-        i.e. if the return is the normal force as a scalar sensor_shape should be 1, if it is a 6-d vector sensor_shape
-        should be 6
+        for contact_id, geom_id, forces in contact_tuples:
+            # At this point we already have the forces for each contact, now we must attach/spread them to sensor
+            # points, based on the adjustment function
+            self.adjustment_function(contact_id, geom_id, forces)
 
-        Returns a numpy array of shape (n_sensors_total, 3)"""
-        contact_tuples = self.get_contacts(verbose=False)
-        sensor_outputs = self.get_empty_sensor_dict(sensor_shape)
-
-        if adjustment_function is None:
-            adjustment_function = scale_linear
-
-        for contact_id, geom_id, nearest_sensor_ids in contact_tuples:
-            rel_forces = force_function(self, contact_id, geom_id)
-            adjusted_forces = {}
-            force_total = np.zeros(rel_forces.shape)
-            for sensor_id in nearest_sensor_ids:
-                sensor_adjusted_force = self._adjust_force_for_sensor(rel_forces, contact_id, geom_id, sensor_id,
-                                                                      adjustment_function, self.sensor_params[geom_id])
-                force_total += sensor_adjusted_force
-                adjusted_forces[sensor_id] = sensor_adjusted_force
-
-            factors = rel_forces / (force_total + EPS)   # Add very small value to avoid divide by zero errors
-            for sensor_id in adjusted_forces:
-                rescaled_sensor_adjusted_force = adjusted_forces[sensor_id] * factors
-                sensor_outputs[geom_id][sensor_id] += rescaled_sensor_adjusted_force
-
-        self.sensor_outputs = sensor_outputs
-        sensor_obs = self.flatten_sensor_dict(sensor_outputs)
+        sensor_obs = self.flatten_sensor_dict(self.sensor_outputs)
         return sensor_obs
 
+    # =============== Force adjustment functions ======================================
+    # =================================================================================
 
-# =============== Force adjustment functions ======================================
+    def spread_linear(self, contact_id, geom_id, force):
+        # Get all sensors within distance (distance here is just double the sensor scale)
+        body_id = self.m_model.geom_bodyid[geom_id]
+        scale = self.sensor_scales[body_id]
+        nearest_sensors, sensor_distances = self.get_sensors_within_distance(contact_id, geom_id, 2*scale)
+
+        adjusted_forces = {}
+        force_total = np.zeros(force.shape)
+        for sensor_id, distance in zip(nearest_sensors, sensor_distances):
+            sensor_adjusted_force = scale_linear(force, distance, scale=2*scale)
+            force_total += sensor_adjusted_force
+            adjusted_forces[sensor_id] = sensor_adjusted_force
+
+        factors = force / (force_total + EPS)  # Add very small value to avoid divide by zero errors
+        for sensor_id in adjusted_forces:
+            rescaled_sensor_adjusted_force = adjusted_forces[sensor_id] * factors
+            self.sensor_outputs[geom_id][sensor_id] += rescaled_sensor_adjusted_force
+
+    def nearest(self, contact_id, geom_id, force):
+        # Get the nearest sensor to this contact, add the force to it
+        nearest_sensor, distance = self.get_nearest_sensor(contact_id, geom_id)
+        self.sensor_outputs[geom_id][nearest_sensor] += force
+
+
+# =============== Scaling functions ===============================================
 # =================================================================================
 
 def scale_linear(force, distance, scale, **kwargs):
