@@ -44,7 +44,12 @@
     </asset>
 	
 	<!-- Import everything except the kinematic tree -->
-	<include file="MIMo_meta.xml"></include>
+	<include file="standup_meta.xml"></include>
+
+    <equality>
+        <weld body1="left_eye" body2="head"/>
+        <weld body1="right_eye" body2="head"/>
+    </equality>
 
     <worldbody>
         <geom name="floor" friction="1 .1 .1" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>

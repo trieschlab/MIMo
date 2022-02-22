@@ -133,6 +133,7 @@ class MIMoStandupEnv(MIMoEnvDummy, utils.EzPickle):
         MIMoEnvDummy.__init__(
             self,
             model_path=MIMO_XML,
+            n_actions=34,
             touch_params=None,
             vision_params=None,
             vestibular_params=VESTIBULAR_PARAMS,
@@ -142,7 +143,8 @@ class MIMoStandupEnv(MIMoEnvDummy, utils.EzPickle):
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         head_height = self.sim.data.get_body_xpos('head')[2]
-        reward = head_height - 0.05
+        quad_ctrl_cost = 0.01 * np.square(self.sim.data.ctrl).sum()
+        reward = head_height - quad_ctrl_cost
         return reward
 
     def _is_success(self, achieved_goal, desired_goal):

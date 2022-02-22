@@ -15,13 +15,20 @@
 
 <mujoco model="MIMo">
 
-	<default>
-        <joint limited="true" damping="1" stiffness="1" armature="0.01" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
+	<!--<default>
+        <joint limited="true" damping="1" stiffness="1" armature="1" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
         <geom condim="3" material="skin" density="985" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
         <motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
 		<camera user="0 0 0"/>
     </default>
-
+	-->
+	<default>
+        <joint armature="1" damping="1" limited="true"/>
+        <geom conaffinity="1" condim="1" contype="1" margin="0.001" material="skin"/>
+        <motor ctrllimited="true" ctrlrange="-.4 .4"/>
+    </default>
+	<option integrator="RK4" iterations="50" solver="PGS" timestep="0.003">
+	</option>
     <asset>
 		<!--<texture name="tex_head" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>-->
 		<texture name="tex_head_default" type="cube" fileright="tex/head_front.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
@@ -140,7 +147,7 @@
 	</sensor>
 
     <actuator>
-	
+
 		<motor name="act:hip_bend" 					joint="robot:hip_bend1" 		gear="10.58" 	forcerange="-1 .765"/>
 		<motor name="act:hip_twist" 				joint="robot:hip_rot1" 			gear="3.63" 	forcerange="-1 1"/>
 		<motor name="act:hip_lean" 					joint="robot:hip_lean1" 		gear="7.25" 	forcerange="-1 1"/>
