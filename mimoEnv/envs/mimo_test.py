@@ -7,28 +7,32 @@ from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML
 
 # Dictionary with body_names as keys,
 TOUCH_PARAMS = {
-    "left_toes": 0.010,
-    "right_toes": 0.010,
-    "left_foot": 0.015,
-    "right_foot": 0.015,
-    "left_lower_leg": 0.038,
-    "right_lower_leg": 0.038,
-    "left_upper_leg": 0.027,
-    "right_upper_leg": 0.027,
-    "hip": 0.025,
-    "lower_body": 0.025,
-    "upper_body": 0.030,
-    "head": 0.013,
-    "left_eye": 1.0,
-    "right_eye": 1.0,
-    "left_upper_arm": 0.024,
-    "right_upper_arm": 0.024,
-    "left_lower_arm": 0.024,
-    "right_lower_arm": 0.024,
-    "left_hand": 0.007,
-    "right_hand": 0.007,
-    "left_fingers": 0.002,
-    "right_fingers": 0.002,
+    "scales": {
+        #"left_toes": 0.010,
+        #"right_toes": 0.010,
+        "left_foot": 0.015,
+        #"right_foot": 0.015,
+        #"left_lower_leg": 0.038,
+        #"right_lower_leg": 0.038,
+        #"left_upper_leg": 0.027,
+        #"right_upper_leg": 0.027,
+        #"hip": 0.025,
+        #"lower_body": 0.025,
+        #"upper_body": 0.030,
+        #"head": 0.013,
+        #"left_eye": 1.0,
+        #"right_eye": 1.0,
+        #"left_upper_arm": 0.024,
+        #"right_upper_arm": 0.024,
+        #"left_lower_arm": 0.024,
+        #"right_lower_arm": 0.024,
+        #"left_hand": 0.007,
+        #"right_hand": 0.007,
+        #"left_fingers": 0.002,
+        #"right_fingers": 0.002,
+    },
+    "touch_function": "force_vector",
+    "adjustment_function": "spread_linear",
 }
 
 VISION_PARAMS = {
@@ -66,12 +70,20 @@ class MIMoEnvDummy(MIMoEnv):
                          goals_in_observation=goals_in_observation,
                          done_active=done_active)
 
+    def _touch_setup(self, touch_params):
+        super()._touch_setup(touch_params)
+        for geom_id in self.touch.sensor_positions:
+            self.touch.plot_sensors_geom(geom_id=geom_id)
+
     def _get_obs(self):
         """Returns the observations."""
         obs = super()._get_obs()
 
         if self.vision_params:
             self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+
+        for body_name in self.touch_params["scales"]:
+            self.touch.plot_force_body(body_name=body_name)
 
         self.steps += 1
 
@@ -126,7 +138,13 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
         self,
     ):
         utils.EzPickle.__init__(
-            self
+            self,
+            model_path=MIMO_XML,
+            touch_params=TOUCH_PARAMS,
+            vision_params=VISION_PARAMS,
+            vestibular_params=VESTIBULAR_PARAMS,
+            goals_in_observation=False,
+            done_active=True
         )
         MIMoEnvDummy.__init__(
             self,
