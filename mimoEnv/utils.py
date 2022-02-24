@@ -18,6 +18,11 @@ def mulRot(vector, rot_matrix):
 def weighted_sum_vectors(vector1, vector2, weight1, weight2):
     return (vector1 * weight1 + vector2 * weight2) / (weight1 + weight2)
 
+
+def normalize_vectors(vectors):
+    mag = np.linalg.norm(vectors, axis=1, ord=2)
+    return vectors / np.expand_dims(mag, -1)
+
 # ======================== Mujoco access utils ====================================
 # =================================================================================
 
