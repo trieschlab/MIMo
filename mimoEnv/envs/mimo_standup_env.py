@@ -41,7 +41,7 @@ VESTIBULAR_PARAMS = {
     "sensors": ["vestibular_acc", "vestibular_gyro"]
 }
 
-MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "standup_scene.xml"))
+MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "standup_model.xml"))
 
 class MIMoEnvDummy(MIMoEnv):
 

@@ -23,6 +23,8 @@ def main():
     env = gym.make('MIMoStandup-v0')
     env.reset()
 
+    print(env.sim.data.qpos.shape)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_for', default=0, type=int,
                         help='Total timesteps of training')
