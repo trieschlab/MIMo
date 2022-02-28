@@ -4,4 +4,5 @@ __pycache__/
 *egg-info/
 mimoEnv/test.py
 mimoEnv/envs/mimo_test.py
+mimoEnv/imgs/*
 mimoEnv/models/*
