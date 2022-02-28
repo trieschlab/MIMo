@@ -47,8 +47,9 @@
 	<include file="standup_meta.xml"></include>
 
     <equality>
-        <weld body1="left_foot"/>
-        <weld body1="right_foot"/>
+        <weld body1="left_foot"  relpose="-0 -0.05 0 0.01 0 0 0"/>
+        <weld body1="right_foot" relpose="-0 0.05 0 0.01 0 0 0"/>
+        <weld body1="head" body2="upper_body"/>
         <weld body1="left_eye" body2="head"/>
         <weld body1="right_eye" body2="head"/>
     </equality>

@@ -2,7 +2,7 @@ import gym
 import time
 import mimoEnv
 import argparse
-from stable_baselines3 import PPO
+from stable_baselines3 import SAC
 
 def test(env, test_for=1000, model=None):
     obs = env.reset()
@@ -22,8 +22,6 @@ def main():
 
     env = gym.make('MIMoStandup-v0')
     env.reset()
-
-    print(env.sim.data.qpos.shape)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_for', default=0, type=int,
@@ -50,9 +48,9 @@ def main():
     if no_model:
         model = None
     elif load_model:
-        model = PPO.load("models/standup" + load_model, env)
+        model = SAC.load("models/standup" + load_model, env)
     else:
-        model = PPO("MultiInputPolicy", env, verbose=1)
+        model = SAC("MultiInputPolicy", env, verbose=1)
 
     # train model
     while train_for>0:
