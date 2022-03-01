@@ -2,7 +2,7 @@ import gym
 import time
 import mimoEnv
 import argparse
-from stable_baselines3 import SAC
+from stable_baselines3 import PPO as RL
 
 def test(env, test_for=1000, model=None):
     obs = env.reset()
@@ -48,9 +48,9 @@ def main():
     if no_model:
         model = None
     elif load_model:
-        model = SAC.load("models/standup" + load_model, env)
+        model = RL.load("models/standup" + load_model, env, ent_coef=0.2)
     else:
-        model = SAC("MultiInputPolicy", env, verbose=1)
+        model = RL("MultiInputPolicy", env, verbose=1, ent_coef=0.2)
 
     # train model
     while train_for>0:
