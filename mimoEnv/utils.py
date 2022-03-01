@@ -23,6 +23,7 @@ def normalize_vectors(vectors):
     mag = np.linalg.norm(vectors, axis=1, ord=2)
     return vectors / np.expand_dims(mag, -1)
 
+
 # ======================== Mujoco access utils ====================================
 # =================================================================================
 
@@ -114,13 +115,13 @@ def world_pos_to_geom(sim_data, position, geom_id):
 def world_pos_to_body(sim_data, position, body_id):
     """ Converts a (n, 3) numpy array containing xyz coordinates in world frame to body frame"""
     rel_pos = position - get_body_position(sim_data, body_id)
-    rel_pos = np.transpose(mulRotT(np.transpose(rel_pos), get_body_rotation(sim_data, body_id)))
+    rel_pos = world_rot_to_body(sim_data, rel_pos, body_id)
     return rel_pos
 
 
 def geom_pos_to_world(sim_data, position, geom_id):
     """ Converts a (n, 3) numpy array containing xyz coordinates in geom frame to world frame"""
-    global_pos = np.transpose(mulRot(np.transpose(position), get_geom_rotation(sim_data, geom_id)))
+    global_pos = geom_rot_to_world(sim_data, position, geom_id)
     global_pos = global_pos + get_geom_position(sim_data, geom_id)
     return global_pos
 
@@ -128,6 +129,27 @@ def geom_pos_to_world(sim_data, position, geom_id):
 def geom_pos_to_body(sim_data, position, geom_id, body_id):
     world_pos = geom_pos_to_world(sim_data, position, geom_id)
     return world_pos_to_body(sim_data, world_pos, body_id)
+
+
+def geom_rot_to_world(sim_data, vector, geom_id):
+    return np.transpose(mulRot(np.transpose(vector), get_geom_rotation(sim_data, geom_id)))
+
+
+def body_rot_to_world(sim_data, vector, body_id):
+    return np.transpose(mulRot(np.transpose(vector), get_body_rotation(sim_data, body_id)))
+
+
+def world_rot_to_geom(sim_data, vector, geom_id):
+    return np.transpose(mulRotT(np.transpose(vector), get_geom_rotation(sim_data, geom_id)))
+
+
+def world_rot_to_body(sim_data, vector, body_id):
+    return np.transpose(mulRotT(np.transpose(vector), get_body_rotation(sim_data, body_id)))
+
+
+def geom_rot_to_body(sim_data, vector, geom_id, body_id):
+    world_rot = geom_rot_to_world(sim_data, vector, geom_id)
+    return world_rot_to_body(sim_data, world_rot, body_id)
 
 
 # ======================== Mujoco data utils ======================================

@@ -3,3 +3,6 @@ gym
 mujoco_py
 matplotlib
 glfw
+trimesh
+networkx
+rtree
