@@ -74,7 +74,6 @@ class Touch:
         assert self.adjustment_type in self.VALID_ADJUSTMENTS
         self.adjustment_function = getattr(self, self.adjustment_type)
 
-        self.sensor_positions = {}
         self.sensor_outputs = {}
 
     def get_touch_obs(self):
@@ -105,6 +104,7 @@ class DiscreteTouch(Touch):
         self.m_data = env.sim.data
         self.m_model = env.sim.model
 
+        self.sensor_positions = {}
         self.plotting_limits = {}
         self.plots = {}
 

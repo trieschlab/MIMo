@@ -46,6 +46,7 @@ class MIMoEnv(robot_env.RobotEnv):
 
         model = mujoco_py.load_model_from_path(fullpath)
         self.sim = mujoco_py.MjSim(model, nsubsteps=n_substeps)
+        self.sim.forward()
         self.viewer = None
         self._viewers = {}
 

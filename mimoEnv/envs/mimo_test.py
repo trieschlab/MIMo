@@ -3,6 +3,7 @@ import numpy as np
 from gym import utils
 
 from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML
+from mimoTouch.touch_trimesh import TrimeshTouch
 
 
 # Dictionary with body_names as keys,
@@ -32,7 +33,7 @@ TOUCH_PARAMS = {
         #"right_fingers": 0.002,
     },
     "touch_function": "force_vector",
-    "adjustment_function": "spread_linear",
+    "adjustment_function": "nearest",
 }
 
 VISION_PARAMS = {
@@ -71,9 +72,7 @@ class MIMoEnvDummy(MIMoEnv):
                          done_active=done_active)
 
     def _touch_setup(self, touch_params):
-        super()._touch_setup(touch_params)
-        for geom_id in self.touch.sensor_positions:
-            self.touch.plot_sensors_geom(geom_id=geom_id)
+        self.touch = TrimeshTouch(self, touch_params=touch_params)
 
     def _get_obs(self):
         """Returns the observations."""
