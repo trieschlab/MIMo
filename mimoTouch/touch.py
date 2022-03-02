@@ -56,7 +56,6 @@ class Touch:
         """
         self.env = env
 
-        print(touch_params)
         self.sensor_scales = {}
         for body_name in touch_params["scales"]:
             body_id = env.sim.model.body_name2id(body_name)

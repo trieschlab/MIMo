@@ -33,7 +33,7 @@ TOUCH_PARAMS = {
         #"right_fingers": 0.002,
     },
     "touch_function": "force_vector",
-    "adjustment_function": "nearest",
+    "adjustment_function": "spread_linear",
 }
 
 VISION_PARAMS = {
