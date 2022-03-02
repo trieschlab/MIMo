@@ -84,9 +84,9 @@ class MIMoEnvDummy(MIMoEnv):
         print("Total number of sensor points: ", count_touch_sensors)
 
         # Plot the sensor points for each body once
-        for body_id in self.touch.sensor_positions:
-            body_name = self.sim.model.body_id2name(body_id)
-            env_utils.plot_points(self.touch.sensor_positions[body_id], limit=1., title=body_name)
+        #for body_id in self.touch.sensor_positions:
+        #    body_name = self.sim.model.body_id2name(body_id)
+        #    env_utils.plot_points(self.touch.sensor_positions[body_id], limit=1., title=body_name)
 
     def _get_obs(self):
         """Returns the observations."""

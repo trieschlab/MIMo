@@ -50,6 +50,10 @@ def get_body_id(mujoco_model, body_id=None, body_name=None):
     return body_id
 
 
+# ======================== Mujoco frame utils =====================================
+# =================================================================================
+
+
 def get_geoms_for_body(sim_model, body_id):
     geom_start = sim_model.body_geomadr[body_id]
     geom_end = geom_start + sim_model.body_geomnum[body_id]
