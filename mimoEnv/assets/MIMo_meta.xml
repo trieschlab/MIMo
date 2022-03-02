@@ -158,7 +158,7 @@
 		<motor name="right_wrist_rotation" 		joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
 		<motor name="right_wrist_flexion" 		joint="robot:right_hand2" 				gear="1.4"	forcerange="-1 .5"/>
 		<motor name="right_wrist_ulnar" 		joint="robot:right_hand3" 				gear=".7"	forcerange="-1 1"/>
-		<motor name="right_fingers" 			joint="robot:right_fingers" 			gear=""		forcerange="-1 .33"/>
+		<motor name="right_fingers" 			joint="robot:right_fingers" 			gear=".69"	forcerange="-1 .33"/>
 		
 		<motor name="left_shoulder_horizontal" 	joint="robot:left_shoulder_horizontal" 	gear="1.8" 	forcerange="-1 1"/>
 		<motor name="left_shoulder_abduction" 	joint="robot:left_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
