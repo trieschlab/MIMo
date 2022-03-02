@@ -1,0 +1,169 @@
+<!-- Copyright 2021 DeepMind Technologies Limited
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<mujoco model="MIMo">
+
+    <compiler inertiafromgeom="true" angle="degree"/>
+
+    <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0" density="1.2"/>
+
+    <size nconmax="1000" njmax="5000" nstack="10000000" nuser_cam="3"/>
+
+    <visual>
+        <map force="0.1" zfar="30" znear="0.005"/>
+        <rgba haze="0.15 0.25 0.35 1"/>
+        <quality shadowsize="4096"/>
+        <global offwidth="800" offheight="800"/>
+		<headlight active="0"/>
+    </visual>
+	
+	<default>
+		<default class="scene">
+			<geom condim="6" friction="1 0.005 0.0002" solimp="0.9995 0.9999 0.001 0.5 1" solref="0.005 1"/>
+			<default class="scene:bouncy">
+				<geom solimp="0.99 0.995 0.001 0.5 2" solref="-20000 -20"/>
+			</default>
+		</default>
+	</default>
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+
+        <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278"
+            rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
+
+        <material name="matplane" reflectance="0" texture="texplane" texrepeat="1 1" texuniform="true"/>
+
+        <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
+		
+		<material name="red" rgba="0.8 0 0 1" specular=".2" shininess=".8"/>
+		<material name="green" rgba="0 0.8 0 1" specular=".2" shininess=".8"/>
+		<material name="blue" rgba="0.15 0.15 1 1" specular=".2" shininess=".8"/>
+		<material name="yellow" rgba="0.7 0.7 0 1" specular=".2" shininess=".8"/>
+		<material name="orange" rgba="0.9 0.4 0 1" specular=".2" shininess=".8"/>
+		<material name="wall" rgba="0.9 0.9 0.7 1" specular="0" shininess="0"/>
+		
+		<material name="matmocap" texture="texgeom" texuniform="true" rgba="0.5 0 0.5 0.5"/>
+    </asset>
+	
+	<!-- Import everything except the kinematic tree -->
+	<include file="MIMo_meta_positional.xml"></include>
+
+    <worldbody>
+        <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
+
+        <!--<light directional="false" ambient="0 0 0" diffuse=".5 .5 .5" specular="0 0 0" pos="0 0 2" castshadow="true"/>-->
+		<light directional="false" ambient="0 0 0" diffuse="1 1 1" specular="0 0 0" pos="1.5 1.5 1.2" dir="-1 -1 -1" castshadow="true"/>
+		<light directional="false" ambient="0 0 0" diffuse="1 1 1" specular="0 0 0" pos="1.5 1.5 1.2" dir="-1 0 -1" castshadow="true"/>
+        <light directional="false" ambient="0 0 0" diffuse="1 1 1" specular="0 0 0" pos="1.5 1.5 1.2" dir="-1 -1 .25" castshadow="true"/>
+		<light directional="false" ambient="0 0 0" diffuse="1 1 1" specular="0 0 0" pos="1.5 1.5 1.2" dir="-1 0 .25" castshadow="true"/>
+		<!--<light directional="false" ambient="0 0 0" diffuse="1 1 1" specular="0 0 0" pos="1.5 1.5 1.2" dir="-1 -1 -1" castshadow="true"/>-->
+		<light directional="true" ambient="0.2 0.2 0.2" diffuse="0 0 0" specular="0 0 0" pos="0 0 5" castshadow="false"/>
+		
+		<!-- <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="1 0 5.0" dir="0 0 -1"/> -->
+		
+		<!-- Loose object -->
+		
+		<body name="red_cube" pos=".3 0.3 0.5">
+			<freejoint/>
+			<geom class="scene" type="box" material="red" size="0.03 0.03 0.03" pos="0 0 0" density="200"/>
+		</body>
+		
+		<body name="yellow_cube" pos=".31 0.3 0.7" euler="0 0 10">
+			<freejoint/>
+			<geom class="scene" type="box" material="yellow" size="0.03 0.03 0.03" pos="0 0 0" density="200"/>
+		</body>
+		
+		<body name="blue_cube" pos=".31 0.3 0.8" euler="0 0 15">
+			<freejoint/>
+			<geom class="scene" type="box" material="blue" size="0.02 0.02 0.02" pos="0 0 0" density="200"/>
+		</body>
+		
+		<body name="green_sphere" pos=".3 -0.2 0.7">
+			<freejoint/>
+			<geom class="scene:bouncy" type="sphere" material="green" size="0.025" pos="0 0 0" density="200"/>
+		</body>
+		
+		<body name="blue_sphere" pos=".2 -0.1 0.5">
+			<freejoint/>
+			<geom class="scene:bouncy" type="sphere" material="blue" size="0.02" pos="0 0 0" density="200"/>
+		</body>
+		
+		<body name="orange_sphere" pos=".2 0.1 0.5">
+			<freejoint/>
+			<geom class="scene:bouncy" type="sphere" material="orange" size="0.015" pos="0 0 0" density="200"/>
+		</body>
+		
+		<!-- Castle -->
+		
+		<body name="castle_base1" pos="-.2 -.4 .05" euler="0 0 40">
+			<freejoint/>
+			<geom class="scene" type="box" material="red" size=".03 .03 .05" density="200"/>
+		</body>
+		
+		<body name="castle_base2" pos="-.1 -.5 .05" euler="0 0 70">
+			<freejoint/>
+			<geom class="scene" type="box" material="red" size=".03 .03 .05" density="200"/>
+		</body>
+		
+		<body name="castle_bridge" pos="-.15 -.45 .135" euler="0 0 45">
+			<freejoint/>
+			<geom class="scene" type="box" material="blue" size=".045 .125 .025" density="200"/>
+		</body>
+		
+		<body name="castle_top1" pos="-.10 -.5 .2" euler="0 0 50">
+			<freejoint/>
+			<geom class="scene" type="box" material="green" size=".03 .03 .03" density="200"/>
+		</body>
+		
+		<body name="castle_tower1" pos="-.175 -.425 .22" euler="0 0 50">
+			<freejoint/>
+			<geom class="scene" type="box" material="red" size=".03 .03 .05" density="200"/>
+		</body>
+		
+		<body name="castle_top2" pos="-.197 -.403 .31" euler="0 0 55">
+			<freejoint/>
+			<geom class="scene" type="box" material="yellow" size=".03 .03 .03" density="200"/>
+		</body>
+		
+		<body name="castle_top3" pos="-.15 -.45 .31" euler="0 0 45">
+			<freejoint/>
+			<geom class="scene" type="box" material="green" size=".03 .03 .03" density="200"/>
+		</body>
+		
+		<body name="castle_top4" pos="-.175 -.425 .38" euler="0 0 30">
+			<freejoint/>
+			<geom class="scene" type="box" material="orange" size=".03 .03 .03" density="200"/>
+		</body>
+		
+		<!-- Room -->
+		
+		<body name="room" pos="0 0 1">
+			<geom type="box" material="wall" size="2 .1 1" pos="0 2 0"/>
+			<geom type="box" material="wall" size="2 .1 1" pos="0 -2 0"/>
+			<geom type="box" material="wall" size=".1 2 1" pos="2 0 0"/>
+			<geom type="box" material="wall" size=".1 2 1" pos="-2 0 0"/>
+		</body>
+
+		<!-- The location and orientation of the base model can be set using this body -->
+		<body name="mimo_location" pos="0 0 .5" euler="0 0 0">
+			<freejoint/>
+			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
+		</body>
+		
+    </worldbody>
+</mujoco>
