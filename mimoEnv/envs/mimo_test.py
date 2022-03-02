@@ -4,33 +4,34 @@ from gym import utils
 
 from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML
 from mimoTouch.touch_trimesh import TrimeshTouch
+import mimoEnv.utils as env_utils
 
 
 # Dictionary with body_names as keys,
 TOUCH_PARAMS = {
     "scales": {
-        #"left_toes": 0.010,
-        #"right_toes": 0.010,
+        "left_toes": 0.010,
+        "right_toes": 0.010,
         "left_foot": 0.015,
-        #"right_foot": 0.015,
-        #"left_lower_leg": 0.038,
-        #"right_lower_leg": 0.038,
-        #"left_upper_leg": 0.027,
-        #"right_upper_leg": 0.027,
-        #"hip": 0.025,
-        #"lower_body": 0.025,
-        #"upper_body": 0.030,
-        #"head": 0.013,
-        #"left_eye": 1.0,
-        #"right_eye": 1.0,
-        #"left_upper_arm": 0.024,
-        #"right_upper_arm": 0.024,
-        #"left_lower_arm": 0.024,
-        #"right_lower_arm": 0.024,
-        #"left_hand": 0.007,
-        #"right_hand": 0.007,
-        #"left_fingers": 0.002,
-        #"right_fingers": 0.002,
+        "right_foot": 0.015,
+        "left_lower_leg": 0.038,
+        "right_lower_leg": 0.038,
+        "left_upper_leg": 0.027,
+        "right_upper_leg": 0.027,
+        "hip": 0.025,
+        "lower_body": 0.025,
+        "upper_body": 0.030,
+        "head": 0.013,
+        "left_eye": 1.0,
+        "right_eye": 1.0,
+        "left_upper_arm": 0.024,
+        "right_upper_arm": 0.024,
+        "left_lower_arm": 0.024,
+        "right_lower_arm": 0.024,
+        "left_hand": 0.007,
+        "right_hand": 0.007,
+        "left_fingers": 0.002,
+        "right_fingers": 0.002,
     },
     "touch_function": "force_vector",
     "adjustment_function": "spread_linear",
@@ -74,6 +75,19 @@ class MIMoEnvDummy(MIMoEnv):
     def _touch_setup(self, touch_params):
         self.touch = TrimeshTouch(self, touch_params=touch_params)
 
+        # Count and print the number of sensor points on each body
+        count_touch_sensors = 0
+        print("Number of sensor points for each body: ")
+        for body_id in self.touch.sensor_positions:
+            print(self.sim.model.body_id2name(body_id), self.touch.sensor_positions[body_id].shape[0])
+            count_touch_sensors += self.touch.sensor_positions[body_id].shape[0]
+        print("Total number of sensor points: ", count_touch_sensors)
+
+        # Plot the sensor points for each body once
+        for body_id in self.touch.sensor_positions:
+            body_name = self.sim.model.body_id2name(body_id)
+            env_utils.plot_points(self.touch.sensor_positions[body_id], limit=1., title=body_name)
+
     def _get_obs(self):
         """Returns the observations."""
         obs = super()._get_obs()
@@ -81,8 +95,8 @@ class MIMoEnvDummy(MIMoEnv):
         if self.vision_params:
             self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
 
-        for body_name in self.touch_params["scales"]:
-            self.touch.plot_force_body(body_name=body_name)
+        #for body_name in self.touch_params["scales"]:
+        #    self.touch.plot_force_body(body_name=body_name)
 
         self.steps += 1
 
@@ -98,38 +112,27 @@ class MIMoEnvDummy(MIMoEnv):
         )
 
     def _is_success(self, achieved_goal, desired_goal):
-        """Indicates whether or not the achieved goal successfully achieved the desired goal."""
-        # TODO: All of it
+        """Indicates whether or not the achieved goal successfully achieved the desired goal. Since this class is just
+        a demo environment to test sensor modalities, we do not care about this! """
         return False
 
     def _is_failure(self, achieved_goal, desired_goal):
+        """ Indicates whether or not the achieved goal is a failure state. Since this class is just a demo environment
+        to test sensor modalities, we do not care about this! """
         return False
 
     def _sample_goal(self):
-        """Samples a new goal and returns it."""
-        # TODO: Actually sample a goal
+        """Samples a new goal and returns it. Again just a dummy return."""
         return np.zeros(self._get_proprio_obs().shape)
 
     def _get_achieved_goal(self):
-        """Get the goal state actually achieved in this episode/timeframe."""
-        # TODO: All of it
+        """Get the goal state actually achieved in this episode/timeframe. Again just a dummy return."""
         return np.zeros(self._get_proprio_obs().shape)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        # TODO: Actually compute a reward
+        """ Computes the reward given the current state (achieved goal) and the desired state (desired_goal). Returns a
+        dummy value for this test environment"""
         return 0
-
-    def _render_callback(self):
-        """A custom callback that is called before rendering. Can be used
-        to implement custom visualizations.
-        """
-        pass
-
-    def _step_callback(self):
-        """A custom callback that is called after stepping the simulation. Can be used
-        to enforce additional constraints on the simulation state.
-        """
-        pass
 
 
 class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):

@@ -7,21 +7,6 @@ from mimoEnv.utils import mulRotT, mulRot, EPS
 from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spread_points_cylinder, \
                                    spread_points_capsule
 
-# Class that handles all of this
-#   Initialized as part of gym env, links to gym env
-#   Function to add a sensing body/geom,
-#   Adding a body that was already added overwrites existing sensor points
-#   Figures out where to put sensor points
-#   Stores sensor locations for each geom
-#   Function to get normal vectors at sensor points
-#   Function to read out contacts
-#   TODO: Convenience functions for cleanup of automatic sensor placement: Remove sensors located within another geom
-#   TODO: Function for "slippage" at sensor point: Direction + magnitude
-#   Find nearest sensors:
-#       TODO: Should consider surface of mesh, opposite side of thing object should not be considered
-#   Function to adjust force based on distance between contact and sensor point
-#   TODO: Rework (with trimesh?). Sensor points should have well defined frames with normal vector
-#   TODO: Biologically accurate outputs/delays(?)
 
 GEOM_TYPES = {"PLANE": 0, "HFIELD": 1, "SPHERE": 2, "CAPSULE": 3, "ELLIPSOID": 4, "CYLINDER": 5, "BOX": 6, "MESH": 7}
 

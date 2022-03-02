@@ -12,7 +12,6 @@ import mimoTouch.sensorpoints
 def mesh_box(resolution: float, sizes: np.array):
     """Spreads points over a box by subdividing into smaller boxes.
     Sizes is an array containing the three edge half-lengths of the box"""
-    # TODO: Fix this. Maybe use trimesh splitting?
     assert len(sizes) == 3, "Size parameter does not fit box!"
     # If distance between points is greater than size of box, have only one point in center of box
     if resolution > sizes.max():
@@ -190,11 +189,9 @@ def mesh_capsule(resolution: float, length: float, radius: float):
     sphere_points_u = []
     sphere_points_l = []
     n_theta = int(math.ceil(math.pi * radius / (2*resolution)))
-    print("theta", n_theta)
     for i in range(n_theta + 1):
         theta = (i + 0) * math.pi / (2*n_theta)
         n_phi = math.ceil(2 * math.pi * math.sin(theta) * radius / resolution)
-        print("phi", n_phi, theta)
         if n_phi < 2:
             z = length / 2 + radius
             sphere_points_u.append([0, 0, z])
