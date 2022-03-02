@@ -142,9 +142,9 @@
 		<motor name="hip_twist" 				joint="robot:hip_rot1" 			gear="3.63" 	forcerange="-1 1"/>
 		<motor name="hip_lean" 					joint="robot:hip_lean1" 		gear="7.25" 	forcerange="-1 1"/>
 		
-		<motor name="head_swivel" 				joint="robot:head_swivel" 		gear=".65" 		forcerange="-1 1"/>
-		<motor name="head_tilt" 				joint="robot:head_tilt" 		gear="1.2" 		forcerange="-1 .55"/>
-		<motor name="head_tilt_side" 			joint="robot:head_tilt_side" 	gear=".65" 		forcerange="-1 1"/>
+		<motor name="head_swivel" 				joint="robot:head_swivel" 		gear="1.17" 	forcerange="-1 1"/>
+		<motor name="head_tilt" 				joint="robot:head_tilt" 		gear="2.1" 		forcerange="-1 .56"/>
+		<motor name="head_tilt_side" 			joint="robot:head_tilt_side" 	gear="1.17" 	forcerange="-1 1"/>
 		
 		<motor name="left_eye_horizontal" 		joint="robot:left_eye_horizontal" 	gear=".1" 	forcerange="-1 1"/>
 		<motor name="left_eye_vertical" 		joint="robot:left_eye_vertical" 	gear=".1" 	forcerange="-1 1"/>
