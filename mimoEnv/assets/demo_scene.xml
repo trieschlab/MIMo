@@ -60,7 +60,7 @@
     </asset>
 	
 	<!-- Import everything except the kinematic tree -->
-	<include file="MIMo_meta.xml"></include>
+	<include file="demo_meta.xml"></include>
     
     <equality>
         <weld body1="head"/>
