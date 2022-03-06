@@ -17,7 +17,7 @@
 
     <compiler inertiafromgeom="true" angle="degree"/>
 
-    <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
+    <option gravity="0 0 0" timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
 
     <size nconmax="1000" njmax="5000" nstack="10000000" nuser_cam="3"/>
 
@@ -52,11 +52,11 @@
         <weld body1="left_hand"/>
         <weld body1="left_foot"/>
         <weld body1="right_foot"/>
-        <weld body1="target"/>
+	    <weld body1="right_fingers" body2="right_hand"/>
     </equality>
 
     <worldbody>
-        <geom name="floor" friction="1 .1 .1" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
+        <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
 
         <light directional="false" diffuse=".4 .4 .4" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="false"/>
         <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
@@ -68,7 +68,7 @@
 			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>
 
-        <body name="target" pos="0.25 0 0.7">
+        <body name="target" pos="0.25 -0.06 0.6">
             <freejoint/>
 			<geom type="sphere" material="matgeom" size="0.025" pos="0 0 0" condim="6" solimp="0.99 0.995 0.001 0.5 2" solref="-20000 -20"/>
 		</body>

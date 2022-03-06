@@ -185,8 +185,8 @@ class MIMoEnv(robot_env.RobotEnv):
         proprio_obs = self._get_proprio_obs()
         observation_dict = {
             "observation": proprio_obs,
-            "achieved_goal": np.empty(shape=(0,)),
-            "desired_goal": np.empty(shape=(0,))
+            "achieved_goal": np.array([0]),
+            "desired_goal": np.array([0])
         }
         # robot touch sensors:
         if self.touch:

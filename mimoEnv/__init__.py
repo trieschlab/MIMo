@@ -6,4 +6,5 @@ register(id='MIMo-v0',
 
 register(id='MIMoReach-v0',
          entry_point='mimoEnv.envs:MIMoReachEnv',
+         max_episode_steps=1000, 
          )

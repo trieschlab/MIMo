@@ -137,18 +137,14 @@
 	</sensor>
 
     <actuator>
-
-		<motor name="right_shoulder_horizontal" joint="robot:right_shoulder_horizontal" gear="3.6" 	forcerange="-1 1"/>
-		<motor name="right_shoulder_abduction" 	joint="robot:right_shoulder_ad_ab" 		gear="8" 	forcerange="-.6875 1"/>
-		<motor name="right_shoulder_internal" 	joint="robot:right_shoulder_rotation" 	gear="5" 	forcerange="-.64 1"/>
-		<motor name="right_elbow" 				joint="robot:right_elbow" 				gear="7.2" 	forcerange="-1 .83"/>
-		<motor name="right_wrist_rotation" 		joint="robot:right_hand1" 				gear="1.4"	forcerange="-1 1"/>
-		<motor name="right_wrist_flexion" 		joint="robot:right_hand2" 				gear="2.8"	forcerange="-1 .5"/>
-		<motor name="right_wrist_ulnar" 		joint="robot:right_hand3" 				gear="1.4"	forcerange="-1 1"/>
+		<motor name="right_shoulder_horizontal" joint="robot:right_shoulder_horizontal" gear="1.8" 	forcerange="-1 1"/>
+		<motor name="right_shoulder_abduction" 	joint="robot:right_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
+		<motor name="right_shoulder_internal" 	joint="robot:right_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
+		<motor name="right_elbow" 				joint="robot:right_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
+		<motor name="right_wrist_rotation" 		joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
+		<motor name="right_wrist_flexion" 		joint="robot:right_hand2" 				gear="1.4"	forcerange="-1 .5"/>
+		<motor name="right_wrist_ulnar" 		joint="robot:right_hand3" 				gear=".7"	forcerange="-1 1"/>
 		<motor name="right_fingers" 			joint="robot:right_fingers" 			gear=""		forcerange="-1 .33"/>
-		
-		<!--<position name="right_toes" gear="57.296" kp="1" joint="robot:right_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/>
-		<position name="left_toes" gear="57.296" kp="1" joint="robot:left_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/> -->
 	</actuator>
 	
 </mujoco>

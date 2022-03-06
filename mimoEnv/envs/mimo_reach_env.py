@@ -1,41 +1,15 @@
 import os
 import numpy as np
-
+import copy 
 from gym import utils
 import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv
 
 
-# Dictionary with body_names as keys,
-TOUCH_PARAMS = {
-    "left_toes": 0.010,
-    "right_toes": 0.010,
-    "left_foot": 0.015,
-    "right_foot": 0.015,
-    "left_lower_leg": 0.038,
-    "right_lower_leg": 0.038,
-    "left_upper_leg": 0.027,
-    "right_upper_leg": 0.027,
-    "hip": 0.025,
-    "lower_body": 0.025,
-    "upper_body": 0.030,
-    "head": 0.013,
-    "left_eye": 1.0,
-    "right_eye": 1.0,
-    "left_upper_arm": 0.024,
-    "right_upper_arm": 0.024,
-    "left_lower_arm": 0.024,
-    "right_lower_arm": 0.024,
-    "left_hand": 0.007,
-    "right_hand": 0.007,
-    "left_fingers": 0.002,
-    "right_fingers": 0.002,
-}
-
 VISION_PARAMS = {
-    "eye_left": {"width": 400, "height": 300},
-    "eye_right": {"width": 400, "height": 300}
+    "eye_left": {"width": 32, "height": 32},
+    "eye_right": {"width": 32, "height": 32}
 }
 
 VESTIBULAR_PARAMS = {
@@ -136,8 +110,8 @@ class MIMoReachEnv(MIMoEnvDummy, utils.EzPickle):
             model_path=MIMO_XML,
             n_actions=8,
             touch_params=None,
-            vision_params=VISION_PARAMS,
-            vestibular_params=VESTIBULAR_PARAMS,
+            vision_params=None,
+            vestibular_params=None,
             goals_in_observation=False,
             done_active=True,
         )
@@ -147,14 +121,13 @@ class MIMoReachEnv(MIMoEnvDummy, utils.EzPickle):
         fingers_pos = self.sim.data.get_body_xpos('right_fingers')
         target_pos = self.sim.data.get_body_xpos('target')
         distance = np.linalg.norm(fingers_pos-target_pos)
-        reward = 1 - distance + 100*(contact==True)
+        reward = - distance + 100*(contact==True)
         return reward
 
     def _is_success(self, achieved_goal, desired_goal):
         """Indicates whether or not the achieved goal successfully achieved the desired goal."""
-        fingers_pos = self.sim.data.get_body_xpos('right_fingers')
         target_pos = self.sim.data.get_body_xpos('target')
-        success = (np.linalg.norm(fingers_pos-target_pos) < 0.05)
+        success = (np.linalg.norm(target_pos-self.target_init_pos) > 0.01)
         return success
 
     def _reset_sim(self):
@@ -165,17 +138,71 @@ class MIMoReachEnv(MIMoEnvDummy, utils.EzPickle):
         """
 
         self.sim.set_state(self.initial_state)
-        default_state = self.sim.get_state()
-        qpos = self.sim.data.qpos
-        qvel = self.sim.data.qvel
+        self.sim.forward()
         
-        # reset with random initial positions and velocities
-        qpos = qpos + self.np_random.uniform(low=-0.05, high=0.05, size=len(qpos))
+        # perform 10 random actions 
+        for _ in range(10):
+            action = self.action_space.sample()
+            self._set_action(action)
+            self.sim.step()
+            self._step_callback()
+
+        # reset target in random initial position and velocities as zero
+        qpos = self.sim.data.qpos
+        target_pos_error = True
+        while target_pos_error:
+            new_target_pos = self.initial_state.qpos[[-7,-6,-5]] + self.np_random.uniform(low=-0.1, high=0.1, size=3)
+            right_arm_pos = self.sim.data.get_body_xpos('left_upper_arm')
+            target_dist = np.linalg.norm(new_target_pos - right_arm_pos)
+            target_pos_error = target_dist > 0.25
+        qpos[[-7,-6, -5]] = new_target_pos
+        qvel = np.zeros(self.sim.data.qvel.shape)
 
         new_state = mujoco_py.MjSimState(
-            default_state.time, qpos, qvel, default_state.act, default_state.udd_state
+            self.initial_state.time, qpos, qvel, self.initial_state.act, self.initial_state.udd_state
         )
 
         self.sim.set_state(new_state)
         self.sim.forward()
+        self.target_init_pos = copy.deepcopy(self.sim.data.get_body_xpos('target'))
         return True
+
+    def step(self, action):
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+        self._set_action(action)
+        self.sim.step()
+        self._step_callback()
+
+        # manually set head and eye positions to look at target
+        target_pos = self.sim.data.get_body_xpos('target')
+        head_pos = self.sim.data.get_body_xpos('head')
+        head_target_dif = target_pos - head_pos
+        head_target_dist = np.linalg.norm(head_target_dif)
+        half_eyes_dist = 0.0245 # horizontal distance between eyes / 2
+        eyes_target_dist = head_target_dist - 0.07
+        self.sim.data.qpos[13] = np.arctan(head_target_dif[1]/head_target_dif[0]) # head - horizontal
+        self.sim.data.qpos[14] = np.arctan(-head_target_dif[2]/head_target_dif[0]) # head - vertical
+        self.sim.data.qpos[16] = np.arctan(half_eyes_dist/eyes_target_dist)    # left eye -  horizontal
+        self.sim.data.qpos[18] = np.arctan(-half_eyes_dist/eyes_target_dist)    # right eye - horizontal
+
+        obs = self._get_obs()
+
+        achieved_goal = self._get_achieved_goal()
+
+        # Done always false if not done_active, else either of is_success or is_failure must be true
+        is_success = self._is_success(achieved_goal, self.goal)
+        is_failure = self._is_failure(achieved_goal, self.goal)
+
+        info = {
+            "is_success": is_success,
+            "is_failure": is_failure,
+        }
+
+        if not self.goals_in_observation:
+            info["achieved_goal"] = achieved_goal.copy()
+            info["desired_goal"] = self.goal.copy()
+
+        done = self._is_done(achieved_goal, self.goal, info)
+
+        reward = self.compute_reward(achieved_goal, self.goal, info)
+        return obs, reward, done, info
