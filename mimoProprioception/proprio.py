@@ -23,8 +23,16 @@ class SimpleProprioception(Proprioception):
 
         self.obs = {}
 
+        self.sensor_names = {}
+        self.joint_names = [name for name in self.env.sim.model.joint_names if name.startswith("robot")]
+        self.sensor_names["qpos"] = self.joint_names
+        self.sensor_names["qvel"] = self.joint_names
+        self.sensor_names["torque"] = self.sensors
+        
+
     def get_proprioception_obs(self):
-        robot_qpos, robot_qvel = robot_get_obs(self.env.sim)
+        robot_qpos = np.array([self.env.sim.data.get_joint_qpos(name) for name in self.joint_names])
+        robot_qvel = np.array([self.env.sim.data.get_joint_qvel(name) for name in self.joint_names]),
         torques = []
         for sensor in self.sensors:
             sensor_output = get_data_for_sensor(self.env.sim, sensor)
