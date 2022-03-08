@@ -98,6 +98,12 @@ class MIMoEnvDummy(MIMoEnv):
         #for body_name in self.touch_params["scales"]:
         #    self.touch.plot_force_body(body_name=body_name)
 
+        # Toggle through all of the emotions
+        emotes = sorted(self.facial_expressions.keys())
+        if self.steps % 20 == 0:
+            new_emotion = emotes[(self.steps // 20) % 4]
+            self.swap_facial_expression(new_emotion)
+
         self.steps += 1
 
         return obs

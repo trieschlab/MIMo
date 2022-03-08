@@ -38,7 +38,7 @@
 				<geom name="ub3" type="capsule" size=".041 .047" density="900" material="top_up" pos="0 0 0.09" euler="90 0 0"/>
 					
 				<body name="head" pos="0 0 .135">
-					<geom type="sphere" material="head" size=".0735" pos="0.01 0 0.0735"/>
+					<geom name="head" type="sphere" material="head" size=".0735" pos="0.01 0 0.0735"/>
 					<site name="vestibular" type="sphere" size="0.01" pos="0.01 0 0.0735" group="4"/>
 					<site name="torque_neck" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 					<joint name="robot:head_swivel" type="hinge" pos="0 0 0" axis="0 0 1" range="-111 111" stiffness=".15" damping=".19" frictionloss=".012"/>

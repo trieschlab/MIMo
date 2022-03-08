@@ -10,10 +10,17 @@ from mimoTouch.touch import DiscreteTouch
 from mimoVision.vision import SimpleVision
 from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception
-
+import mimoEnv.utils as utils
 
 # Ensure we get the path separator correct on windows
 MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "Sample_Scene.xml"))
+
+EMOTES = {
+    "default": "tex_head_default",
+    "happy": "tex_head_happy",
+    "sad": "tex_head_sad",
+    "surprised": "tex_head_surprised",
+}
 
 
 class MIMoEnv(robot_env.RobotEnv):
@@ -58,6 +65,15 @@ class MIMoEnv(robot_env.RobotEnv):
         self.seed()
         self._env_setup(initial_qpos=initial_qpos)
         self.initial_state = copy.deepcopy(self.sim.get_state())
+
+        # Face emotions:
+        self.facial_expressions = {}
+        for emote in EMOTES:
+            tex_name = EMOTES[emote]
+            tex_id = utils.texture_name2id(self.sim, tex_name)
+            self.facial_expressions[emote] = tex_id
+        head_material_name = "head"
+        self._head_material_id = utils.material_name2id(self.sim, head_material_name)
 
         self.goal = self._sample_goal()
         self.action_space = spaces.Box(-1.0, 1.0, shape=(n_actions,), dtype="float32")
@@ -209,6 +225,13 @@ class MIMoEnv(robot_env.RobotEnv):
 
     def _set_action(self, action):
         raise NotImplementedError
+
+    def swap_facial_expression(self, emotion):
+        """ Changes MIMos facial texture. Valid emotion names are in self.facial_expression, which links readable
+        emotion names to their associated texture ids """
+        assert emotion in self.facial_expressions, "{} is not a valid facial expression!".format(emotion)
+        new_tex_id = self.facial_expressions[emotion]
+        self.sim.model.mat_texid[self._head_material_id] = new_tex_id
 
     def _is_success(self, achieved_goal, desired_goal):
         """Indicates whether or not the achieved goal successfully achieved the desired goal."""

@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+
 EPS = 1e-10
 
 
@@ -137,6 +138,46 @@ def get_data_for_sensor(sim, sensor_name):
     start = sim.model.sensor_adr[sensor_id]
     end = start + sim.model.sensor_dim[sensor_id]
     return sim.data.sensordata[start:end]
+
+
+def _decode_name(sim, name_adr):
+    """ Mujoco-py unfortunately does not properly wrap all of mujocos data structures/functions, so we have to get some
+    names (such as textures and materials) manually. This is a very tedious process in python """
+    # TODO: Figure out cython so we don't have to do this
+    # TODO: Alternatively at least cache the name-id relationship somewhere
+    i = 0
+    while sim.model.names[name_adr + i].decode() != "":
+        i += 1
+    if i == 0:
+        return None
+    str_array = sim.model.names[name_adr: name_adr + i].astype(str)
+    return "".join(str_array)
+
+
+def texture_name2id(sim, texture_name):
+    """ Returns the id for the texture with the given name. """
+    tex_id = None
+    for i, name_adr in enumerate(sim.model.name_texadr):
+        name = _decode_name(sim, name_adr)
+        if name == texture_name:
+            tex_id = i
+            break
+    if tex_id is None:
+        raise RuntimeError("Could not find texture with name {}".format(texture_name))
+    return tex_id
+
+
+def material_name2id(sim, material_name):
+    """ Returns the id for the material with the given name. """
+    mat_id = None
+    for i, name_adr in enumerate(sim.model.name_matadr):
+        name = _decode_name(sim, name_adr)
+        if name == material_name:
+            mat_id = i
+            break
+    if mat_id is None:
+        raise RuntimeError("Could not find material with name {}".format(material_name))
+    return mat_id
 
 
 # ======================== Plotting utils =========================================
