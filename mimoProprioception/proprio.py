@@ -1,7 +1,5 @@
 import numpy as np
 from mimoEnv.utils import get_data_for_sensor
-from gym.envs.robotics.utils import robot_get_obs
-
 
 class Proprioception:
     def __init__(self, env, proprio_parameters):
@@ -28,11 +26,10 @@ class SimpleProprioception(Proprioception):
         self.sensor_names["qpos"] = self.joint_names
         self.sensor_names["qvel"] = self.joint_names
         self.sensor_names["torque"] = self.sensors
-        
 
     def get_proprioception_obs(self):
         robot_qpos = np.array([self.env.sim.data.get_joint_qpos(name) for name in self.joint_names])
-        robot_qvel = np.array([self.env.sim.data.get_joint_qvel(name) for name in self.joint_names]),
+        robot_qvel = np.array([self.env.sim.data.get_joint_qvel(name) for name in self.joint_names])
         torques = []
         for sensor in self.sensors:
             sensor_output = get_data_for_sensor(self.env.sim, sensor)
