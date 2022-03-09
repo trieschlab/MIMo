@@ -28,7 +28,6 @@ class MIMoEnv(robot_env.RobotEnv):
     def __init__(self,
                  model_path=MIMO_XML,
                  initial_qpos={},
-                 n_actions=40,  # Currently hardcoded
                  n_substeps=2,
                  touch_params=None,
                  vision_params=None,
@@ -76,6 +75,8 @@ class MIMoEnv(robot_env.RobotEnv):
         self._head_material_id = utils.material_name2id(self.sim, head_material_name)
 
         self.goal = self._sample_goal()
+        n_actions = len([name for name in self.sim.model.actuator_names if name.startswith("act:")])
+        print(n_actions)
         self.action_space = spaces.Box(-1.0, 1.0, shape=(n_actions,), dtype="float32")
         obs = self._get_obs()
         # Observation spaces

@@ -52,7 +52,6 @@ class MIMoEnvDummy(MIMoEnv):
     def __init__(self,
                  model_path=MIMO_XML,
                  initial_qpos={},
-                 n_actions=40,  # Currently hardcoded
                  n_substeps=2,
                  touch_params=None,
                  vision_params=None,
@@ -64,7 +63,6 @@ class MIMoEnvDummy(MIMoEnv):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
-                         n_actions=n_actions,
                          n_substeps=n_substeps,
                          touch_params=touch_params,
                          vision_params=vision_params,
@@ -92,8 +90,8 @@ class MIMoEnvDummy(MIMoEnv):
         """Returns the observations."""
         obs = super()._get_obs()
 
-        if self.vision_params:
-            self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+        #if self.vision_params:
+        #    self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
 
         #for body_name in self.touch_params["scales"]:
         #    self.touch.plot_force_body(body_name=body_name)
@@ -104,9 +102,10 @@ class MIMoEnvDummy(MIMoEnv):
             new_emotion = emotes[(self.steps // 20) % 4]
             self.swap_facial_expression(new_emotion)
 
-        self.steps += 1
-
         return obs
+
+    def _step_callback(self):
+        self.steps += 1
 
     def _set_action(self, action):
         ctrlrange = self.sim.model.actuator_ctrlrange
@@ -157,7 +156,7 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
         MIMoEnvDummy.__init__(
             self,
             model_path=MIMO_XML,
-            touch_params=TOUCH_PARAMS,
+            touch_params=None,
             vision_params=VISION_PARAMS,
             vestibular_params=VESTIBULAR_PARAMS,
             goals_in_observation=False,

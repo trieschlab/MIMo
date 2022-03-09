@@ -141,54 +141,54 @@
 
     <actuator>
 	
-		<motor name="hip_bend" 					joint="robot:hip_bend1" 		gear="10.58" 	forcerange="-1 .765"/>
-		<motor name="hip_twist" 				joint="robot:hip_rot1" 			gear="3.63" 	forcerange="-1 1"/>
-		<motor name="hip_lean" 					joint="robot:hip_lean1" 		gear="7.25" 	forcerange="-1 1"/>
+		<motor name="act:hip_bend" 					joint="robot:hip_bend1" 		gear="10.58" 	forcerange="-1 .765"/>
+		<motor name="act:hip_twist" 				joint="robot:hip_rot1" 			gear="3.63" 	forcerange="-1 1"/>
+		<motor name="act:hip_lean" 					joint="robot:hip_lean1" 		gear="7.25" 	forcerange="-1 1"/>
 		
-		<motor name="head_swivel" 				joint="robot:head_swivel" 		gear="1.17" 	forcerange="-1 1"/>
-		<motor name="head_tilt" 				joint="robot:head_tilt" 		gear="2.1" 		forcerange="-1 .56"/>
-		<motor name="head_tilt_side" 			joint="robot:head_tilt_side" 	gear="1.17" 	forcerange="-1 1"/>
+		<motor name="act:head_swivel" 				joint="robot:head_swivel" 		gear="1.17" 	forcerange="-1 1"/>
+		<motor name="act:head_tilt" 				joint="robot:head_tilt" 		gear="2.1" 		forcerange="-1 .56"/>
+		<motor name="act:head_tilt_side" 			joint="robot:head_tilt_side" 	gear="1.17" 	forcerange="-1 1"/>
 		
-		<motor name="left_eye_horizontal" 		joint="robot:left_eye_horizontal" 	gear=".1" 	forcerange="-1 1"/>
-		<motor name="left_eye_vertical" 		joint="robot:left_eye_vertical" 	gear=".1" 	forcerange="-1 1"/>
-		<motor name="left_eye_torsional" 		joint="robot:left_eye_torsional" 	gear=".1" 	forcerange="-1 1"/>
-		<motor name="right_eye_horizontal" 		joint="robot:right_eye_horizontal" 	gear=".1" 	forcerange="-1 1"/>
-		<motor name="right_eye_vertical" 		joint="robot:right_eye_vertical" 	gear=".1" 	forcerange="-1 1"/>
-		<motor name="right_eye_torsional" 		joint="robot:right_eye_torsional" 	gear=".1" 	forcerange="-1 1"/>
+		<motor name="act:left_eye_horizontal" 		joint="robot:left_eye_horizontal" 	gear=".1" 	forcerange="-1 1"/>
+		<motor name="act:left_eye_vertical" 		joint="robot:left_eye_vertical" 	gear=".1" 	forcerange="-1 1"/>
+		<motor name="act:left_eye_torsional" 		joint="robot:left_eye_torsional" 	gear=".1" 	forcerange="-1 1"/>
+		<motor name="act:right_eye_horizontal" 		joint="robot:right_eye_horizontal" 	gear=".1" 	forcerange="-1 1"/>
+		<motor name="act:right_eye_vertical" 		joint="robot:right_eye_vertical" 	gear=".1" 	forcerange="-1 1"/>
+		<motor name="act:right_eye_torsional" 		joint="robot:right_eye_torsional" 	gear=".1" 	forcerange="-1 1"/>
 		
-		<motor name="right_shoulder_horizontal" joint="robot:right_shoulder_horizontal" gear="1.8" 	forcerange="-1 1"/>
-		<motor name="right_shoulder_abduction" 	joint="robot:right_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
-		<motor name="right_shoulder_internal" 	joint="robot:right_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
-		<motor name="right_elbow" 				joint="robot:right_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
-		<motor name="right_wrist_rotation" 		joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
-		<motor name="right_wrist_flexion" 		joint="robot:right_hand2" 				gear="1.4"	forcerange="-1 .5"/>
-		<motor name="right_wrist_ulnar" 		joint="robot:right_hand3" 				gear=".7"	forcerange="-1 1"/>
-		<motor name="right_fingers" 			joint="robot:right_fingers" 			gear=".69"	forcerange="-1 .33"/>
+		<motor name="act:right_shoulder_horizontal" joint="robot:right_shoulder_horizontal" gear="1.8" 	forcerange="-1 1"/>
+		<motor name="act:right_shoulder_abduction" 	joint="robot:right_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
+		<motor name="act:right_shoulder_internal" 	joint="robot:right_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
+		<motor name="act:right_elbow" 				joint="robot:right_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
+		<motor name="act:right_wrist_rotation" 		joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
+		<motor name="act:right_wrist_flexion" 		joint="robot:right_hand2" 				gear="1.4"	forcerange="-1 .5"/>
+		<motor name="act:right_wrist_ulnar" 		joint="robot:right_hand3" 				gear=".7"	forcerange="-1 1"/>
+		<motor name="act:right_fingers" 			joint="robot:right_fingers" 			gear=".69"	forcerange="-1 .33"/>
 		
-		<motor name="left_shoulder_horizontal" 	joint="robot:left_shoulder_horizontal" 	gear="1.8" 	forcerange="-1 1"/>
-		<motor name="left_shoulder_abduction" 	joint="robot:left_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
-		<motor name="left_shoulder_internal" 	joint="robot:left_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
-		<motor name="left_elbow" 				joint="robot:left_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
-		<motor name="left_wrist_rotation" 		joint="robot:left_hand1"  				gear=".7"	forcerange="-1 1"/>
-		<motor name="left_wrist_flexion" 		joint="robot:left_hand2"  				gear="1.4"	forcerange="-1 .5"/>
-		<motor name="left_wrist_ulnar" 			joint="robot:left_hand3"  				gear=".7"	forcerange="-1 1"/>
-		<motor name="left_fingers" 				joint="robot:left_fingers" 				gear=".69" 	forcerange="-1 .33"/>
+		<motor name="act:left_shoulder_horizontal" 	joint="robot:left_shoulder_horizontal" 	gear="1.8" 	forcerange="-1 1"/>
+		<motor name="act:left_shoulder_abduction" 	joint="robot:left_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
+		<motor name="act:left_shoulder_internal" 	joint="robot:left_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
+		<motor name="act:left_elbow" 				joint="robot:left_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
+		<motor name="act:left_wrist_rotation" 		joint="robot:left_hand1"  				gear=".7"	forcerange="-1 1"/>
+		<motor name="act:left_wrist_flexion" 		joint="robot:left_hand2"  				gear="1.4"	forcerange="-1 .5"/>
+		<motor name="act:left_wrist_ulnar" 			joint="robot:left_hand3"  				gear=".7"	forcerange="-1 1"/>
+		<motor name="act:left_fingers" 				joint="robot:left_fingers" 				gear=".69" 	forcerange="-1 .33"/>
 		
-		<motor name="right_hip_flex" 			joint="robot:right_hip1" 		gear="8" 	forcerange="-1 1"/>
-		<motor name="right_hip_abduction" 		joint="robot:right_hip2" 		gear="6.24" forcerange="-1 1"/>
-		<motor name="right_hip_rotation" 		joint="robot:right_hip3" 		gear="3.54" forcerange="-.75 1"/>
-		<motor name="right_knee" 				joint="robot:right_knee" 		gear="10" 	forcerange="-.65 1"/>
-		<motor name="right_foot_flexion" 		joint="robot:right_foot1" 		gear="3.78"	forcerange="-1 .5"/>
-		<motor name="right_foot_inversion" 		joint="robot:right_foot2" 		gear="1.16"	forcerange="-.91 1"/>
-		<motor name="right_foot_rotation" 		joint="robot:right_foot3"	 	gear="1.2"	forcerange="-1 1"/>
+		<motor name="act:right_hip_flex" 			joint="robot:right_hip1" 		gear="8" 	forcerange="-1 1"/>
+		<motor name="act:right_hip_abduction" 		joint="robot:right_hip2" 		gear="6.24" forcerange="-1 1"/>
+		<motor name="act:right_hip_rotation" 		joint="robot:right_hip3" 		gear="3.54" forcerange="-.75 1"/>
+		<motor name="act:right_knee" 				joint="robot:right_knee" 		gear="10" 	forcerange="-.65 1"/>
+		<motor name="act:right_foot_flexion" 		joint="robot:right_foot1" 		gear="3.78"	forcerange="-1 .5"/>
+		<motor name="act:right_foot_inversion" 		joint="robot:right_foot2" 		gear="1.16"	forcerange="-.91 1"/>
+		<motor name="act:right_foot_rotation" 		joint="robot:right_foot3"	 	gear="1.2"	forcerange="-1 1"/>
 	
-		<motor name="left_hip_flex" 			joint="robot:left_hip1" 		gear="8" 	forcerange="-1 1"/>
-		<motor name="left_hip_abduction" 		joint="robot:left_hip2" 		gear="6.24" forcerange="-1 1"/>
-		<motor name="left_hip_rotation" 		joint="robot:left_hip3"			gear="3.54" forcerange="-.75 1"/>
-		<motor name="left_knee" 				joint="robot:left_knee" 		gear="10" 	forcerange="-.65 1"/>
-		<motor name="left_foot_flexion" 		joint="robot:left_foot1" 		gear="3.78"	forcerange="-1 .5"/>
-		<motor name="left_foot_inversion" 		joint="robot:left_foot2" 		gear="1.16"	forcerange="-.91 1"/>
-		<motor name="left_foot_rotation" 		joint="robot:left_foot3" 		gear="1.2"	forcerange="-1 1"/>
+		<motor name="act:left_hip_flex" 			joint="robot:left_hip1" 		gear="8" 	forcerange="-1 1"/>
+		<motor name="act:left_hip_abduction" 		joint="robot:left_hip2" 		gear="6.24" forcerange="-1 1"/>
+		<motor name="act:left_hip_rotation" 		joint="robot:left_hip3"			gear="3.54" forcerange="-.75 1"/>
+		<motor name="act:left_knee" 				joint="robot:left_knee" 		gear="10" 	forcerange="-.65 1"/>
+		<motor name="act:left_foot_flexion" 		joint="robot:left_foot1" 		gear="3.78"	forcerange="-1 .5"/>
+		<motor name="act:left_foot_inversion" 		joint="robot:left_foot2" 		gear="1.16"	forcerange="-.91 1"/>
+		<motor name="act:left_foot_rotation" 		joint="robot:left_foot3" 		gear="1.2"	forcerange="-1 1"/>
 		
 		<!--<position name="right_toes" gear="57.296" kp="1" joint="robot:right_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/>
 		<position name="left_toes" gear="57.296" kp="1" joint="robot:left_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/> -->
