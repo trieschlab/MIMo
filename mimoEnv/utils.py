@@ -102,6 +102,13 @@ def geom_pos_to_world(sim_data, position, geom_id):
     return global_pos
 
 
+def body_pos_to_world(sim_data, position, body_id):
+    """ Converts a (n, 3) numpy array containing xyz coordinates from body frame to world frame"""
+    global_pos = body_rot_to_world(sim_data, position, body_id)
+    global_pos = global_pos + get_body_position(sim_data, body_id)
+    return global_pos
+
+
 def geom_pos_to_body(sim_data, position, geom_id, body_id):
     world_pos = geom_pos_to_world(sim_data, position, geom_id)
     return world_pos_to_body(sim_data, world_pos, body_id)
