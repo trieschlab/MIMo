@@ -62,6 +62,7 @@
 	<!-- Import everything except the kinematic tree -->
 	<include file="demo_meta.xml"></include>
     
+    <!--
     <equality>
         <weld body1="head"/>
         <weld body1="upper_body"/>
@@ -79,6 +80,7 @@
         <connect body1="left_eye" body2="right_eye" anchor="0 0 0.5"/>
         <connect body2="left_eye" body1="right_eye" anchor="0 0 0.5"/>
     </equality>
+    -->
 
     <worldbody>
         <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
