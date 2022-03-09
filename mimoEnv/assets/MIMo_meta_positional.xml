@@ -148,8 +148,10 @@
 
 		<position name="left_eye_horizontal" gear="57.296" kp=".2" joint="robot:left_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.05 .05"/>
 		<position name="left_eye_vertical" gear="57.296" kp=".2" joint="robot:left_eye_vertical" ctrlrange="-46 32" forcelimited="true" forcerange="-.05 .05"/>
+		<position name="left_eye_torsional" gear="57.296" kp=".2" joint="robot:left_eye_torsional" ctrlrange="-16 16" forcelimited="true" forcerange="-.05 .05"/>
 		<position name="right_eye_horizontal" gear="57.296" kp=".2" joint="robot:right_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.05 .05"/>
 		<position name="right_eye_vertical" gear="57.296" kp=".2" joint="robot:right_eye_vertical" ctrlrange="-46 32" forcelimited="true" forcerange="-.05 .05"/>
+		<position name="right_eye_torsional" gear="57.296" kp=".2" joint="robot:right_eye_torsional" ctrlrange="-16 16" forcelimited="true" forcerange="-.05 .05"/>
 
 		<position name="right_shoulder1" gear="57.296" kp=".2" joint="robot:right_shoulder_horizontal" ctrlrange="-28 118" forcelimited="true" forcerange="-.15 .15"/>
 		<position name="right_shoulder2" gear="57.296" kp=".2" joint="robot:right_shoulder_ad_ab" ctrlrange="-84 183" forcelimited="true" forcerange="-.15 .15"/>

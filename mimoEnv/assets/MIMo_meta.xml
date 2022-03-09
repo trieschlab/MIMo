@@ -151,8 +151,10 @@
 		
 		<motor name="left_eye_horizontal" 		joint="robot:left_eye_horizontal" 	gear=".1" 	forcerange="-1 1"/>
 		<motor name="left_eye_vertical" 		joint="robot:left_eye_vertical" 	gear=".1" 	forcerange="-1 1"/>
+		<motor name="left_eye_torsional" 		joint="robot:left_eye_torsional" 	gear=".1" 	forcerange="-1 1"/>
 		<motor name="right_eye_horizontal" 		joint="robot:right_eye_horizontal" 	gear=".1" 	forcerange="-1 1"/>
 		<motor name="right_eye_vertical" 		joint="robot:right_eye_vertical" 	gear=".1" 	forcerange="-1 1"/>
+		<motor name="right_eye_torsional" 		joint="robot:right_eye_torsional" 	gear=".1" 	forcerange="-1 1"/>
 		
 		<motor name="right_shoulder_horizontal" joint="robot:right_shoulder_horizontal" gear="1.8" 	forcerange="-1 1"/>
 		<motor name="right_shoulder_abduction" 	joint="robot:right_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
