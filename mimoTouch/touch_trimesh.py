@@ -153,12 +153,11 @@ class TrimeshTouch(Touch):
         offset += submesh_offsets[vertex_idx]
         return offset
 
-    def get_nearest_sensor(self, contact_id, body_id):
-        """ Given a contact and a geom, return the sensor on the geom closest to the contact.
-        Returns the sensor index and the distance between contact and sensor"""
+    def get_nearest_sensor(self, contact_pos, body_id):
+        """ Given a position and a body, return the sensor on the body closest to that position.
+        Returns the sensor index and the distance between the position and sensor """
         # Get closest active vertex on the whole body mesh. Does this by getting clostest active subvertex on each
         # submesh and then returning the closest of those.
-        contact_pos = self.get_contact_position_relative(contact_id=contact_id, body_id=body_id)
         active_sensors = {}
         for i, mesh in enumerate(self._submeshes[body_id]):
             # Get closest vertex on mesh
@@ -195,13 +194,14 @@ class TrimeshTouch(Touch):
                 closest_distance = distance
         return self.convert_active_sensor_idx(body_id, closest[0], closest[1]), closest_distance
 
-    def get_k_nearest_sensors(self, contact_id, body_id, k):
+    def get_k_nearest_sensors(self, contact_pos, body_id, k):
+        """ Given a position and a body, return the k closest sensors on the body to that position.
+        Returns the sensor indices and the distances between the position and sensors """
         # Use trimesh meshes to get nearest vertex on all submeshes, then get up to k extra candidates for each submesh,
         # then get the k closest from the candidates of all submeshes
         candidate_sensors_idx = []
         candidate_sensor_distances = []
         largest_distance_so_far = 0
-        contact_pos = self.get_contact_position_relative(contact_id=contact_id, body_id=body_id)
         for i, mesh in enumerate(self._submeshes[body_id]):
             proximity_query = trimesh.proximity.ProximityQuery(mesh)
             distance, sub_idx = proximity_query.vertex(contact_pos)
@@ -235,11 +235,13 @@ class TrimeshTouch(Touch):
         sorted_idxs = np.argpartition(distances, k)
         return sensor_idx[sorted_idxs[:k]], distances[sorted_idxs[:k]]
 
-    def get_sensors_within_distance(self, contact_id, body_id, distance_limit):
+    def get_sensors_within_distance(self, contact_pos, body_id, distance_limit):
+        """ Given a position, a body and a distance limit, returns all sensors on the body whose distance to the
+        position is less than the distance limits.
+        Returns the sensor indices and the distances between the position and sensors """
         # Use trimesh meshes to get all vertices on nearest edge and then inspect neighbours from there
         candidate_sensors_idx = []
         candidate_sensor_distances = []
-        contact_pos = self.get_contact_position_relative(contact_id=contact_id, body_id=body_id)
         for i, mesh in enumerate(self._submeshes[body_id]):
             proximity_query = trimesh.proximity.ProximityQuery(mesh)
             distance, sub_idx = proximity_query.vertex(contact_pos)
@@ -408,7 +410,8 @@ class TrimeshTouch(Touch):
     def spread_linear(self, contact_id, body_id, force):
         # Get all sensors within distance (distance here is just double the sensor scale)
         scale = self.sensor_scales[body_id]
-        nearest_sensors, sensor_distances = self.get_sensors_within_distance(contact_id, body_id, 2*scale)
+        contact_pos = self.get_contact_position_relative(contact_id=contact_id, body_id=body_id)
+        nearest_sensors, sensor_distances = self.get_sensors_within_distance(contact_pos, body_id, 2*scale)
 
         adjusted_forces = {}
         force_total = np.zeros(force.shape)
@@ -425,7 +428,8 @@ class TrimeshTouch(Touch):
 
     def nearest(self, contact_id, body_id, force):
         # Get the nearest sensor to this contact, add the force to it
-        nearest_sensor, distance = self.get_nearest_sensor(contact_id, body_id)
+        contact_pos = self.get_contact_position_relative(contact_id=contact_id, body_id=body_id)
+        nearest_sensor, distance = self.get_nearest_sensor(contact_pos, body_id)
         self.sensor_outputs[body_id][nearest_sensor] += force
 
     # =============== Visualizations ==================================================
