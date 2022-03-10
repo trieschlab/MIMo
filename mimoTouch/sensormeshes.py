@@ -94,7 +94,7 @@ def mesh_ellipsoid(resolution: float, radii):
 def mesh_pipe(resolution: float, length: float, radius: float):
     """ Spreads points around the outer surface of a cylinder, without caps. """
     # Number of subdivisions along length
-    n_length = int(math.ceil(length / resolution))
+    n_length = int(math.ceil(length / resolution)) + 1
     # Number of subdivisions around circumference
     n_circum = int(math.ceil(2 * math.pi * radius / resolution))
 

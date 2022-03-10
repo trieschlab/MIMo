@@ -76,7 +76,6 @@ class MIMoEnv(robot_env.RobotEnv):
 
         self.goal = self._sample_goal()
         n_actions = len([name for name in self.sim.model.actuator_names if name.startswith("act:")])
-        print(n_actions)
         self.action_space = spaces.Box(-1.0, 1.0, shape=(n_actions,), dtype="float32")
         obs = self._get_obs()
         # Observation spaces

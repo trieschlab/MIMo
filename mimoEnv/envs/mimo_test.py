@@ -90,11 +90,13 @@ class MIMoEnvDummy(MIMoEnv):
         """Returns the observations."""
         obs = super()._get_obs()
 
-        #if self.vision_params:
-        #    self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+        if self.vision_params:
+            self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
 
         #for body_name in self.touch_params["scales"]:
         #    self.touch.plot_force_body(body_name=body_name)
+        #self.touch.plot_force_body(body_name="left_lower_leg")
+        #self.touch.plot_force_body_subtree(body_name="left_lower_leg")
 
         # Toggle through all of the emotions
         emotes = sorted(self.facial_expressions.keys())
@@ -156,7 +158,7 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
         MIMoEnvDummy.__init__(
             self,
             model_path=MIMO_XML,
-            touch_params=None,
+            touch_params=TOUCH_PARAMS,
             vision_params=VISION_PARAMS,
             vestibular_params=VESTIBULAR_PARAMS,
             goals_in_observation=False,

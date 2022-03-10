@@ -163,7 +163,7 @@ def spread_points_ellipsoid(resolution: float, radii, return_normals=False):
 def _spread_points_pipe(resolution: float, length: float, radius: float):
     """ Spreads points around the outer surface of a cylinder, without caps. Always returns normal vectors. """
     # Number of subdivisions along length
-    n_length = int(math.ceil(length / resolution))
+    n_length = int(math.ceil(length / resolution)) + 1
     # Number of subdivisions around circumference
     n_circum = int(math.ceil(2 * math.pi * radius / resolution))
 
