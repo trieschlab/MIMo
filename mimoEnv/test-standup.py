@@ -9,7 +9,7 @@ def test(env, test_for=1000, model=None):
         if model == None:
             action = env.action_space.sample()
         else:
-            action, _ = model.predict(obs, deterministic=True)
+            action, _ = model.predict(obs)
         obs, _, done, _ = env.step(action)
         env.render()
         if done:
@@ -29,7 +29,7 @@ def main():
                         help='Total timesteps of testing of trained policy')               
     parser.add_argument('--save_every', default=100000, type=int,
                         help='Number of timesteps between model saves')
-    parser.add_argument('--new_model', default='PPO', type=str, 
+    parser.add_argument('--algorithm', default=None, type=str, 
                         choices=['PPO','SAC','TD3','DDPG','A2C','HER'],                   
                         help='RL algorithm from Stable Baselines3')
     parser.add_argument('--load_model', default=False, type=str,
@@ -38,27 +38,29 @@ def main():
                         help='Name of model to save')
     
     args = parser.parse_args()
-    new_model = args.new_model
+    algorithm = args.algorithm
     load_model = args.load_model
     save_model = args.save_model
     save_every = args.save_every
     train_for = args.train_for
     test_for = args.test_for
 
-    if new_model=='PPO':
+    if algorithm=='PPO':
         from stable_baselines3 import PPO as RL
-    elif new_model=='SAC':
+    elif algorithm=='SAC':
         from stable_baselines3 import SAC as RL
-    elif new_model=='TD3':
+    elif algorithm=='TD3':
         from stable_baselines3 import TD3 as RL
-    elif new_model=='DDPG':
+    elif algorithm=='DDPG':
         from stable_baselines3 import DDPG as RL
-    elif new_model=='A2C':
+    elif algorithm=='A2C':
         from stable_baselines3 import A2C as RL
 
     # load pretrained model or create new one
-    if load_model:
-        model = RL.load("models/standup" + load_model, env, tensorboard_log="models/standup"+save_model+"/")
+    if algorithm==None:
+        model = None
+    elif load_model:
+        model = RL.load("models/standup" + load_model, env)
     else:
         model = RL("MultiInputPolicy", env, tensorboard_log="models/standup"+save_model+"/", verbose=1)
 
