@@ -149,13 +149,23 @@ class MIMoReachEnv(MIMoEnvDummy, utils.EzPickle):
 
         # reset target in random initial position and velocities as zero
         qpos = self.sim.data.qpos
-        target_pos_error = True
+        """target_pos_error = True
         while target_pos_error:
-            new_target_pos = self.initial_state.qpos[[-7,-6,-5]] + self.np_random.uniform(low=-0.1, high=0.1, size=3)
+            new_target_pos = np.array([
+                self.initial_state.qpos[-7] + self.np_random.uniform(low=-0.05, high=0.1, size=1)[0],
+                self.initial_state.qpos[-6] + self.np_random.uniform(low=-0.15, high=0.1, size=1)[0],
+                self.initial_state.qpos[-5] + self.np_random.uniform(low=-0.05, high=0.05, size=1)[0]
+            ])
             right_arm_pos = self.sim.data.get_body_xpos('left_upper_arm')
             target_dist = np.linalg.norm(new_target_pos - right_arm_pos)
             target_pos_error = target_dist > 0.25
-        qpos[[-7,-6, -5]] = new_target_pos
+        qpos[[-7,-6,-5]] = new_target_pos
+        """
+        qpos[[-7,-6,-5]] = np.array([
+                self.initial_state.qpos[-7] + self.np_random.uniform(low=-0.1, high=0, size=1)[0],
+                self.initial_state.qpos[-6] + self.np_random.uniform(low=-0.2, high=0.1, size=1)[0],
+                self.initial_state.qpos[-5] + self.np_random.uniform(low=-0.1, high=0, size=1)[0]
+        ])
         qvel = np.zeros(self.sim.data.qvel.shape)
 
         new_state = mujoco_py.MjSimState(
@@ -178,12 +188,16 @@ class MIMoReachEnv(MIMoEnvDummy, utils.EzPickle):
         head_pos = self.sim.data.get_body_xpos('head')
         head_target_dif = target_pos - head_pos
         head_target_dist = np.linalg.norm(head_target_dif)
+        head_target_dif[2] = head_target_dif[2] - 0.067375 # extra difference to eyes height in head 
         half_eyes_dist = 0.0245 # horizontal distance between eyes / 2
-        eyes_target_dist = head_target_dist - 0.07
+        eyes_target_dist = head_target_dist - 0.07 # remove distance from head center to eyes
         self.sim.data.qpos[13] = np.arctan(head_target_dif[1]/head_target_dif[0]) # head - horizontal
         self.sim.data.qpos[14] = np.arctan(-head_target_dif[2]/head_target_dif[0]) # head - vertical
-        self.sim.data.qpos[16] = np.arctan(half_eyes_dist/eyes_target_dist)    # left eye -  horizontal
-        self.sim.data.qpos[18] = np.arctan(-half_eyes_dist/eyes_target_dist)    # right eye - horizontal
+        self.sim.data.qpos[15] = 0  # head - side tild 
+        self.sim.data.qpos[16] = np.arctan(-2*half_eyes_dist/eyes_target_dist)    # left eye -  horizontal
+        self.sim.data.qpos[17] = 0  # left eye - vertical
+        self.sim.data.qpos[18] = np.arctan(-2*half_eyes_dist/eyes_target_dist)    # right eye - horizontal
+        self.sim.data.qpos[18] = 0  # right eye - vertical
 
         obs = self._get_obs()
 

@@ -47,8 +47,8 @@
 	<include file="reach_meta.xml"></include>
 
     <equality>
-        <weld body1="head"/>
-        <weld body1="hip"/>
+        <weld body1="upper_body"/>
+        <weld body1="lower_body"/>
         <weld body1="left_hand"/>
         <weld body1="left_foot"/>
         <weld body1="right_foot"/>
@@ -68,7 +68,7 @@
 			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>
 
-        <body name="target" pos="0.25 -0.06 0.6">
+        <body name="target" pos="0.3 -0.05 0.7">
             <freejoint/>
 			<geom type="sphere" material="matgeom" size="0.025" pos="0 0 0" condim="6" solimp="0.99 0.995 0.001 0.5 2" solref="-20000 -20"/>
 		</body>
