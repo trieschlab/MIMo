@@ -29,16 +29,21 @@ class MIMoEnv(robot_env.RobotEnv):
                  model_path=MIMO_XML,
                  initial_qpos={},
                  n_substeps=2,
+                 proprio_params=None,
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
                  goals_in_observation=True,
                  done_active=False):
 
+        assert any([proprio_params, touch_params, vision_params, vestibular_params]), "Must have some observations!"
+
+        self.proprio_params = proprio_params
         self.touch_params = touch_params
         self.vision_params = vision_params
         self.vestibular_params = vestibular_params
 
+        self.proprioception = None
         self.touch = None
         self.vision = None
         self.vestibular = None
@@ -80,29 +85,17 @@ class MIMoEnv(robot_env.RobotEnv):
         obs = self._get_obs()
         # Observation spaces
         spaces_dict = {
-            "observation": spaces.Box(
-                -np.inf, np.inf, shape=obs["observation"].shape, dtype="float32"
-            ),
-            "desired_goal": spaces.Box(
-                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
-            ),
-            "achieved_goal": spaces.Box(
-                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
-            ),
+            "desired_goal": spaces.Box(-np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"),
+            "achieved_goal": spaces.Box(-np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"),
+            "observation": spaces.Box(-np.inf, np.inf, shape=obs["observation"].shape, dtype="float32")
         }
         if self.touch:
-            spaces_dict["touch"] = spaces.Box(
-                    -np.inf, np.inf, shape=obs["touch"].shape, dtype="float32"
-                )
+            spaces_dict["touch"] = spaces.Box(-np.inf, np.inf, shape=obs["touch"].shape, dtype="float32")
         if self.vision:
             for sensor in self.vision_params:
-                spaces_dict[sensor] = spaces.Box(
-                        0, 256, shape=obs[sensor].shape, dtype="uint8"
-                    )
+                spaces_dict[sensor] = spaces.Box(0, 256, shape=obs[sensor].shape, dtype="uint8")
         if self.vestibular:
-            spaces_dict["vestibular"] = spaces.Box(
-                    -np.inf, np.inf, shape=obs["vestibular"].shape, dtype="float32"
-                )
+            spaces_dict["vestibular"] = spaces.Box(-np.inf, np.inf, shape=obs["vestibular"].shape, dtype="float32")
 
         self.observation_space = spaces.Dict(spaces_dict)
 
@@ -110,28 +103,25 @@ class MIMoEnv(robot_env.RobotEnv):
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
         # observation space and goals are not set yet
 
-        # Always do proprioception
-        self.proprioception = SimpleProprioception(self, {})
-
         # Do setups
+        self._proprio_setup(self.proprio_params)
         if self.touch_params is not None:
             self._touch_setup(self.touch_params)
         if self.vision_params is not None:
             self._vision_setup(self.vision_params)
         if self.vestibular_params is not None:
             self._vestibular_setup(self.vestibular_params)
-
-        # Do sound setup
-        # Do whatever actuation setup
         # Should be able to get all types of sensor outputs here
         # Should be able to produce all control inputs here
-        pass
+
+    def _proprio_setup(self, proprio_params):
+        self.proprioception = SimpleProprioception(self, proprio_params)
 
     def _touch_setup(self, touch_params):
-        self.touch = DiscreteTouch(self, touch_params=touch_params)
+        self.touch = DiscreteTouch(self, touch_params)
 
     def _vision_setup(self, vision_params):
-        self.vision = SimpleVision(self, vision_params)  # This fixes the GLEW initialization error
+        self.vision = SimpleVision(self, vision_params)
 
     def _vestibular_setup(self, vestibular_params):
         self.vestibular = SimpleVestibular(self, vestibular_params)
@@ -174,7 +164,6 @@ class MIMoEnv(robot_env.RobotEnv):
         return True
 
     def _get_proprio_obs(self):
-        # Naive implementation: Joint positions and velocities
         return self.proprioception.get_proprioception_obs()
 
     def _get_touch_obs(self):
@@ -194,13 +183,11 @@ class MIMoEnv(robot_env.RobotEnv):
         """Returns the observation."""
         # robot proprioception:
         proprio_obs = self._get_proprio_obs()
-
         observation_dict = {
             "observation": proprio_obs,
             "achieved_goal": np.empty(shape=(0,)),
             "desired_goal": np.empty(shape=(0,))
         }
-
         # robot touch sensors:
         if self.touch:
             touch_obs = self._get_touch_obs().ravel()
@@ -210,7 +197,6 @@ class MIMoEnv(robot_env.RobotEnv):
             vision_obs = self._get_vision_obs()
             for sensor in vision_obs:
                 observation_dict[sensor] = vision_obs[sensor]
-
         # vestibular
         if self.vestibular:
             vestibular_obs = self._get_vestibular_obs()

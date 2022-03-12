@@ -39,11 +39,16 @@ TOUCH_PARAMS = {
 
 VISION_PARAMS = {
     "eye_left": {"width": 400, "height": 300},
-    "eye_right": {"width": 400, "height": 300}
+    "eye_right": {"width": 400, "height": 300},
 }
 
 VESTIBULAR_PARAMS = {
-    "sensors": ["vestibular_acc", "vestibular_gyro"]
+    "sensors": ["vestibular_acc", "vestibular_gyro"],
+}
+
+# Proprioception is always included and always includes the relative joint positions
+PROPRIOCEPTION_PARAMS = {
+    "components": ["velocity", "torque", "limits"],
 }
 
 
@@ -53,6 +58,7 @@ class MIMoEnvDummy(MIMoEnv):
                  model_path=MIMO_XML,
                  initial_qpos={},
                  n_substeps=2,
+                 proprio_params=None,
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
@@ -64,11 +70,14 @@ class MIMoEnvDummy(MIMoEnv):
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
                          n_substeps=n_substeps,
+                         proprio_params=proprio_params,
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
                          goals_in_observation=goals_in_observation,
                          done_active=done_active)
+        for key in self.observation_space:
+            print(key, self.observation_space[key].shape)
 
     def _touch_setup(self, touch_params):
         self.touch = TrimeshTouch(self, touch_params=touch_params)
@@ -90,8 +99,8 @@ class MIMoEnvDummy(MIMoEnv):
         """Returns the observations."""
         obs = super()._get_obs()
 
-        if self.vision_params:
-            self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
+        #if self.vision_params:
+        #    self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
 
         #for body_name in self.touch_params["scales"]:
         #    self.touch.plot_force_body(body_name=body_name)
@@ -149,6 +158,7 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
         utils.EzPickle.__init__(
             self,
             model_path=MIMO_XML,
+            proprio_params=PROPRIOCEPTION_PARAMS,
             touch_params=TOUCH_PARAMS,
             vision_params=VISION_PARAMS,
             vestibular_params=VESTIBULAR_PARAMS,
@@ -158,6 +168,7 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
         MIMoEnvDummy.__init__(
             self,
             model_path=MIMO_XML,
+            proprio_params=PROPRIOCEPTION_PARAMS,
             touch_params=TOUCH_PARAMS,
             vision_params=VISION_PARAMS,
             vestibular_params=VESTIBULAR_PARAMS,
