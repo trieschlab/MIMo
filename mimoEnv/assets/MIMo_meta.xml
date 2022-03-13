@@ -23,22 +23,14 @@
     </default>
 
     <asset>
-		<!--<texture name="tex_head" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>-->
+
 		<texture name="tex_head_default" type="cube" fileright="tex/head_front.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
 		<texture name="tex_head_happy" type="cube" fileright="tex/head_front_happy.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
 		<texture name="tex_head_sad" type="cube" fileright="tex/head_front_sad.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
 		<texture name="tex_head_surprised" type="cube" fileright="tex/head_front_surprised.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
 		<texture name="tex_eye_left" type="cube" fileright="tex/eye_pupil_left.png" rgb1="1 1 1"/>
 		<texture name="tex_eye_right" type="cube" fileright="tex/eye_pupil_right.png" rgb1="1 1 1"/>
-		<!---
-		<texture name="tex_top_up" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
-		<texture name="tex_top_down" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
-		<texture name="tex_top_sleeve" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
-		<texture name="tex_pants_up" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
-		<texture name="tex_pants_down" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" fileback="tex/primitives_back.png" rgb1="0.95 .8 .5"/>
-		<texture name="tex_pants_leg" type="cube" fileright="tex/primitives_right.png" fileleft="tex/primitives_left.png" fileup="tex/primitives_up.png" filedown="tex/primitives_down.png" filefront="tex/primitives_front.png" rgb1="0.95 .8 .5"/>
-		
-		-->		
+
 		<material name="skin" rgba="0.95 0.8 0.5 1" specular=".15" shininess=".7"/>
 		<material name="buttons" rgba=".05 .05 .05 1" specular=".9" shininess=".9"/>
 		<material name="head" texture="tex_head_default" texuniform="true" specular=".0" shininess=".0"/>
@@ -51,16 +43,7 @@
 		<material name="pants_leg" rgba="0.1 0.1 0.6 1" specular=".0" shininess=".0"/>
 		<material name="eye_left" texture="tex_eye_left" texuniform="true" specular=".0" shininess=".0"/>
 		<material name="eye_right" texture="tex_eye_right" texuniform="true" specular=".0" shininess=".0"/>
-		<!--
-		<material name="top_up" texture="tex_top_up" texuniform="true" specular=".0" shininess=".0"/>
-		<material name="top_down" texture="tex_top_down" texuniform="true" specular=".0" shininess=".0"/>
-		<material name="top_sleeve" texture="tex_top_sleeve" texuniform="true" specular=".0" shininess=".0"/>
-		<material name="pants_up" texture="tex_pants_up" texuniform="true" specular=".0" shininess=".0"/>
-		<material name="pants_down" texture="tex_pants_down" texuniform="true" specular=".0" shininess=".0"/>
-		<material name="pants_leg" texture="tex_pants_leg" texuniform="true" specular=".0" shininess=".0"/>
-		<material name="eye_left" texture="tex_eye_left" texuniform="true" specular=".0" shininess=".0"/>
-		<material name="eye_right" texture="tex_eye_right" texuniform="true" specular=".0" shininess=".0"/>
-		-->
+
     </asset>
 	
 	<!-- Internal contacts should not have friction to reduce "getting stuck" on ourselves-->
@@ -190,8 +173,6 @@
 		<motor name="act:left_foot_inversion" 		joint="robot:left_foot2" 		gear="1.16"	forcerange="-.91 1"/>
 		<motor name="act:left_foot_rotation" 		joint="robot:left_foot3" 		gear="1.2"	forcerange="-1 1"/>
 
-		<!--<position name="right_toes" gear="57.296" kp="1" joint="robot:right_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/>
-		<position name="left_toes" gear="57.296" kp="1" joint="robot:left_toes" ctrlrange="-30 80" forcelimited="true" forcerange="-.01 .01"/> -->
 	</actuator>
 	
 </mujoco>

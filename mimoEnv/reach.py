@@ -13,12 +13,11 @@ def test(env, test_for=1000, model=None):
         else:
             action, _ = model.predict(obs)
         obs, _, done, _ = env.step(action)
+        env.render()
         if done or idx % 1000 == 0:
             time.sleep(1)
             obs = env.reset()
-        env.render()
     env.reset()
-    env.close()
 
 
 def main():
