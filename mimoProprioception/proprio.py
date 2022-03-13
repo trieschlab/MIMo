@@ -69,4 +69,4 @@ class SimpleProprioception(Proprioception):
             limit_response = np.asarray(limits)  # np.asarrays
             self.obs["limits"] = limit_response
 
-        return np.concatenate([self.obs[key] for key in self.obs])
+        return np.concatenate([self.obs[key] for key in sorted(self.obs.keys())])

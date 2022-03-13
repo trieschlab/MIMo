@@ -2,54 +2,10 @@ import numpy as np
 
 from gym import utils
 
-from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML
+from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML, \
+    DEFAULT_VISION_PARAMS, DEFAULT_VESTIBULAR_PARAMS, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS
 from mimoTouch.touch_trimesh import TrimeshTouch
 import mimoEnv.utils as env_utils
-
-
-# Dictionary with body_names as keys,
-TOUCH_PARAMS = {
-    "scales": {
-        "left_toes": 0.010,
-        "right_toes": 0.010,
-        "left_foot": 0.015,
-        "right_foot": 0.015,
-        "left_lower_leg": 0.038,
-        "right_lower_leg": 0.038,
-        "left_upper_leg": 0.027,
-        "right_upper_leg": 0.027,
-        "hip": 0.025,
-        "lower_body": 0.025,
-        "upper_body": 0.030,
-        "head": 0.013,
-        "left_eye": 1.0,
-        "right_eye": 1.0,
-        "left_upper_arm": 0.024,
-        "right_upper_arm": 0.024,
-        "left_lower_arm": 0.024,
-        "right_lower_arm": 0.024,
-        "left_hand": 0.007,
-        "right_hand": 0.007,
-        "left_fingers": 0.002,
-        "right_fingers": 0.002,
-    },
-    "touch_function": "force_vector",
-    "adjustment_function": "spread_linear",
-}
-
-VISION_PARAMS = {
-    "eye_left": {"width": 400, "height": 300},
-    "eye_right": {"width": 400, "height": 300},
-}
-
-VESTIBULAR_PARAMS = {
-    "sensors": ["vestibular_acc", "vestibular_gyro"],
-}
-
-# Proprioception is always included and always includes the relative joint positions
-PROPRIOCEPTION_PARAMS = {
-    "components": ["velocity", "torque", "limits"],
-}
 
 
 class MIMoEnvDummy(MIMoEnv):
@@ -118,15 +74,6 @@ class MIMoEnvDummy(MIMoEnv):
     def _step_callback(self):
         self.steps += 1
 
-    def _set_action(self, action):
-        ctrlrange = self.sim.model.actuator_ctrlrange
-        actuation_range = (ctrlrange[:, 1] - ctrlrange[:, 0]) / 2.0
-        actuation_center = (ctrlrange[:, 1] + ctrlrange[:, 0]) / 2.0
-        self.sim.data.ctrl[:] = actuation_center + action * actuation_range
-        self.sim.data.ctrl[:] = np.clip(
-            self.sim.data.ctrl, ctrlrange[:, 0], ctrlrange[:, 1]
-        )
-
     def _is_success(self, achieved_goal, desired_goal):
         """Indicates whether or not the achieved goal successfully achieved the desired goal. Since this class is just
         a demo environment to test sensor modalities, we do not care about this! """
@@ -158,20 +105,20 @@ class MIMoTestEnv(MIMoEnvDummy, utils.EzPickle):
         utils.EzPickle.__init__(
             self,
             model_path=MIMO_XML,
-            proprio_params=PROPRIOCEPTION_PARAMS,
-            touch_params=TOUCH_PARAMS,
-            vision_params=VISION_PARAMS,
-            vestibular_params=VESTIBULAR_PARAMS,
+            proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
+            touch_params=DEFAULT_TOUCH_PARAMS,
+            vision_params=DEFAULT_VISION_PARAMS,
+            vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
             goals_in_observation=False,
             done_active=True
         )
         MIMoEnvDummy.__init__(
             self,
             model_path=MIMO_XML,
-            proprio_params=PROPRIOCEPTION_PARAMS,
-            touch_params=TOUCH_PARAMS,
-            vision_params=VISION_PARAMS,
-            vestibular_params=VESTIBULAR_PARAMS,
+            proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
+            touch_params=DEFAULT_TOUCH_PARAMS,
+            vision_params=DEFAULT_VISION_PARAMS,
+            vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
             goals_in_observation=False,
             done_active=True
         )

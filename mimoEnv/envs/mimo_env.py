@@ -3,14 +3,14 @@ import numpy as np
 import mujoco_py
 import copy
 
-from gym import spaces
+from gym import spaces, utils
 from gym.envs.robotics import robot_env
 
 from mimoTouch.touch import DiscreteTouch
 from mimoVision.vision import SimpleVision
 from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception
-import mimoEnv.utils as utils
+import mimoEnv.utils as mimo_utils
 
 # Ensure we get the path separator correct on windows
 MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "Sample_Scene.xml"))
@@ -22,8 +22,52 @@ EMOTES = {
     "surprised": "tex_head_surprised",
 }
 
+# Dictionary with body_names as keys,
+DEFAULT_TOUCH_PARAMS = {
+    "scales": {
+        "left_toes": 0.010,
+        "right_toes": 0.010,
+        "left_foot": 0.015,
+        "right_foot": 0.015,
+        "left_lower_leg": 0.038,
+        "right_lower_leg": 0.038,
+        "left_upper_leg": 0.027,
+        "right_upper_leg": 0.027,
+        "hip": 0.025,
+        "lower_body": 0.025,
+        "upper_body": 0.030,
+        "head": 0.013,
+        "left_eye": 1.0,
+        "right_eye": 1.0,
+        "left_upper_arm": 0.024,
+        "right_upper_arm": 0.024,
+        "left_lower_arm": 0.024,
+        "right_lower_arm": 0.024,
+        "left_hand": 0.007,
+        "right_hand": 0.007,
+        "left_fingers": 0.002,
+        "right_fingers": 0.002,
+    },
+    "touch_function": "force_vector",
+    "adjustment_function": "spread_linear",
+}
 
-class MIMoEnv(robot_env.RobotEnv):
+DEFAULT_VISION_PARAMS = {
+    "eye_left": {"width": 400, "height": 300},
+    "eye_right": {"width": 400, "height": 300},
+}
+
+DEFAULT_VESTIBULAR_PARAMS = {
+    "sensors": ["vestibular_acc", "vestibular_gyro"],
+}
+
+# Proprioception is always included and always includes the relative joint positions
+DEFAULT_PROPRIOCEPTION_PARAMS = {
+    "components": ["velocity", "torque", "limits"],
+}
+
+
+class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     def __init__(self,
                  model_path=MIMO_XML,
@@ -36,7 +80,7 @@ class MIMoEnv(robot_env.RobotEnv):
                  goals_in_observation=True,
                  done_active=False):
 
-        assert any([proprio_params, touch_params, vision_params, vestibular_params]), "Must have some observations!"
+        utils.EzPickle.__init__(**locals())
 
         self.proprio_params = proprio_params
         self.touch_params = touch_params
@@ -74,10 +118,10 @@ class MIMoEnv(robot_env.RobotEnv):
         self.facial_expressions = {}
         for emote in EMOTES:
             tex_name = EMOTES[emote]
-            tex_id = utils.texture_name2id(self.sim, tex_name)
+            tex_id = mimo_utils.texture_name2id(self.sim, tex_name)
             self.facial_expressions[emote] = tex_id
         head_material_name = "head"
-        self._head_material_id = utils.material_name2id(self.sim, head_material_name)
+        self._head_material_id = mimo_utils.material_name2id(self.sim, head_material_name)
 
         self.goal = self._sample_goal()
         n_actions = len([name for name in self.sim.model.actuator_names if name.startswith("act:")])
@@ -210,7 +254,13 @@ class MIMoEnv(robot_env.RobotEnv):
         return observation_dict
 
     def _set_action(self, action):
-        raise NotImplementedError
+        ctrlrange = self.sim.model.actuator_ctrlrange
+        actuation_range = (ctrlrange[:, 1] - ctrlrange[:, 0]) / 2.0
+        actuation_center = (ctrlrange[:, 1] + ctrlrange[:, 0]) / 2.0
+        self.sim.data.ctrl[:] = actuation_center + action * actuation_range
+        self.sim.data.ctrl[:] = np.clip(
+            self.sim.data.ctrl, ctrlrange[:, 0], ctrlrange[:, 1]
+        )
 
     def swap_facial_expression(self, emotion):
         """ Changes MIMos facial texture. Valid emotion names are in self.facial_expression, which links readable
