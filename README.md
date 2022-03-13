@@ -2,16 +2,16 @@
 
 ## Installation:
 
-First install mujoco and mujoco-py following their instructions
+First install mujoco and mujoco-py following their instructions.
+Then clone this repository, install other dependencies with `pip install -r requirements.txt` and finally run `pip install -e .`
 
-Then clone gymTouch (https://github.com/Domattee/gymTouch), move to gymTouch/gymTouch and run `pip install -e .`
+## Sample Environments
 
-Then clone Mimo, move to the directory with setup.py and run `pip install -e .`
+We provide several sample environments with some simple tasks for demonstration purposes. These come with both an openAI environment in `mimoEnv/envs` as well as simple training scripts using stable-baselines3, in `mimoEnv`. These environments include:
 
-## Tests
-
-There is a dummy/test environment setup in mimoEnv, as well as a very crude minimal working environment script. The script is `mimoEnv/test.py`, the environment is `MIMoTestEnv` in `mimoEnv/envs/mimo_test.py`
-
+  1. `reach` - A stripped down version where MIMo is tasked with reaching for a ball hovering in front of him. By default only the proprioceptive sensors are used. MIMo can only move his right arm and his head is manually fixed to track the ball. The initial position of both the ball and MIMo is slightly randomized.
+  2. `standup` - MIMo is tasked with standing up from lying on his back. Proprioception and the vestibular sensors are included by default.
+  3. `test` - This is a simple dummy environment set up to demonstrate and visualize most of the sensor modalities. MIMo is set to fall from a short height. During this, the visual and haptic outputs are rendered and saved to hard drive.
 
 ## Observation spaces and `done`
 
