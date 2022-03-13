@@ -129,8 +129,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         obs = self._get_obs()
         # Observation spaces
         spaces_dict = {
-            "desired_goal": spaces.Box(-np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"),
-            "achieved_goal": spaces.Box(-np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"),
             "observation": spaces.Box(-np.inf, np.inf, shape=obs["observation"].shape, dtype="float32")
         }
         if self.touch:
@@ -140,6 +138,11 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
                 spaces_dict[sensor] = spaces.Box(0, 256, shape=obs[sensor].shape, dtype="uint8")
         if self.vestibular:
             spaces_dict["vestibular"] = spaces.Box(-np.inf, np.inf, shape=obs["vestibular"].shape, dtype="float32")
+        if self.goals_in_observation:
+            spaces_dict["desired_goal"] = spaces.Box(
+                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32")
+            spaces_dict["achieved_goal"] = spaces.Box(
+                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32")
 
         self.observation_space = spaces.Dict(spaces_dict)
 
@@ -197,6 +200,19 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         reward = self.compute_reward(achieved_goal, self.goal, info)
         return obs, reward, done, info
 
+    def reset(self):
+        # Attempt to reset the simulator. Since we randomize initial conditions, it
+        # is possible to get into a state with numerical issues (e.g. due to penetration or
+        # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
+        # In this case, we just keep randomizing until we eventually achieve a valid initial
+        # configuration.
+        did_reset_sim = False
+        while not did_reset_sim:
+            did_reset_sim = self._reset_sim()
+        self.goal = self._sample_goal().copy()
+        obs = self._get_obs()
+        return obs
+
     def _reset_sim(self):
         """Resets a simulation and indicates whether or not it was successful.
         If a reset was unsuccessful (e.g. if a randomized state caused an error in the
@@ -229,8 +245,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         proprio_obs = self._get_proprio_obs()
         observation_dict = {
             "observation": proprio_obs,
-            "achieved_goal": np.array([0]),
-            "desired_goal": np.array([0])
         }
         # robot touch sensors:
         if self.touch:
