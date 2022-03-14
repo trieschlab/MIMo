@@ -10,6 +10,7 @@ class Vision:
     def __init__(self, env, camera_parameters):
         self.env = env
         self.camera_parameters = camera_parameters
+        self.sensor_outputs = {}
 
     def render_camera(self, width, height, camera_name):
         raise NotImplementedError
@@ -28,8 +29,6 @@ class SimpleVision(Vision):
             self.offscreen_context = mujoco_py.GlfwContext(offscreen=True)
         else:
             self.offscreen_context = self._get_viewer('rgb_array').opengl_context
-
-        self.obs = {}
 
     def render_camera(self, width, height, camera_name):
         mode = "rgb_array"
@@ -60,17 +59,17 @@ class SimpleVision(Vision):
         if self.env.sim._render_context_window is not None:
             self.swap_context(self.env.sim._render_context_window.window)
 
-        self.obs = imgs
+        self.sensor_outputs = imgs
         return imgs
 
     def save_obs_to_file(self, directory, suffix: str = ""):
         os.makedirs(directory, exist_ok=True)
-        if self.obs is None or len(self.obs) == 0:
+        if self.sensor_outputs is None or len(self.sensor_outputs) == 0:
             raise RuntimeWarning("No image observations to save!")
-        for camera_name in self.obs:
+        for camera_name in self.sensor_outputs:
             file_name = camera_name + suffix + ".png"
             matplotlib.image.imsave(os.path.join(
-                directory, file_name), self.obs[camera_name])
+                directory, file_name), self.sensor_outputs[camera_name])
 
     def _get_viewer(self, mode):
         self.viewer = self._viewers.get(mode)

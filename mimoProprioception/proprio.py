@@ -7,8 +7,7 @@ class Proprioception:
         self.env = env
         self.proprio_parameters = proprio_parameters
         self.output_components = proprio_parameters["components"]
-        self.sensors = []
-        self.sensor_names = {}
+        self.sensor_outputs = {}
 
     def get_proprioception_obs(self):
         raise NotImplementedError
@@ -17,6 +16,9 @@ class Proprioception:
 class SimpleProprioception(Proprioception):
     def __init__(self, env, proprio_parameters):
         super().__init__(env, proprio_parameters)
+
+        self.sensors = []
+        self.sensor_names = {}
 
         for sensor_name in self.env.sim.model.sensor_names:
             if sensor_name.startswith("proprio:"):
@@ -35,15 +37,13 @@ class SimpleProprioception(Proprioception):
 
         self._limit_thresh = .035  # ~2 degrees in radians
 
-        self.obs = {}
-
     def get_proprioception_obs(self):
-        self.obs = {}
+        self.sensor_outputs = {}
         robot_qpos = np.array([self.env.sim.data.get_joint_qpos(name) for name in self.joint_names])
-        self.obs["qpos"] = robot_qpos
+        self.sensor_outputs["qpos"] = robot_qpos
         if "velocity" in self.output_components:
             robot_qvel = np.array([self.env.sim.data.get_joint_qvel(name) for name in self.joint_names])
-            self.obs["qvel"] = robot_qvel
+            self.sensor_outputs["qvel"] = robot_qvel
         if "torques" in self.output_components:
             torques = []
             for sensor in self.sensors:
@@ -51,7 +51,7 @@ class SimpleProprioception(Proprioception):
                 # Convert from child to parent frame? Report torque in terms of the axis of the relevant joints?
                 torques.append(sensor_output)
             torques = np.concatenate(torques)
-            self.obs["torques"] = torques
+            self.sensor_outputs["torques"] = torques
 
         # Limit sensor outputs 0 while the joint position is more than _limit_thresh away from its limits, then scales
         # from 0 to 1 at the limit and then beyond 1 beyond the limit
@@ -67,6 +67,6 @@ class SimpleProprioception(Proprioception):
                 response = - min(response, 0)  # Clamp all positive values (have not reached the threshold) and invert
                 limits.append(response)
             limit_response = np.asarray(limits)  # np.asarrays
-            self.obs["limits"] = limit_response
+            self.sensor_outputs["limits"] = limit_response
 
-        return np.concatenate([self.obs[key] for key in sorted(self.obs.keys())])
+        return np.concatenate([self.sensor_outputs[key] for key in sorted(self.sensor_outputs.keys())])

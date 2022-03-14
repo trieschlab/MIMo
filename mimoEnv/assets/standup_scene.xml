@@ -62,7 +62,7 @@
         <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
 		
 		<!-- The location and orientation of the base model can be set using this body -->
-		<body name="mimo_location" pos="0 0 .05" euler="0 270 0">
+		<body name="mimo_location" pos="0 0 .33" euler="0 0 0">
 			<freejoint/>
 			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>
