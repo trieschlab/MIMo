@@ -22,7 +22,7 @@ class TrimeshTouch(Touch):
         "force_vector_global": 3,
     }
 
-    VALID_ADJUSTMENTS = ["nearest", "spread_linear"]
+    VALID_RESPONSE_FUNCTIONS = ["nearest", "spread_linear"]
 
     """ This class uses bodies as the base touch object. Sensors are part of a mesh (using trimesh).
 
@@ -394,7 +394,7 @@ class TrimeshTouch(Touch):
         for contact_id, body_id, forces in contact_tuples:
             # At this point we already have the forces for each contact, now we must attach/spread them to sensor
             # points, based on the adjustment function
-            self.adjustment_function(contact_id, body_id, forces)
+            self.response_function(contact_id, body_id, forces)
 
         sensor_obs = self.flatten_sensor_dict(self.sensor_outputs)
         return sensor_obs

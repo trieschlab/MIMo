@@ -49,7 +49,7 @@ DEFAULT_TOUCH_PARAMS = {
         "right_fingers": 0.002,
     },
     "touch_function": "force_vector",
-    "adjustment_function": "spread_linear",
+    "response_function": "spread_linear",
 }
 
 DEFAULT_VISION_PARAMS = {

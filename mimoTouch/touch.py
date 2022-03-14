@@ -14,7 +14,7 @@ GEOM_TYPES = {"PLANE": 0, "HFIELD": 1, "SPHERE": 2, "CAPSULE": 3, "ELLIPSOID": 4
 class Touch:
 
     VALID_TOUCH_TYPES = {}
-    VALID_ADJUSTMENTS = []
+    VALID_RESPONSE_FUNCTIONS = []
 
     def __init__(self, env, touch_params):
         """
@@ -53,9 +53,9 @@ class Touch:
         self.touch_size = self.VALID_TOUCH_TYPES[self.touch_type]
 
         # Get all information for the surface adjustment function: function name, reference to function
-        self.adjustment_type = touch_params["adjustment_function"]
-        assert self.adjustment_type in self.VALID_ADJUSTMENTS
-        self.adjustment_function = getattr(self, self.adjustment_type)
+        self.response_type = touch_params["response_function"]
+        assert self.response_type in self.VALID_RESPONSE_FUNCTIONS
+        self.response_function = getattr(self, self.response_type)
 
         self.sensor_outputs = {}
 
@@ -75,7 +75,7 @@ class DiscreteTouch(Touch):
         "force_vector_global": 3,
     }
 
-    VALID_ADJUSTMENTS = ["nearest", "spread_linear"]
+    VALID_RESPONSE_FUNCTIONS = ["nearest", "spread_linear"]
 
     def __init__(self, env, touch_params):
         """
@@ -368,7 +368,7 @@ class DiscreteTouch(Touch):
         for contact_id, geom_id, forces in contact_tuples:
             # At this point we already have the forces for each contact, now we must attach/spread them to sensor
             # points, based on the adjustment function
-            self.adjustment_function(contact_id, geom_id, forces)
+            self.response_function(contact_id, geom_id, forces)
 
         sensor_obs = self.flatten_sensor_dict(self.sensor_outputs)
         return sensor_obs
