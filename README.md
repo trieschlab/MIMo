@@ -2,7 +2,13 @@
 
 ## The MIMo environment.
 
-Base class. Action space, observation space
+Base class. 
+
+MuJoCo xmls.
+
+The action space is auomatically generated from the underlying MuJoCo xml. Each actuator whose name starts with 'act:' is included in the action space. Each actuator has a range from -1 to 1, with full torque in opposite directions at -1 and 1 and a linear response in between.
+
+The observation space is a dictionary built automatically based on the configuration of the sensor modules. An entry 'observation' is always included and always returns relative joint positions. Enabling more sensor modules adds extra entries. For example, each camera of the vision system will store its image in a separate entry in the observation space, named after the associated camera.
 
 ### Observation spaces and `done`
 
@@ -19,7 +25,7 @@ Then clone this repository, install other dependencies with `pip install -r requ
 
 ## Sensor modules
 
-All of the sensor modules follow the same pattern. They are initialized with a MuJoCo gym environment and a dictionary of parameters and their observations can be collected by calling their `get_<modality>_touch` function. The parameter structure and workings of each module are described in more detail below.
+All of the sensor modules follow the same pattern. They are initialized with a MuJoCo gym environment and a dictionary of parameters and their observations can be collected by calling their `get_<modality>_touch` function. The return of this function is generally a single array containing the flattened/concatenated output. Each module also has an attribute `sensor_outputs` that stores the unflattened outputs as a dictionary. The parameter structure and workings of each module are described in more detail below.
 
 ### Proprioception
 
