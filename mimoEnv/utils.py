@@ -58,13 +58,11 @@ def get_body_id(mujoco_model, body_id=None, body_name=None):
 
 
 def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
-    """ Sets the qpos values for the joint with name joint_name. qpos must be an array of the appropriate size for the
-    joint! """
+    """ Sets the qpos values for the joint with name joint_name. qpos must be the appropriate size for the joint! """
     joint_id = mujoco_model.joint_name2id(joint_name)
     joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
     joint_type = mujoco_model.jnt_type[joint_id]
     n_qpos = MUJOCO_JOINT_SIZE[joint_type]
-    assert qpos.shape == (n_qpos, ), "Passed qpos does not fit joint!"
     mujoco_data.qpos[joint_qpos_addr:joint_qpos_addr + n_qpos] = qpos
 
 
