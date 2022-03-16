@@ -4,6 +4,8 @@ from matplotlib import pyplot as plt
 
 EPS = 1e-10
 
+MUJOCO_JOINT_SIZE = [7, 4, 1, 1]  # Number of qpos entries for each joint type [free, ball, slide, hinge]
+
 
 def rotate_vector(vector, rot_matrix):
     """ Rotates the vectors with the the rotation matrix.
@@ -53,6 +55,17 @@ def get_body_id(mujoco_model, body_id=None, body_name=None):
         body_id = mujoco_model.body_name2id(body_name)
 
     return body_id
+
+
+def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
+    """ Sets the qpos values for the joint with name joint_name. qpos must be an array of the appropriate size for the
+    joint! """
+    joint_id = mujoco_model.joint_name2id(joint_name)
+    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qpos = MUJOCO_JOINT_SIZE[joint_type]
+    assert qpos.shape == (n_qpos, ), "Passed qpos does not fit joint!"
+    mujoco_data.qpos[joint_qpos_addr:joint_qpos_addr + n_qpos] = qpos
 
 
 # ======================== Mujoco frame utils =====================================
@@ -278,7 +291,7 @@ def plot_forces(points, vectors, limit: float = 1.0, title="", show=True):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.quiver(xs, ys, zs, us, vs, ws)
-    ax.scatter(xs, ys, zs, color="k", s=20)
+    ax.scatter(xs, ys, zs, color="k", s=10, depthshade=True, alpha=0.4)
     ax.set_title(title)
     ax.set_xlim([-limit, limit])
     ax.set_ylim([-limit, limit])

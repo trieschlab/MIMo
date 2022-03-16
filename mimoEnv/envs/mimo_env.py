@@ -53,8 +53,8 @@ DEFAULT_TOUCH_PARAMS = {
 }
 
 DEFAULT_VISION_PARAMS = {
-    "eye_left": {"width": 400, "height": 300},
-    "eye_right": {"width": 400, "height": 300},
+    "eye_left": {"width": 256, "height": 256},
+    "eye_right": {"width": 256, "height": 256},
 }
 
 DEFAULT_VESTIBULAR_PARAMS = {
@@ -160,6 +160,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             self._vestibular_setup(self.vestibular_params)
         # Should be able to get all types of sensor outputs here
         # Should be able to produce all control inputs here
+
+        # Implement qpos:
+        for joint_name in initial_qpos:
+            mimo_utils.set_joint_qpos(self.sim.model, self.sim.data, joint_name, initial_qpos[joint_name])
 
     def _proprio_setup(self, proprio_params):
         self.proprioception = SimpleProprioception(self, proprio_params)
