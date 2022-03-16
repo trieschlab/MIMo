@@ -2,17 +2,17 @@
 
 ## The MIMo environment.
 
-Base class. 
+The main class of the codebase is `MIMoEnv`. It is an openAI gym style environment, implementing all the relevant gym interfaces. It is the base class that is subclassed by all the experiment specific environments. It takes a MuJoCo XML and a series of parameter dictionaries for the sensory modalities and builds the environments.
 
-MuJoCo xmls.
+The MuJoCo XML defines the simulated geometries and their degrees of freedom. We have set ours up in a modular fashion to avoid duplication as much as possible. MIMos kinematic tree is defined in `mimo_model.xml` while the associated actuators and sensors are located in `mimo_meta.xml`. A scene then includes both of these files. This allows multiple scenes to share the same base model with different actuation models and ancillary objects.
 
-The action space is auomatically generated from the underlying MuJoCo xml. Each actuator whose name starts with 'act:' is included in the action space. Each actuator has a range from -1 to 1, with full torque in opposite directions at -1 and 1 and a linear response in between.
+The action space of the gym environment is generated automatically from the underlying MuJoCo XML. Each actuator whose name starts with 'act:' is included in the action space. Each actuator has a range from -1 to 1, with full torque in opposite directions at -1 and 1 and a linear response in between.
 
-The observation space is a dictionary built automatically based on the configuration of the sensor modules. An entry 'observation' is always included and always returns relative joint positions. Enabling more sensor modules adds extra entries. For example, each camera of the vision system will store its image in a separate entry in the observation space, named after the associated camera.
+The observation space is a dictionary type space built automatically based on the configuration of the sensor modules. An entry 'observation' is always included and always returns relative joint positions. Enabling more sensor modules adds extra entries. For example, each camera of the vision system will store its image in a separate entry in the observation space, named after the associated camera.
 
 ### Observation spaces and `done`
 
-By default this environment follows the behaviour of the `Robot` environments in gym. This means that the `done` return value from `step` is always False, and the calling method has to figure out when to stop or reset. In addition the observation space includes two entries with the desired and the currently achieved goal (populated by `_sample_goal` and `_get_achieved_goal`).
+By default this environment follows the behaviour of the old `Robot` environments in gym. This means that the `done` return value from `step` is always False, and the calling method has to figure out when to stop or reset. In addition the observation space includes two entries with the desired and the currently achieved goal (populated by `_sample_goal` and `_get_achieved_goal`).
 
 This behaviour can be changed with two parameters during initialization of the environment. 
   1. `goals_in_observation` : If this parameter is False, the goal entries in the observation space will not be populated. Note that the space still contains these entries, but they will be size zero. By default set to True.
