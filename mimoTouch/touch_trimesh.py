@@ -41,6 +41,8 @@ class TrimeshTouch(Touch):
         # for inactive vertices!
         self._submeshes: Dict[int, List[trimesh.Trimesh]] = {}
         self._active_subvertices = {}
+        self._sensor_counts = {}
+        self._sensor_counts_submesh = {}
         self._vertex_to_sensor_idx = {}
 
         self.meshes: Dict[int, trimesh.Trimesh] = {}
@@ -78,6 +80,7 @@ class TrimeshTouch(Touch):
         active_vertices = []
         vertex_to_sensor_idxs = []
         submesh_offset = 0
+        sensor_counts = []
         # Cleanup, removing all sensor points inside other sensors
         # TODO: More filtering to remove vertices too close to one another near geom intersections
         for mesh in meshes:
@@ -90,12 +93,15 @@ class TrimeshTouch(Touch):
                 contained = other_mesh.contains(mesh.vertices)
                 mask = np.logical_and(mask, np.invert(contained))
             active_vertices.append(mask)
+            sensor_counts.append(np.count_nonzero(mask))
             vertex_offsets = np.cumsum(mask) - 1
             vertex_to_sensor_idxs.append(vertex_offsets + submesh_offset)
             submesh_offset += np.count_nonzero(mask)
 
         self._active_subvertices[body_id] = active_vertices
         self.active_vertices[body_id] = np.concatenate(active_vertices)
+        self._sensor_counts[body_id] = np.count_nonzero(self.active_vertices[body_id])
+        self._sensor_counts_submesh[body_id] = sensor_counts
         self._vertex_to_sensor_idx[body_id] = vertex_to_sensor_idxs
 
         self.sensor_positions[body_id] = self.meshes[body_id].vertices[self.active_vertices[body_id], :]
@@ -110,10 +116,10 @@ class TrimeshTouch(Touch):
 
     def get_sensor_count(self, body_id):
         """ Returns the number of sensors for the geom """
-        return np.count_nonzero(self.active_vertices[body_id])
+        return self._sensor_counts[body_id]
 
     def _get_sensor_count_submesh(self, body_id, submesh_idx):
-        return np.count_nonzero(self._active_subvertices[body_id][submesh_idx])
+        return self._sensor_counts_submesh[body_id][submesh_idx]
 
     def _get_mesh(self, geom_id: int, scale: float):
         # Do sensorpoints for a single geom
@@ -148,6 +154,15 @@ class TrimeshTouch(Touch):
         """
         return self._vertex_to_sensor_idx[body_id][submesh_idx][vertex_idx]
 
+    def _get_nearest_vertex(self, contact_pos, mesh):
+        if mesh.vertices.shape[0] == 1:
+            distance = np.linalg.norm(contact_pos - mesh.vertices[0])
+            sub_idx = 0
+        else:
+            proximity_query = trimesh.proximity.ProximityQuery(mesh)
+            distance, sub_idx = proximity_query.vertex(contact_pos)
+        return distance, sub_idx
+
     def get_nearest_sensor(self, contact_pos, body_id):
         """ Given a position and a body, return the sensor on the body closest to that position.
         Returns the sensor index and the distance between the position and sensor """
@@ -156,8 +171,7 @@ class TrimeshTouch(Touch):
         active_sensors = {}
         for i, mesh in enumerate(self._submeshes[body_id]):
             # Get closest vertex on mesh
-            proximity_query = trimesh.proximity.ProximityQuery(mesh)
-            distance, sub_idx = proximity_query.vertex(contact_pos)
+            distance, sub_idx = self._get_nearest_vertex(contact_pos, mesh)
             active_vertices_on_submesh = self._active_subvertices[body_id][i]
             # If closest vertex is active: It is the candidate for this submesh
             if active_vertices_on_submesh[sub_idx]:
@@ -199,16 +213,19 @@ class TrimeshTouch(Touch):
         candidate_sensor_distances = []
         largest_distance_so_far = 0
         for i, mesh in enumerate(self._submeshes[body_id]):
-            proximity_query = trimesh.proximity.ProximityQuery(mesh)
-            distance, sub_idx = proximity_query.vertex(contact_pos)
+            mesh_distances = self._sensor_distances(contact_pos, mesh)
+            sub_idx = np.argmin(mesh_distances)
+            distance = mesh_distances[sub_idx]
             active_vertices_on_submesh = self._active_subvertices[body_id][i]
-
+            if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
+                candidate_sensors_idx.append(self.convert_active_sensor_idx(body_id, i, sub_idx))
+                candidate_sensor_distances.append(distance)
+                continue
             graph = mesh.vertex_adjacency_graph
             candidates = deque()
             candidates.append(sub_idx)
             candidates.extend(graph[sub_idx])
             checked = set()
-            mesh_distances = self._sensor_distances(contact_pos, mesh)
             while len(candidates) > 0:
                 candidate = candidates.pop()
                 if candidate in checked:
@@ -232,6 +249,9 @@ class TrimeshTouch(Touch):
         sorted_idxs = np.argpartition(distances, k)
         return sensor_idx[sorted_idxs[:k]], distances[sorted_idxs[:k]]
 
+    def get_mesh_adjacency_graph(self, mesh):
+        return mesh.vertex_adjacency_graph
+
     def get_sensors_within_distance(self, contact_pos, body_id, distance_limit):
         """ Given a position, a body and a distance limit, returns all sensors on the body whose distance to the
         position is less than the distance limits.
@@ -241,18 +261,23 @@ class TrimeshTouch(Touch):
         candidate_sensors_idx = []
         candidate_sensor_distances = []
         for i, mesh in enumerate(self._submeshes[body_id]):
-            proximity_query = trimesh.proximity.ProximityQuery(mesh)
-            distance, sub_idx = proximity_query.vertex(contact_pos)
+            mesh_distances = self._sensor_distances(contact_pos, mesh)
+            sub_idx = np.argmin(mesh_distances)
+            distance = mesh_distances[sub_idx]
             if distance > distance_limit:
                 continue
             active_vertices_on_submesh = self._active_subvertices[body_id][i]
-
-            graph = mesh.vertex_adjacency_graph
+            index_map = self._vertex_to_sensor_idx[body_id][i]
+            if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
+                candidate_sensors_idx.append(index_map[sub_idx])
+                candidate_sensor_distances.append(distance)
+                continue
+            graph = self.get_mesh_adjacency_graph(mesh)
             candidates = deque()
             candidates.append(sub_idx)
             candidates.extend(graph[sub_idx])
             checked = set()
-            mesh_distances = self._sensor_distances(contact_pos, mesh)
+
             within_distance = mesh_distances < distance_limit
             while len(candidates) > 0:
                 candidate = candidates.pop()
@@ -265,8 +290,7 @@ class TrimeshTouch(Touch):
                     continue
                 else:
                     if active_vertices_on_submesh[candidate]:
-                        # Check that idx are correct
-                        candidate_sensors_idx.append(self.convert_active_sensor_idx(body_id, i, candidate))
+                        candidate_sensors_idx.append(index_map[candidate])
                         candidate_sensor_distances.append(mesh_distances[candidate])
                     candidates.extend(set(graph[candidate]) - checked)
 
@@ -409,17 +433,15 @@ class TrimeshTouch(Touch):
         nearest_sensors, sensor_distances = self.get_sensors_within_distance(contact_pos, body_id, 2*scale)
 
         adjusted_forces = {}
-        force_total = np.zeros(force.shape)
+        force_total = 0  # This variable c
         for sensor_id, distance in zip(nearest_sensors, sensor_distances):
             sensor_adjusted_force = scale_linear(force, distance, scale=2*scale)
-            force_total += sensor_adjusted_force
+            force_total += sensor_adjusted_force[0]
             adjusted_forces[sensor_id] = sensor_adjusted_force
 
-        # TODO: Check that this makes sense
-        factors = force / (force_total + EPS)  # Add very small value to avoid divide by zero errors
+        factor = force[0] / force_total
         for sensor_id in adjusted_forces:
-            rescaled_sensor_adjusted_force = adjusted_forces[sensor_id] * factors
-            self.sensor_outputs[body_id][sensor_id] += rescaled_sensor_adjusted_force
+            self.sensor_outputs[body_id][sensor_id] += adjusted_forces[sensor_id] * factor
 
     def nearest(self, contact_id, body_id, force):
         # Get the nearest sensor to this contact, add the force to it

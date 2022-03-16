@@ -48,7 +48,8 @@ class SimpleVision(Vision):
 
     def get_vision_obs(self):
         # Have to manage contexts ourselves to avoid buffer reuse issues
-        self.swap_context(self.offscreen_context.window)
+        if self.env.sim._render_context_window is not None:
+            self.swap_context(self.offscreen_context.window)
 
         imgs = {}
         for camera in self.camera_parameters:
