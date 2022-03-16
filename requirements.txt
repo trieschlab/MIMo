@@ -1,5 +1,5 @@
 numpy
-gym
+gym<=0.20
 mujoco_py
 matplotlib
 glfw
