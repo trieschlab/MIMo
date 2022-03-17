@@ -3,14 +3,14 @@ import numpy as np
 import mujoco_py
 import copy
 
-from gym import spaces
+from gym import spaces, utils
 from gym.envs.robotics import robot_env
 
 from mimoTouch.touch import DiscreteTouch
 from mimoVision.vision import SimpleVision
 from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception
-import mimoEnv.utils as utils
+import mimoEnv.utils as mimo_utils
 
 # Ensure we get the path separator correct on windows
 MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "Sample_Scene.xml"))
@@ -22,24 +22,72 @@ EMOTES = {
     "surprised": "tex_head_surprised",
 }
 
+# Dictionary with body_names as keys,
+DEFAULT_TOUCH_PARAMS = {
+    "scales": {
+        "left_toes": 0.010,
+        "right_toes": 0.010,
+        "left_foot": 0.015,
+        "right_foot": 0.015,
+        "left_lower_leg": 0.038,
+        "right_lower_leg": 0.038,
+        "left_upper_leg": 0.027,
+        "right_upper_leg": 0.027,
+        "hip": 0.025,
+        "lower_body": 0.025,
+        "upper_body": 0.030,
+        "head": 0.013,
+        "left_eye": 1.0,
+        "right_eye": 1.0,
+        "left_upper_arm": 0.024,
+        "right_upper_arm": 0.024,
+        "left_lower_arm": 0.024,
+        "right_lower_arm": 0.024,
+        "left_hand": 0.007,
+        "right_hand": 0.007,
+        "left_fingers": 0.002,
+        "right_fingers": 0.002,
+    },
+    "touch_function": "force_vector",
+    "response_function": "spread_linear",
+}
 
-class MIMoEnv(robot_env.RobotEnv):
+DEFAULT_VISION_PARAMS = {
+    "eye_left": {"width": 256, "height": 256},
+    "eye_right": {"width": 256, "height": 256},
+}
+
+DEFAULT_VESTIBULAR_PARAMS = {
+    "sensors": ["vestibular_acc", "vestibular_gyro"],
+}
+
+# Proprioception is always included and always includes the relative joint positions
+DEFAULT_PROPRIOCEPTION_PARAMS = {
+    "components": ["velocity", "torque", "limits"],
+}
+
+
+class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     def __init__(self,
                  model_path=MIMO_XML,
                  initial_qpos={},
-                 n_actions=40,  # Currently hardcoded
                  n_substeps=2,
+                 proprio_params=None,
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
                  goals_in_observation=True,
                  done_active=False):
 
+        utils.EzPickle.__init__(**locals())
+
+        self.proprio_params = proprio_params
         self.touch_params = touch_params
         self.vision_params = vision_params
         self.vestibular_params = vestibular_params
 
+        self.proprioception = None
         self.touch = None
         self.vision = None
         self.vestibular = None
@@ -70,39 +118,31 @@ class MIMoEnv(robot_env.RobotEnv):
         self.facial_expressions = {}
         for emote in EMOTES:
             tex_name = EMOTES[emote]
-            tex_id = utils.texture_name2id(self.sim, tex_name)
+            tex_id = mimo_utils.texture_name2id(self.sim, tex_name)
             self.facial_expressions[emote] = tex_id
         head_material_name = "head"
-        self._head_material_id = utils.material_name2id(self.sim, head_material_name)
+        self._head_material_id = mimo_utils.material_name2id(self.sim, head_material_name)
 
         self.goal = self._sample_goal()
+        n_actions = len([name for name in self.sim.model.actuator_names if name.startswith("act:")])
         self.action_space = spaces.Box(-1.0, 1.0, shape=(n_actions,), dtype="float32")
         obs = self._get_obs()
         # Observation spaces
         spaces_dict = {
-            "observation": spaces.Box(
-                -np.inf, np.inf, shape=obs["observation"].shape, dtype="float32"
-            ),
-            "desired_goal": spaces.Box(
-                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
-            ),
-            "achieved_goal": spaces.Box(
-                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32"
-            ),
+            "observation": spaces.Box(-np.inf, np.inf, shape=obs["observation"].shape, dtype="float32")
         }
         if self.touch:
-            spaces_dict["touch"] = spaces.Box(
-                    -np.inf, np.inf, shape=obs["touch"].shape, dtype="float32"
-                )
+            spaces_dict["touch"] = spaces.Box(-np.inf, np.inf, shape=obs["touch"].shape, dtype="float32")
         if self.vision:
             for sensor in self.vision_params:
-                spaces_dict[sensor] = spaces.Box(
-                        0, 256, shape=obs[sensor].shape, dtype="uint8"
-                    )
+                spaces_dict[sensor] = spaces.Box(0, 256, shape=obs[sensor].shape, dtype="uint8")
         if self.vestibular:
-            spaces_dict["vestibular"] = spaces.Box(
-                    -np.inf, np.inf, shape=obs["vestibular"].shape, dtype="float32"
-                )
+            spaces_dict["vestibular"] = spaces.Box(-np.inf, np.inf, shape=obs["vestibular"].shape, dtype="float32")
+        if self.goals_in_observation:
+            spaces_dict["desired_goal"] = spaces.Box(
+                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32")
+            spaces_dict["achieved_goal"] = spaces.Box(
+                -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32")
 
         self.observation_space = spaces.Dict(spaces_dict)
 
@@ -110,28 +150,29 @@ class MIMoEnv(robot_env.RobotEnv):
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
         # observation space and goals are not set yet
 
-        # Always do proprioception
-        self.proprioception = SimpleProprioception(self, {})
-
         # Do setups
+        self._proprio_setup(self.proprio_params)
         if self.touch_params is not None:
             self._touch_setup(self.touch_params)
         if self.vision_params is not None:
             self._vision_setup(self.vision_params)
         if self.vestibular_params is not None:
             self._vestibular_setup(self.vestibular_params)
-
-        # Do sound setup
-        # Do whatever actuation setup
         # Should be able to get all types of sensor outputs here
         # Should be able to produce all control inputs here
-        pass
+
+        # Implement qpos:
+        for joint_name in initial_qpos:
+            mimo_utils.set_joint_qpos(self.sim.model, self.sim.data, joint_name, initial_qpos[joint_name])
+
+    def _proprio_setup(self, proprio_params):
+        self.proprioception = SimpleProprioception(self, proprio_params)
 
     def _touch_setup(self, touch_params):
-        self.touch = DiscreteTouch(self, touch_params=touch_params)
+        self.touch = DiscreteTouch(self, touch_params)
 
     def _vision_setup(self, vision_params):
-        self.vision = SimpleVision(self, vision_params)  # This fixes the GLEW initialization error
+        self.vision = SimpleVision(self, vision_params)
 
     def _vestibular_setup(self, vestibular_params):
         self.vestibular = SimpleVestibular(self, vestibular_params)
@@ -163,6 +204,19 @@ class MIMoEnv(robot_env.RobotEnv):
         reward = self.compute_reward(achieved_goal, self.goal, info)
         return obs, reward, done, info
 
+    def reset(self):
+        # Attempt to reset the simulator. Since we randomize initial conditions, it
+        # is possible to get into a state with numerical issues (e.g. due to penetration or
+        # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
+        # In this case, we just keep randomizing until we eventually achieve a valid initial
+        # configuration.
+        did_reset_sim = False
+        while not did_reset_sim:
+            did_reset_sim = self._reset_sim()
+        self.goal = self._sample_goal().copy()
+        obs = self._get_obs()
+        return obs
+
     def _reset_sim(self):
         """Resets a simulation and indicates whether or not it was successful.
         If a reset was unsuccessful (e.g. if a randomized state caused an error in the
@@ -174,7 +228,6 @@ class MIMoEnv(robot_env.RobotEnv):
         return True
 
     def _get_proprio_obs(self):
-        # Naive implementation: Joint positions and velocities
         return self.proprioception.get_proprioception_obs()
 
     def _get_touch_obs(self):
@@ -194,13 +247,9 @@ class MIMoEnv(robot_env.RobotEnv):
         """Returns the observation."""
         # robot proprioception:
         proprio_obs = self._get_proprio_obs()
-
         observation_dict = {
             "observation": proprio_obs,
-            "achieved_goal": np.empty(shape=(0,)),
-            "desired_goal": np.empty(shape=(0,))
         }
-
         # robot touch sensors:
         if self.touch:
             touch_obs = self._get_touch_obs().ravel()
@@ -210,7 +259,6 @@ class MIMoEnv(robot_env.RobotEnv):
             vision_obs = self._get_vision_obs()
             for sensor in vision_obs:
                 observation_dict[sensor] = vision_obs[sensor]
-
         # vestibular
         if self.vestibular:
             vestibular_obs = self._get_vestibular_obs()
@@ -224,7 +272,13 @@ class MIMoEnv(robot_env.RobotEnv):
         return observation_dict
 
     def _set_action(self, action):
-        raise NotImplementedError
+        ctrlrange = self.sim.model.actuator_ctrlrange
+        actuation_range = (ctrlrange[:, 1] - ctrlrange[:, 0]) / 2.0
+        actuation_center = (ctrlrange[:, 1] + ctrlrange[:, 0]) / 2.0
+        self.sim.data.ctrl[:] = actuation_center + action * actuation_range
+        self.sim.data.ctrl[:] = np.clip(
+            self.sim.data.ctrl, ctrlrange[:, 0], ctrlrange[:, 1]
+        )
 
     def swap_facial_expression(self, emotion):
         """ Changes MIMos facial texture. Valid emotion names are in self.facial_expression, which links readable

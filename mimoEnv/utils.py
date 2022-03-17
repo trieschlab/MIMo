@@ -4,16 +4,21 @@ from matplotlib import pyplot as plt
 
 EPS = 1e-10
 
-
-def mulRotT(vector, rot_matrix):
-    return np.transpose(rot_matrix).dot(vector)
+MUJOCO_JOINT_SIZE = [7, 4, 1, 1]  # Number of qpos entries for each joint type [free, ball, slide, hinge]
 
 
-def mulRot(vector, rot_matrix):
+def rotate_vector(vector, rot_matrix):
+    """ Rotates the vectors with the the rotation matrix.
+
+    Convention for mujoco matrices: Use rotate_vector to convert from special frame to global, rotate_vector_transpose
+    for the inverse rotation. The exception are the contact frames, which are transposed
+    """
     return rot_matrix.dot(vector)
 
-# Rotation convention is: from world to special: use mulRotT, from special to world: use mulRot
-# Exception is contact frame rotation, which is inverted.
+
+def rotate_vector_transpose(vector, rot_matrix):
+    """ Rotates the vectors with the transpose of the rotation matrix. """
+    return np.transpose(rot_matrix).dot(vector)
 
 
 def weighted_sum_vectors(vector1, vector2, weight1, weight2):
@@ -21,7 +26,8 @@ def weighted_sum_vectors(vector1, vector2, weight1, weight2):
 
 
 def normalize_vectors(vectors):
-    mag = np.linalg.norm(vectors, axis=1, ord=2)
+    """ Normalizes an array of vectors, i.e. the last dimension must have size 3, so each vector has unit length """
+    mag = np.linalg.norm(vectors, axis=-1, ord=2)
     return vectors / np.expand_dims(mag, -1)
 
 
@@ -51,6 +57,15 @@ def get_body_id(mujoco_model, body_id=None, body_name=None):
     return body_id
 
 
+def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
+    """ Sets the qpos values for the joint with name joint_name. qpos must be the appropriate size for the joint! """
+    joint_id = mujoco_model.joint_name2id(joint_name)
+    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qpos = MUJOCO_JOINT_SIZE[joint_type]
+    mujoco_data.qpos[joint_qpos_addr:joint_qpos_addr + n_qpos] = qpos
+
+
 # ======================== Mujoco frame utils =====================================
 # =================================================================================
 
@@ -59,6 +74,28 @@ def get_geoms_for_body(sim_model, body_id):
     geom_start = sim_model.body_geomadr[body_id]
     geom_end = geom_start + sim_model.body_geomnum[body_id]
     return range(geom_start, geom_end)
+
+
+def get_child_bodies(sim_model, body_id):
+    """ Returns a set containing the ids of all descendant bodies of a given body, including itself"""
+    children_dict = {}
+    # Built a dictionary listing the children for each node
+    for i in range(sim_model.nbody):
+        parent = sim_model.body_parentid[i]
+        if parent in children_dict:
+            children_dict[parent].append(i)
+        else:
+            children_dict[parent] = [i]
+    # Collect all the children in the subtree that has body_id as its root.
+    children = []
+    to_process = [body_id]
+    while len(to_process) > 0:
+        child = to_process.pop()
+        children.append(child)
+        # If this node has children: add them as well
+        if child in children_dict:
+            to_process.extend(children_dict[child])
+    return children
 
 
 def get_geom_position(sim_data, geom_id):
@@ -84,7 +121,7 @@ def get_body_rotation(sim_data, body_id):
 def world_pos_to_geom(sim_data, position, geom_id):
     """ Converts a (n, 3) numpy array containing xyz coordinates in world frame to geom frame"""
     rel_pos = position - get_geom_position(sim_data, geom_id)
-    rel_pos = np.transpose(mulRotT(np.transpose(rel_pos), get_geom_rotation(sim_data, geom_id)))
+    rel_pos = world_rot_to_geom(sim_data, rel_pos, geom_id)
     return rel_pos
 
 
@@ -114,25 +151,55 @@ def geom_pos_to_body(sim_data, position, geom_id, body_id):
     return world_pos_to_body(sim_data, world_pos, body_id)
 
 
+def body_pos_to_geom(sim_data, position, body_id, geom_id):
+    world_pos = body_pos_to_world(sim_data, position, body_id)
+    return world_pos_to_geom(sim_data, world_pos, geom_id)
+
+
+def geom_pos_to_geom(sim_data, position, geom_id_source, geom_id_target):
+    world_pos = geom_pos_to_world(sim_data, position, geom_id_source)
+    return world_pos_to_geom(sim_data, world_pos, geom_id_target)
+
+
+def body_pos_to_body(sim_data, position, body_id_source, body_id_target):
+    world_pos = body_pos_to_world(sim_data, position, body_id_source)
+    return world_pos_to_body(sim_data, world_pos, body_id_target)
+
+
 def geom_rot_to_world(sim_data, vector, geom_id):
-    return np.transpose(mulRot(np.transpose(vector), get_geom_rotation(sim_data, geom_id)))
+    return np.transpose(rotate_vector(np.transpose(vector), get_geom_rotation(sim_data, geom_id)))
 
 
 def body_rot_to_world(sim_data, vector, body_id):
-    return np.transpose(mulRot(np.transpose(vector), get_body_rotation(sim_data, body_id)))
+    return np.transpose(rotate_vector(np.transpose(vector), get_body_rotation(sim_data, body_id)))
 
 
 def world_rot_to_geom(sim_data, vector, geom_id):
-    return np.transpose(mulRotT(np.transpose(vector), get_geom_rotation(sim_data, geom_id)))
+    return np.transpose(rotate_vector_transpose(np.transpose(vector), get_geom_rotation(sim_data, geom_id)))
 
 
 def world_rot_to_body(sim_data, vector, body_id):
-    return np.transpose(mulRotT(np.transpose(vector), get_body_rotation(sim_data, body_id)))
+    return np.transpose(rotate_vector_transpose(np.transpose(vector), get_body_rotation(sim_data, body_id)))
 
 
 def geom_rot_to_body(sim_data, vector, geom_id, body_id):
     world_rot = geom_rot_to_world(sim_data, vector, geom_id)
     return world_rot_to_body(sim_data, world_rot, body_id)
+
+
+def body_rot_to_geom(sim_data, vector, body_id, geom_id):
+    world_rot = body_rot_to_world(sim_data, vector, body_id)
+    return world_rot_to_geom(sim_data, world_rot, geom_id)
+
+
+def geom_rot_to_geom(sim_data, vector, geom_id_source, geom_id_target):
+    world_rot = geom_rot_to_world(sim_data, vector, geom_id_source)
+    return world_rot_to_geom(sim_data, world_rot, geom_id_target)
+
+
+def body_rot_to_body(sim_data, vector, body_id_source, body_id_target):
+    world_rot = body_rot_to_world(sim_data, vector, body_id_source)
+    return world_rot_to_body(sim_data, world_rot, body_id_target)
 
 
 # ======================== Mujoco data utils ======================================
@@ -190,7 +257,7 @@ def material_name2id(sim, material_name):
 # ======================== Plotting utils =========================================
 # =================================================================================
 
-def plot_points(points, limit: float = 1.0, title=""):
+def plot_points(points, limit: float = 1.0, title="", show=True):
     xs = points[:, 0]
     ys = points[:, 1]
     zs = points[:, 2]
@@ -204,10 +271,13 @@ def plot_points(points, limit: float = 1.0, title=""):
     ax.set_zlim([-limit, limit])
     ax.set_box_aspect((1, 1, 1))
     plt.tight_layout()
-    plt.show()
+    if show:
+        plt.show()
+    else:
+        return fig, ax
 
 
-def plot_forces(points, vectors, limit: float = 1.0, title=""):
+def plot_forces(points, vectors, limit: float = 1.0, title="", show=True):
     xs = points[:, 0]
     ys = points[:, 1]
     zs = points[:, 2]
@@ -219,11 +289,14 @@ def plot_forces(points, vectors, limit: float = 1.0, title=""):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.quiver(xs, ys, zs, us, vs, ws)
-    ax.scatter(xs, ys, zs, color="k", s=20)
+    ax.scatter(xs, ys, zs, color="k", s=10, depthshade=True, alpha=0.4)
     ax.set_title(title)
     ax.set_xlim([-limit, limit])
     ax.set_ylim([-limit, limit])
     ax.set_zlim([-limit, limit])
     ax.set_box_aspect((1, 1, 1))
     plt.tight_layout()
-    plt.show()
+    if show:
+        plt.show()
+    else:
+        return fig, ax

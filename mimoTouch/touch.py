@@ -3,7 +3,7 @@ import numpy as np
 import mujoco_py
 
 import mimoEnv.utils as env_utils
-from mimoEnv.utils import mulRotT, mulRot, EPS
+from mimoEnv.utils import rotate_vector_transpose, rotate_vector, EPS
 from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spread_points_cylinder, \
                                    spread_points_capsule
 
@@ -14,7 +14,7 @@ GEOM_TYPES = {"PLANE": 0, "HFIELD": 1, "SPHERE": 2, "CAPSULE": 3, "ELLIPSOID": 4
 class Touch:
 
     VALID_TOUCH_TYPES = {}
-    VALID_ADJUSTMENTS = []
+    VALID_RESPONSE_FUNCTIONS = []
 
     def __init__(self, env, touch_params):
         """
@@ -53,9 +53,9 @@ class Touch:
         self.touch_size = self.VALID_TOUCH_TYPES[self.touch_type]
 
         # Get all information for the surface adjustment function: function name, reference to function
-        self.adjustment_type = touch_params["adjustment_function"]
-        assert self.adjustment_type in self.VALID_ADJUSTMENTS
-        self.adjustment_function = getattr(self, self.adjustment_type)
+        self.response_type = touch_params["response_function"]
+        assert self.response_type in self.VALID_RESPONSE_FUNCTIONS
+        self.response_function = getattr(self, self.response_type)
 
         self.sensor_outputs = {}
 
@@ -75,7 +75,7 @@ class DiscreteTouch(Touch):
         "force_vector_global": 3,
     }
 
-    VALID_ADJUSTMENTS = ["nearest", "spread_linear"]
+    VALID_RESPONSE_FUNCTIONS = ["nearest", "spread_linear"]
 
     def __init__(self, env, touch_params):
         """
@@ -246,8 +246,7 @@ class DiscreteTouch(Touch):
             if force_vectors.shape[1] == 1:
                 # TODO: Need proper sensor normals, can't do this until trimesh rework
                 raise RuntimeWarning("Plotting of scalar forces not implemented!")
-            world_forces = mulRot(np.transpose(force_vectors), env_utils.get_geom_rotation(self.m_data, geom_id))
-            body_forces = np.transpose(mulRotT(world_forces, env_utils.get_body_rotation(self.m_data, body_id)))
+            body_forces = env_utils.geom_rot_to_body(self.m_data, force_vectors, geom_id=geom_id, body_id=body_id)
             forces.append(body_forces)
         points_t = np.concatenate(points)
         forces_t = np.concatenate(forces)
@@ -291,7 +290,7 @@ class DiscreteTouch(Touch):
         else:
             RuntimeError("Mismatch between contact and geom")
         # contact frame is in global coordinate frame, rotate to geom frame
-        normal_vector = mulRot(normal_vector, env_utils.get_geom_rotation(self.m_data, geom_id))
+        normal_vector = rotate_vector(normal_vector, env_utils.get_geom_rotation(self.m_data, geom_id))
         return normal_vector
 
     # =============== Valid touch force functions =====================================
@@ -306,13 +305,13 @@ class DiscreteTouch(Touch):
         contact = self.m_data.contact[contact_id]
         forces = self.get_raw_force(contact_id, geom_id)
         force_rot = np.reshape(contact.frame, (3, 3))
-        global_forces = mulRotT(forces, force_rot)
+        global_forces = rotate_vector_transpose(forces, force_rot)
         return global_forces
 
     def force_vector(self, contact_id, geom_id):
         """ Returns full contact force in the frame of the geom. Output is a 3-d vector"""
         global_forces = self.force_vector_global(contact_id, geom_id)
-        relative_forces = mulRotT(global_forces, env_utils.get_geom_rotation(self.m_data, geom_id))
+        relative_forces = rotate_vector_transpose(global_forces, env_utils.get_geom_rotation(self.m_data, geom_id))
         return relative_forces
 
     # =============== Output functions ================================================
@@ -369,7 +368,7 @@ class DiscreteTouch(Touch):
         for contact_id, geom_id, forces in contact_tuples:
             # At this point we already have the forces for each contact, now we must attach/spread them to sensor
             # points, based on the adjustment function
-            self.adjustment_function(contact_id, geom_id, forces)
+            self.response_function(contact_id, geom_id, forces)
 
         sensor_obs = self.flatten_sensor_dict(self.sensor_outputs)
         return sensor_obs

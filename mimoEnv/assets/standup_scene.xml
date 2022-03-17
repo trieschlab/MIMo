@@ -33,19 +33,27 @@
 
         <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
 
-        <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278"
-            rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
+        <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
 
         <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
 
         <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
 		
 		<material name="matmocap" texture="texgeom" texuniform="true" rgba="0.5 0 0.5 0.5"/>
-
     </asset>
 	
 	<!-- Import everything except the kinematic tree -->
-	<include file="MIMo_meta.xml"></include>
+	<include file="standup_meta.xml"></include>
+
+    <equality>
+        <weld body1="left_foot"  relpose="-0 -0.05 0 0.01 0 0 0"/>
+        <weld body1="right_foot" relpose="-0 0.05 0 0.01 0 0 0"/>
+        <weld body1="left_fingers"  relpose="0.1 0.1 0.45 0 -0.1 0.1 0 "/>
+        <weld body1="right_fingers" relpose="0.1 -0.1 0.45 0 0.1 0.1 0 "/>
+        <weld body1="head" body2="upper_body"/>
+        <weld body1="left_eye" body2="head"/>
+        <weld body1="right_eye" body2="head"/>
+    </equality>
 
     <worldbody>
         <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
@@ -53,19 +61,9 @@
         <light directional="false" diffuse=".4 .4 .4" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="false"/>
         <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
 		
-		<body name="test_object1" pos="1 0.3 0.7">
-			<freejoint/>
-			<geom type="box" material="matgeom" size="0.1 0.1 0.1" pos="0 0 0" condim="6"/>
-		</body>
-		
-		<body name="test_object2" pos="1 -0.3 0.7">
-			<freejoint/>
-			<geom type="sphere" material="matgeom" size="0.1" pos="0 0 0" condim="6" solimp="0.99 0.995 0.001 0.5 2" solref="-20000 -20"/>
-		</body>
-
 		<!-- The location and orientation of the base model can be set using this body -->
-		<body name="mimo_location" pos="0 0 .5" euler="0 0 0">
-			<freejoint name="mimo_orientation"/>
+		<body name="mimo_location" pos="0 0 .33" euler="0 0 0">
+			<freejoint/>
 			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>
 		

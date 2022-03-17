@@ -48,6 +48,7 @@
 						<site name="torque_left_eye" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<joint name="robot:left_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 1" range="-45 45" stiffness=".10" damping=".015" frictionloss=".001"/>
 						<joint name="robot:left_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".10" damping=".015" frictionloss=".001"/>
+						<joint name="robot:left_eye_torsional" type="hinge" pos="0 0 0" axis="-1 0 0" range="-16 16" stiffness=".10" damping=".015" frictionloss=".001"/>
 						<geom type="sphere" material="eye_left" size=".01125" pos="0 0 0"/>
 						<camera name="eye_left" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
 					</body>
@@ -55,6 +56,7 @@
 						<site name="torque_right_eye" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<joint name="robot:right_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 -1" range="-45 45" stiffness=".10" damping=".015" frictionloss=".001"/>
 						<joint name="robot:right_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".10" damping=".015" frictionloss=".001"/>
+						<joint name="robot:right_eye_torsional" type="hinge" pos="0 0 0" axis="1 0 0" range="-16 16" stiffness=".10" damping=".015" frictionloss=".001"/>
 						<geom type="sphere" material="eye_right" size=".01125" pos="0 0 0"/>
 						<camera name="eye_right" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
 					</body>
