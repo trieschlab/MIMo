@@ -14,7 +14,7 @@ def test(env, test_for=1000, model=None):
             action, _ = model.predict(obs)
         obs, _, done, _ = env.step(action)
         env.render()
-        if done or idx % 1000 == 0:
+        if done:
             time.sleep(1)
             obs = env.reset()
     env.reset()

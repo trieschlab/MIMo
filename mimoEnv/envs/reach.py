@@ -5,16 +5,6 @@ import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS
 
-
-VISION_PARAMS = {
-    "eye_left": {"width": 32, "height": 32},
-    "eye_right": {"width": 32, "height": 32}
-}
-
-VESTIBULAR_PARAMS = {
-    "sensors": ["vestibular_acc", "vestibular_gyro"]
-}
-
 REACH_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "reach_scene.xml"))
 
 
@@ -88,18 +78,6 @@ class MIMoReachEnv(MIMoEnv):
 
         # reset target in random initial position and velocities as zero
         qpos = self.sim.data.qpos
-        """target_pos_error = True
-        while target_pos_error:
-            new_target_pos = np.array([
-                self.initial_state.qpos[-7] + self.np_random.uniform(low=-0.05, high=0.1, size=1)[0],
-                self.initial_state.qpos[-6] + self.np_random.uniform(low=-0.15, high=0.1, size=1)[0],
-                self.initial_state.qpos[-5] + self.np_random.uniform(low=-0.05, high=0.05, size=1)[0]
-            ])
-            right_arm_pos = self.sim.data.get_body_xpos('left_upper_arm')
-            target_dist = np.linalg.norm(new_target_pos - right_arm_pos)
-            target_pos_error = target_dist > 0.25
-        qpos[[-7,-6,-5]] = new_target_pos
-        """
         qpos[[-7, -6, -5]] = np.array([
             self.initial_state.qpos[-7] + self.np_random.uniform(low=-0.1, high=0, size=1)[0],
             self.initial_state.qpos[-6] + self.np_random.uniform(low=-0.2, high=0.1, size=1)[0],
@@ -128,7 +106,9 @@ class MIMoReachEnv(MIMoEnv):
         self.sim.data.qpos[13] = np.arctan(head_target_dif[1] / head_target_dif[0])  # head - horizontal
         self.sim.data.qpos[14] = np.arctan(-head_target_dif[2] / head_target_dif[0])  # head - vertical
         self.sim.data.qpos[15] = 0  # head - side tild
-        self.sim.data.qpos[16] = np.arctan(-2 * half_eyes_dist / eyes_target_dist)  # left eye -  horizontal
+        self.sim.data.qpos[16] = np.arctan(-half_eyes_dist / eyes_target_dist)  # left eye -  horizontal
         self.sim.data.qpos[17] = 0  # left eye - vertical
-        self.sim.data.qpos[18] = np.arctan(-2 * half_eyes_dist / eyes_target_dist)  # right eye - horizontal
-        self.sim.data.qpos[18] = 0  # right eye - vertical
+        self.sim.data.qpos[17] = 0  # left eye - torsional
+        self.sim.data.qpos[19] = np.arctan(-half_eyes_dist / eyes_target_dist)  # right eye - horizontal
+        self.sim.data.qpos[20] = 0  # right eye - vertical
+        self.sim.data.qpos[21] = 0  # right eye - torsional
