@@ -5,6 +5,7 @@ import trimesh
 import trimesh.util
 import trimesh.proximity
 import trimesh.graph
+from trimesh import PointCloud
 from collections import deque
 
 from typing import List, Dict
@@ -73,7 +74,22 @@ class TrimeshTouch(Touch):
             meshes.append(mesh)
         self._submeshes[body_id] = meshes
         if len(meshes) > 1:
-            self.meshes[body_id] = trimesh.util.concatenate(meshes)
+            # Can't use trimesh util concatenate since that fails with point clouds (such as single point bodies)
+            # self.meshes[body_id] = trimesh.util.concatenate(meshes)
+            vertex_offset = 0
+            vertices = []
+            faces = []
+            for mesh in meshes:
+                vertices.append(mesh.vertices)
+                if hasattr(mesh, "faces"):
+                    faces.append(mesh.faces + vertex_offset)
+                vertex_offset += mesh.vertices.shape[0]
+            vertices = np.concatenate(vertices)
+            if faces:
+                faces = np.concatenate(faces)
+            else:
+                faces = np.zeros((0, 3))
+            self.meshes[body_id] = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
         else:
             self.meshes[body_id] = meshes[0]
 
@@ -86,7 +102,7 @@ class TrimeshTouch(Touch):
         for mesh in meshes:
             mask = np.ones((mesh.vertices.shape[0],), dtype=bool)
             for other_mesh in meshes:
-                if other_mesh == mesh:
+                if other_mesh == mesh or isinstance(other_mesh, PointCloud):
                     continue
                 # If our vertices are contained in the other mesh, make them inactive
                 # TODO: This has weird inconcistencies, check those
@@ -276,14 +292,15 @@ class TrimeshTouch(Touch):
             candidates = deque()
             candidates.append(sub_idx)
             candidates.extend(graph[sub_idx])
-            checked = set()
 
             within_distance = mesh_distances < distance_limit
+            checked = np.invert(within_distance)
+
             while len(candidates) > 0:
                 candidate = candidates.pop()
-                if candidate in checked:
+                if checked[candidate]:
                     continue
-                checked.add(candidate)
+                checked[candidate] = 1
                 # If the sensor is an output sensor, we still need more candidates, or it is closer than another:
                 #   Grab this sensor as a candidate
                 if not within_distance[candidate]:
@@ -292,7 +309,7 @@ class TrimeshTouch(Touch):
                     if active_vertices_on_submesh[candidate]:
                         candidate_sensors_idx.append(index_map[candidate])
                         candidate_sensor_distances.append(mesh_distances[candidate])
-                    candidates.extend(set(graph[candidate]) - checked)
+                    candidates.extend([node for node in graph[candidate] if not checked[candidate]])
 
         sensor_idx = np.asarray(candidate_sensors_idx)
         distances = np.asanyarray(candidate_sensor_distances)
@@ -439,7 +456,7 @@ class TrimeshTouch(Touch):
             force_total += sensor_adjusted_force[0]
             adjusted_forces[sensor_id] = sensor_adjusted_force
 
-        factor = force[0] / force_total
+        factor = force[0] / force_total if abs(force_total) > EPS else 0
         for sensor_id in adjusted_forces:
             self.sensor_outputs[body_id][sensor_id] += adjusted_forces[sensor_id] * factor
 

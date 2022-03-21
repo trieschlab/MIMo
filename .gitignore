@@ -6,3 +6,4 @@ mimoEnv/test.py
 mimoEnv/envs/mimo_test.py
 mimoEnv/imgs/*
 mimoEnv/models/*
+mimoEnv/benchmarks
