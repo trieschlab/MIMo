@@ -10,18 +10,19 @@ import mimoEnv.utils as env_utils
 
 TOUCH_PARAMS = {
     "scales": {
-        "left_foot": 0.015,
-        "right_foot": 0.015,
-        "left_lower_leg": 0.038,
-        "right_lower_leg": 0.038,
-        "left_upper_leg": 0.027,
-        "right_upper_leg": 0.027,
-        "hip": 0.025,
-        "lower_body": 0.025,
-        "upper_body": 0.030,
-        "head": 0.013,
-        "left_upper_arm": 0.024,
-        "left_lower_arm": 0.024,
+        "left_foot": 0.05,
+        "right_foot": 0.05,
+        "left_lower_leg": 0.1,
+        "right_lower_leg": 0.1,
+        "left_upper_leg": 0.1,
+        "right_upper_leg": 0.1,
+        "hip": 0.1,
+        "lower_body": 0.1,
+        "upper_body": 0.1,
+        "head": 0.1,
+        "left_upper_arm": 0.01,
+        "left_lower_arm": 0.01,
+        "right_fingers": 0.01
     },
     "touch_function": "force_vector",
     "adjustment_function": "spread_linear",
@@ -171,9 +172,9 @@ class MIMoSelfBodyEnv(MIMoEnv):
         self.sim.set_state(new_state)
         self.sim.forward()
 
-        # randomly select body part as target
+        # randomly select geom as target (except for 2 latest geoms that correspong to fingers)
         active_geom_codes = list(self.touch.sensor_outputs.keys())
-        target_geom_idx = np.random.randint(len(active_geom_codes))
+        target_geom_idx = np.random.randint(len(active_geom_codes)-2)
         
         self.target_geom = active_geom_codes[int(target_geom_idx)]
         for body_id in self.touch.sensor_scales:
@@ -196,13 +197,24 @@ class MIMoSelfBodyEnv(MIMoEnv):
         # check if contact with target sensor:
         target_geom_touch_max = np.max(self.touch.sensor_outputs[self.target_geom])
         contact_with_target_geom = (target_geom_touch_max > 0)
+        active_geom_codes = list(self.touch.sensor_outputs.keys())
+        fingers_touch_max = max(
+            np.max(self.touch.sensor_outputs[active_geom_codes[-1]]),
+            np.max(self.touch.sensor_outputs[active_geom_codes[-2]])
+        )
+        contact_with_fingers = (fingers_touch_max > 0)
         done = contact_with_target_geom
         
         # compute reward:
-        target_body_pos = self.sim.data.get_body_xpos(self.target_body)
-        fingers_pos = self.sim.data.get_body_xpos("right_fingers")
-        distance = np.linalg.norm(fingers_pos - target_body_pos)
-        reward = -2*distance + 500*contact_with_target_geom
+        if contact_with_target_geom:
+            reward = 500
+        elif contact_with_fingers:
+            target_body_pos = self.sim.data.get_body_xpos(self.target_body)
+            fingers_pos = self.sim.data.get_body_xpos("right_fingers")
+            distance = np.linalg.norm(fingers_pos - target_body_pos)
+            reward = -distance 
+        else:
+            reward = -1
         
         info = {
             'is_success': done,
