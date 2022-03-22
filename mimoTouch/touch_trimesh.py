@@ -383,9 +383,10 @@ class TrimeshTouch(Touch):
     # =================================================================================
 
     def get_contacts(self):
-        """ Returns a tuple containing (contact_id, geom_id, forces) for each active contact with a sensing geom,
-        where contact_id is the index of the contact in the mujoco arrays, geom_id is the index of the geom and forces
-        is a numpy array of the raw output force, determined by self.touch_type"""
+        """ Returns a tuple containing (contact_id, body_id, forces) for each active contact with a sensing body,
+        where contact_id is the index of the contact in the mujoco arrays, body_id is the index of the body and forces
+        is the mujoco contact force, adjusted for normal convention, i.e. the force is flipped ithe first body is the
+        sensing one """
         contact_tuples = []
         for i in range(self.m_data.ncon):
             contact = self.m_data.contact[i]

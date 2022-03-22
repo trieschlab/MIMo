@@ -3,10 +3,17 @@ from mimoEnv.utils import get_data_for_sensor
 
 
 class Proprioception:
+
+    VALID_COMPONENTS = []
+
     def __init__(self, env, proprio_parameters):
         self.env = env
         self.proprio_parameters = proprio_parameters
-        self.output_components = proprio_parameters["components"]
+        if "components" not in proprio_parameters:
+            self.output_components = []
+        else:
+            self.output_components = proprio_parameters["components"]
+        assert all([component in self.VALID_COMPONENTS for component in self.output_components])
         self.sensor_outputs = {}
 
     def get_proprioception_obs(self):
@@ -14,6 +21,9 @@ class Proprioception:
 
 
 class SimpleProprioception(Proprioception):
+
+    VALID_COMPONENTS = ["velocity", "torque", "limits"]
+
     def __init__(self, env, proprio_parameters):
         super().__init__(env, proprio_parameters)
 
