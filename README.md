@@ -29,11 +29,30 @@ All of the sensor modules follow the same pattern. They are initialized with a M
 
 ### Proprioception
 
+Relative joint position of all joints beginning with "robot:" are always included in all configurations. Potential additional outputs in the current implementation include joint velocities, torques and limit sensors. These are all computed directly, with no noise or filters. Torques are full 3D torques on the whole joint, not just the particular axis. The limit sensors have a linear response from 0 to 1 and beyond when moving from ~2° toward the limit and beyond it.
+
+Parameter structure: A dictionary with an entry "components" listing each of the proprioceptive components that should be calculated an included in the output. Valid components can be taken from the `VALID_COMPONENTS` attribute. The output of the obs function is a simple flattened array of all these components. 
+
 ### Touch
 
 ### Vestibular
 
+We currently only have a simple implementation consisting of a gyro and accelerometer located in the head, providing full 3D rotation and acceleration. The output consists of those sensor readings directly, with no noise or filtering.
+
+Parameter structure: A dictionary with an entry "sensors" listing the names of the sensors in the MuJoCo XML to use for the output. These must actually exist in the XMLs or an error will be raised.
+
 ### Vision
+
+The current implementation consists of two cameras located at the eyes with which images can be rendered. The vertical fov is set at a fixed 60°, with the horizontal adjusted based on the rendering resolution.
+
+Parameter structure:  A dictionary as below, with the camera names in the XML as keys and values which define the rendering resolution.
+
+```
+{  
+  "eye_left": {"width": 256, "height": 256},  
+  "eye_right": {"width": 256, "height": 256},  
+}
+```
 
 ## Sample Environments
 
