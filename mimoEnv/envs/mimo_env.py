@@ -20,6 +20,9 @@ EMOTES = {
     "happy": "tex_head_happy",
     "sad": "tex_head_sad",
     "surprised": "tex_head_surprised",
+    "angry": "tex_head_angry",
+    "disgusted": "tex_head_disgusted",
+    "scared": "tex_head_scared",
 }
 
 # Dictionary with body_names as keys,
