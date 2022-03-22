@@ -25,11 +25,11 @@ Then clone this repository, install other dependencies with `pip install -r requ
 
 ## Sensor modules
 
-All of the sensor modules follow the same pattern. They are initialized with a MuJoCo gym environment and a dictionary of parameters and their observations can be collected by calling their `get_<modality>_touch` function. The return of this function is generally a single array containing the flattened/concatenated output. Each module also has an attribute `sensor_outputs` that stores the unflattened outputs as a dictionary. The parameter structure and workings of each module are described in more detail below.
+All of the sensor modules follow the same pattern. They are initialized with a MuJoCo gym environment and a dictionary of parameters and their observations can be collected by calling their `get_<modality>_touch` function. The return of this function is generally a single array containing the flattened/concatenated output. Modules can be disabled or reduced to a minimum by passing an empty dictionary. Each module also has an attribute `sensor_outputs` that stores the unflattened outputs as a dictionary. The parameter structure and workings of each module are described in more detail below.
 
 ### Proprioception
 
-Relative joint position of all joints beginning with "robot:" are always included in all configurations. Potential additional outputs in the current implementation include joint velocities, torques and limit sensors. These are all computed directly, with no noise or filters. Torques are full 3D torques on the whole joint, not just the particular axis. The limit sensors have a linear response from 0 to 1 and beyond when moving from ~2° toward the limit and beyond it.
+Proprioception is always included in the observation space under the entry `observation`. Relative joint position of all joints beginning with "robot:" are also always included. Potential additional outputs in the current implementation include joint velocities, torques and limit sensors. These are all computed directly, with no noise or filters. Torques are full 3D torques on the whole joint, not just the particular axis. The limit sensors have a linear response from 0 to 1 and beyond when approaching within ~2° of the limit and beyond it.
 
 Parameter structure: A dictionary with an entry "components" listing each of the proprioceptive components that should be calculated an included in the output. Valid components can be taken from the `VALID_COMPONENTS` attribute. The output of the obs function is a simple flattened array of all these components. 
 
@@ -43,7 +43,7 @@ Parameter structure: A dictionary with an entry "sensors" listing the names of t
 
 ### Vision
 
-The current implementation consists of two cameras located at the eyes with which images can be rendered. The vertical fov is set at a fixed 60°, with the horizontal adjusted based on the rendering resolution.
+The current implementation consists of two cameras located at the eyes with which images can be rendered. The vertical fov is set at a fixed 60°, with the horizontal adjusted based on the rendering resolution. All of the cameras listed in the configuration are rendered at their defined resolution and then put into their own separate entry in the observation dictionary named after the camera.
 
 Parameter structure:  A dictionary as below, with the camera names in the XML as keys and values which define the rendering resolution.
 
