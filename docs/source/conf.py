@@ -1,6 +1,6 @@
 # Configuration file for the Sphinx documentation builder.
 
-sys.path.insert(0, os.path.abspath('../../'))
+#sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information
 
@@ -32,9 +32,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # -- Options for HTML output
-import sphinx_rtd_theme
+#import sphinx_rtd_theme
 html_theme = 'sphinx_rtd_theme'
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+#html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_static_path = ['_static']
 
 intersphinx_mapping = {
