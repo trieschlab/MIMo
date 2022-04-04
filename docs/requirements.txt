@@ -1,3 +1,11 @@
+numpy
+gym<=0.20
+matplotlib
+glfw
+scipy
+trimesh
+networkx
+rtree
 sphinx==4.2.0
 sphinx_rtd_theme==1.0.0
 sphinx-automodapi
