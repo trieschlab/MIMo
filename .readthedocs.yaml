@@ -5,13 +5,14 @@ build:
   tools:
     python: "3.7"
 
-# Build from the docs/ directory with Sphinx
-sphinx:
-  configuration: docs/conf.py
-
 # Explicitly set the version of Python and its requirements
 python:
   install:
     - method: pip
       path: .
     - requirements: docs/requirements.txt
+	
+# Build from the docs/ directory with Sphinx
+sphinx:
+  configuration: docs/conf.py
+
