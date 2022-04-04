@@ -1,5 +1,7 @@
 # Configuration file for the Sphinx documentation builder.
 
+sys.path.insert(0, os.path.abspath('../../'))
+
 # -- Project information
 
 project = 'MIMo'
@@ -10,14 +12,6 @@ release = '0.1.0'
 version = '0.1.0'
 
 # -- General configuration
-
-
-# The encoding of source files.
-#source_encoding = 'utf-8-sig'
-
-# The master toctree document.
-master_doc = 'index'
-
 extensions = [
     'sphinx.ext.duration',
     'sphinx.ext.doctest',
@@ -28,27 +22,31 @@ extensions = [
     'sphinx_automodapi.automodapi',
     'sphinx_automodapi.smart_resolver'
 ]
+numpydoc_class_members_toctree = False
+automodapi_toctreedirnm = 'generated'
+automodsumm_inherited_members = True
 
-# The suffix(es) of source filenames.
-# You can specify multiple suffix as a list of string:
-# source_suffix = ['.rst', '.md']
+templates_path = ['_templates']
+
 source_suffix = '.rst'
 
+# The master toctree document.
+master_doc = 'index'
+
+# -- Options for HTML output
+import sphinx_rtd_theme
+html_theme = 'sphinx_rtd_theme'
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_static_path = ['_static']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
+    'mimo': ('https://mimo.readthedocs.io/en/latest/', None),
 }
 intersphinx_disabled_domains = ['std']
 
 autosummary_generate = True
-
-templates_path = ['_templates']
-
-# -- Options for HTML output
-
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
