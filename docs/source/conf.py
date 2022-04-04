@@ -13,14 +13,12 @@ version = '0.1.0'
 
 # -- General configuration
 extensions = [
-    'sphinx.ext.duration',
-    'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx_automodapi.automodapi',
-    'sphinx_automodapi.smart_resolver'
+    'sphinx_automodapi.smart_resolver',
 ]
 numpydoc_class_members_toctree = False
 automodapi_toctreedirnm = 'generated'
