@@ -23,6 +23,7 @@ extensions = [
 numpydoc_class_members_toctree = False
 automodapi_toctreedirnm = 'generated'
 automodsumm_inherited_members = True
+autodoc_mock_imports = ["mujoco-py"]
 
 templates_path = ['_templates']
 
@@ -35,7 +36,7 @@ master_doc = 'index'
 #import sphinx_rtd_theme
 html_theme = 'sphinx_rtd_theme'
 #html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
