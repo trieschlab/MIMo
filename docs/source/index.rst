@@ -12,6 +12,7 @@ Contents
 --------
 
 .. toctree::
-
-   usage
-   api
+   :maxdepth: 2
+  
+   guides/index.rst
+   api/index.rst

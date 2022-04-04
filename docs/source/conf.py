@@ -17,6 +17,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.napoleon'
+    'sphinx_automodapi.automodapi',
+    'sphinx_automodapi.smart_resolver'
 ]
 
 # The suffix(es) of source filenames.
@@ -35,6 +38,8 @@ intersphinx_mapping = {
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
 }
 intersphinx_disabled_domains = ['std']
+
+autosummary_generate = True
 
 templates_path = ['_templates']
 
