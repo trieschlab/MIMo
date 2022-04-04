@@ -17,13 +17,11 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
-    'sphinx_automodapi.automodapi',
-    'sphinx_automodapi.smart_resolver',
 ]
+autodoc_mock_imports = ["mujoco_py"]
 numpydoc_class_members_toctree = False
 automodapi_toctreedirnm = 'generated'
 automodsumm_inherited_members = True
-autodoc_mock_imports = ["mujoco_py"]
 
 templates_path = ['_templates']
 
