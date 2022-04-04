@@ -11,6 +11,13 @@ version = '0.1.0'
 
 # -- General configuration
 
+
+# The encoding of source files.
+#source_encoding = 'utf-8-sig'
+
+# The master toctree document.
+master_doc = 'index'
+
 extensions = [
     'sphinx.ext.duration',
     'sphinx.ext.doctest',
@@ -27,11 +34,6 @@ extensions = [
 # source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
 
-# The encoding of source files.
-#source_encoding = 'utf-8-sig'
-
-# The master toctree document.
-master_doc = 'index'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
