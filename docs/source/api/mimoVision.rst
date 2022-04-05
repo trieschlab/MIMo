@@ -1,9 +1,10 @@
-mimoVision package
-==================
+Vision system
+=============
 
 .. autosummary::
    :toctree: _autosummary
    :recursive:
+   :nosignatures:
    
    mimoVision.vision.Vision
    mimoVision.vision.SimpleVision

@@ -1,5 +1,15 @@
-mimoTouch package
-=================
+Touch system
+============
+
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+   
+   mimoTouch.Touch
+   mimoTouch.touch_trimesh
+   mimoTouch.sensorpoints
+   mimoTouch.sensormeshes
+   
 
 Submodules
 ----------
@@ -32,14 +42,6 @@ mimoTouch.touch\_trimesh module
 -------------------------------
 
 .. automodule:: mimoTouch.touch_trimesh
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: mimoTouch
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,9 +1,10 @@
-mimoVestibular package
-======================
+Vestibular system
+=================
 
 .. autosummary::
    :toctree: _autosummary
    :recursive:
+   :nosignatures:
    
    mimoVestibular.vestibular.Vestibular
    mimoVestibular.vestibular.SimpleVestibular
