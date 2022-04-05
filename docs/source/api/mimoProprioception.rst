@@ -1,21 +1,18 @@
-mimoProprioception package
-==========================
+Proprioceptive system
+=====================
 
-Submodules
-----------
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+   :nosignatures:
+   
+   mimoProprioception.proprio.Proprioception
+   mimoProprioception.proprio.SimpleProprioception
 
-mimoProprioception.proprio module
----------------------------------
+mimoProprioception.proprio
+--------------------------
 
 .. automodule:: mimoProprioception.proprio
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: mimoProprioception
    :members:
    :undoc-members:
    :show-inheritance:

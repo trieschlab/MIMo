@@ -67,6 +67,7 @@ DEFAULT_VESTIBULAR_PARAMS = {
 # Proprioception is always included and always includes the relative joint positions
 DEFAULT_PROPRIOCEPTION_PARAMS = {
     "components": ["velocity", "torque", "limits"],
+    "threshold": .035,
 }
 
 

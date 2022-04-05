@@ -54,19 +54,21 @@ class SimpleProprioception(Proprioception):
     """ Simple implementation reading all values directly from the physics simulation.
 
     This class can provide relative joint positions, joint velocities, joint torques and limit sensors on the joint
-    range of motion. Joint positions are always part of the output, while the others can be added optionally through the
-    configuration dictionary. Valid components are 'velocity', 'torque', 'limits'. The configuration dictionary should
-    have the form::
+    range of motion. Torques are in newton-meters, all other values in radians. Joint positions are always part of the
+    output, while the others can be added optionally through the configuration dictionary. Valid components are
+    'velocity', 'torque', 'limits'.
+    The limit sensing increases linearly from 0 through 1 and beyond as the joint position moves within the threshold
+    distance to the limit and then exceeds the limit. The threshold is part of the configuration.
+    The configuration dictionary should have the form::
 
         {
             'components': [list, of, components],
+            'threshold': threshold_value,
         }
 
     Joint positions, velocities and limits are read from the simulation state directly, joint torques uses torque
     sensors placed between bodies in the scene. By default MIMo has one sensor for each joint. Any torque sensor with
     the 'proprio' prefix is used for the output.
-    The limit sensing out linearly increases from 0 through 1 and beyond as the joint position moves within a threshold
-    distance to the limit and then exceeds the limit. The threshold distance is about 2°.
 
     Attributes:
         env: The environment to which this module will be attached.
@@ -78,8 +80,8 @@ class SimpleProprioception(Proprioception):
         sensors: A list containing all the torque sensors.
         sensor_names: A dictionary of lists that can be used to find the joint/sensor of the associated entry in the
             output. The ith value in the joint position output belongs to joint sensor_names['qpos'][i].
-        _limit_thresh: Threshold distance to joint limit. If the joint is more than this distance away from the limit,
-            the output will be 0
+        limit_thresh: Threshold distance to joint limit. If the joint is more than this distance away from the limit,
+            the output will be 0. Default value is .035
     """
 
     #: Valid entries for the output components
@@ -106,7 +108,10 @@ class SimpleProprioception(Proprioception):
         if "limits" in self.output_components:
             self.sensor_names["limit"] = self.joint_names
 
-        self._limit_thresh = .035  # ~2 degrees in radians
+        if "threshold" in proprio_parameters:
+            self.limit_thresh = proprio_parameters["threshold"]
+        else:
+            self.limit_thresh = .035  # ~2 degrees in radians
 
     def get_proprioception_obs(self):
         """ Produce the proprioceptive sensor outputs.
@@ -143,9 +148,9 @@ class SimpleProprioception(Proprioception):
                 joint_id = self.env.sim.model.joint_name2id(joint_name)
                 joint_limits = self.env.sim.model.jnt_range[joint_id]
                 joint_position = robot_qpos[i]
-                l_dif = joint_position - (joint_limits[0] + self._limit_thresh)
-                u_dif = (joint_limits[1]-self._limit_thresh) - joint_position
-                response = min(l_dif, u_dif) / self._limit_thresh  # Outputs negative of difference, scaled by thresh
+                l_dif = joint_position - (joint_limits[0] + self.limit_thresh)
+                u_dif = (joint_limits[1] - self.limit_thresh) - joint_position
+                response = min(l_dif, u_dif) / self.limit_thresh  # Outputs negative of difference, scaled by thresh
                 response = - min(response, 0)  # Clamp all positive values (have not reached the threshold) and invert
                 limits.append(response)
             limit_response = np.asarray(limits)  # np.asarrays
