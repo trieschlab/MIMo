@@ -1,21 +1,18 @@
 mimoVision package
 ==================
 
-Submodules
-----------
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+   
+   mimoVision.vision
 
-mimoVision.vision module
-------------------------
+mimoVision.vision
+-----------------
 
 .. automodule:: mimoVision.vision
    :members:
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
 
-.. automodule:: mimoVision
-   :members:
-   :undoc-members:
-   :show-inheritance:
