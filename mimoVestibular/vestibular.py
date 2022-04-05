@@ -18,7 +18,7 @@ class Vestibular:
     outputs should also be stored in :attr:`.sensor_outputs`.
 
     Attributes:
-        env: The environment to which this module should be attached.
+        env: The environment to which this module will be attached.
         vestibular_parameters: A dictionary containing the configuration. The exact from will depend on the specific
             implementation.
         sensor_outputs: A list of outputs corresponding to the configuration dictionary. This should be populated by

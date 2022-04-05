@@ -22,7 +22,7 @@ class Vision:
     scene.
 
     Attributes:
-        env: The environment to which this module should be attached
+        env: The environment to which this module will be attached
         camera_parameters: A dictionary containing the configuration. The exact from will depend on the specific
             implementation.
         sensor_outputs: A dictionary containing the outputs produced by the sensors. Shape will depend on the specific

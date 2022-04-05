@@ -4,44 +4,42 @@ Touch system
 .. autosummary::
    :toctree: _autosummary
    :recursive:
+   :nosignatures:
    
-   mimoTouch.Touch
-   mimoTouch.touch_trimesh
+   mimoTouch.touch.Touch
+   mimoTouch.touch.SimpleTouch
+   mimoTouch.touch_trimesh.TrimeshTouch
    mimoTouch.sensorpoints
    mimoTouch.sensormeshes
    
+mimoTouch.touch
+---------------
 
-Submodules
-----------
-
-mimoTouch.sensormeshes module
------------------------------
-
-.. automodule:: mimoTouch.sensormeshes
+.. automodule:: mimoTouch.touch
    :members:
    :undoc-members:
    :show-inheritance:
+   
+mimoTouch.touch\_trimesh
+------------------------
 
-mimoTouch.sensorpoints module
------------------------------
+.. automodule:: mimoTouch.touch_trimesh
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
+mimoTouch.sensorpoints
+----------------------
 
 .. automodule:: mimoTouch.sensorpoints
    :members:
    :undoc-members:
    :show-inheritance:
 
-mimoTouch.touch module
+mimoTouch.sensormeshes
 ----------------------
 
-.. automodule:: mimoTouch.touch
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-mimoTouch.touch\_trimesh module
--------------------------------
-
-.. automodule:: mimoTouch.touch_trimesh
+.. automodule:: mimoTouch.sensormeshes
    :members:
    :undoc-members:
    :show-inheritance:
