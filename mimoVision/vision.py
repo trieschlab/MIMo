@@ -38,7 +38,7 @@ class Vision:
     def render_camera(self, width: int, height: int, camera_name: str):
         """ Renders images of a given camera.
 
-        Given the name of a camera in the scene, renders an image  with it using the resolution provided by `width` and
+        Given the name of a camera in the scene, renders an image with it using the resolution provided by `width` and
         `height`. The vertical field of view is defined in the scene xml, with the horizontal field of view determined
         by the rendering resolution.
 

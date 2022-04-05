@@ -1,21 +1,17 @@
 mimoVestibular package
 ======================
 
-Submodules
-----------
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+   
+   mimoVestibular.vestibular.Vestibular
+   mimoVestibular.vestibular.SimpleVestibular
 
-mimoVestibular.vestibular module
---------------------------------
+mimoVestibular.vestibular
+-------------------------
 
 .. automodule:: mimoVestibular.vestibular
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: mimoVestibular
    :members:
    :undoc-members:
    :show-inheritance:

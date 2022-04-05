@@ -15,5 +15,3 @@ mimoVision.vision
    :members:
    :undoc-members:
    :show-inheritance:
-
-
