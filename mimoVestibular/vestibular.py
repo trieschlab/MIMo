@@ -18,11 +18,14 @@ class Vestibular:
     outputs should also be stored in :attr:`.sensor_outputs`.
 
     Attributes:
-        env: The environment to which this module should be attached
+        env: The environment to which this module should be attached.
         vestibular_parameters: A dictionary containing the configuration. The exact from will depend on the specific
             implementation.
         sensor_outputs: A list of outputs corresponding to the configuration dictionary. This should be populated by
-            :meth:`.get_vestibular_obs`
+            :meth:`.get_vestibular_obs`.
+
+    Methods:
+        get_vestibular_obs: Produce the sensor outputs.
 
     """
     def __init__(self, env, vestibular_parameters):
@@ -58,10 +61,14 @@ class SimpleVestibular(Vestibular):
     and the gyro, both located in the head.
 
     Attributes:
-        env: The environment to which this module should be attached
+        env: The environment to which this module should be attached.
         vestibular_parameters: A dictionary containing the configuration.
         sensor_outputs: A list of outputs corresponding to the configuration dictionary. This is populated by
-            :meth:`.get_vestibular_obs`
+            :meth:`.get_vestibular_obs`.
+            
+    Methods:
+        get_vestibular_obs: Produce the sensor outputs.
+
 
     """
     def __init__(self, env, vestibular_parameters):
