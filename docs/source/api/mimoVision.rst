@@ -1,7 +1,12 @@
 mimoVision package
 ==================
 
-.. contents::
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+   
+   mimoVision.vision.Vision
+   mimoVision.vision.SimpleVision
 
 mimoVision.vision
 -----------------
