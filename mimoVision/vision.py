@@ -68,7 +68,37 @@ class Vision:
 
 
 class SimpleVision(Vision):
+    """ A simple vision system with one camera for each output.
+
+    The output is simply one RGB image for each camera in the configuration.
+
+    Attributes:
+        env: The environment to which this module should be attached
+        camera_parameters: A dictionary containing the configuration.
+        sensor_outputs: A dictionary containing the outputs produced by the sensors. This is be populated by
+            :meth:`.get_vision_obs`
+        viewer: The currently active render context.
+
+    """
     def __init__(self, env, camera_parameters):
+        """ Constructor.
+
+        The parameter `camera_parameters` should be a dictionary with the following structure::
+
+            {
+                'camera_name': {'width': width, 'height': height},
+                'other_camera_name': {'width': width, 'height': height},
+            }
+
+        The keys of the dictionary are camera names, while the value is another dictionary listing the width and height
+        of the output image. The default MIMo model has two cameras, one in each eye, named `eye_left` and `eye_right`.
+        Note that the cameras must already exist in the scene xml!
+
+        Args:
+            env: The environment to which this module should be attached
+            camera_parameters: A dictionary containing the configuration.
+
+        """
         super().__init__(env, camera_parameters)
         self.viewer = None
         self._viewers = {}
@@ -92,9 +122,24 @@ class SimpleVision(Vision):
         return data[::-1, :, :]
 
     def _swap_context(self, window):
+        """ Swaps the current render context to 'window'
+
+        Args:
+            window: The new render context.
+
+        """
         glfw.make_context_current(window)
 
     def get_vision_obs(self):
+        """ Produces the current vision output.
+
+        This function renders each camera with the resolution as defined in :attr:`.camera_parameters`. The images are
+        stored in :attr:`.sensor_outputs` under the name of the associated camera. Uses :meth:`.render_camera`.
+
+        Returns:
+            A dictionary of numpy arrays. Keys are camera names and the values are the corresponding images.
+
+        """
         # Have to manage contexts ourselves to avoid buffer reuse issues
         if self.env.sim._render_context_window is not None:
             self._swap_context(self.offscreen_context.window)
@@ -115,10 +160,10 @@ class SimpleVision(Vision):
         """ Saves the output images.
 
         Everytime this function is called all images in :attr:`.sensor_outputs` are saved to files in `directory`. The
-        filename is determiend by the camera name and `suffix`. This is very slow!
+        filename is determined by the camera name and `suffix`. This is very slow!
 
         Args:
-            directory: The output directory. Will be created if it does not exist.
+            directory: The output directory. It will be created if it does not already exist.
             suffix: Optional file suffix. Useful for a step counter.
 
         """
@@ -130,7 +175,14 @@ class SimpleVision(Vision):
             matplotlib.image.imsave(os.path.join(
                 directory, file_name), self.sensor_outputs[camera_name])
 
-    def _get_viewer(self, mode):
+    def _get_viewer(self, mode: str):
+        """ Handles render contexts.
+
+        Args:
+            mode: One of 'human' or 'rgb_array'. If 'rgb_array' an offscreen render context is used, otherwise we render
+            to an interactive viewer window.
+
+        """
         self.viewer = self._viewers.get(mode)
         if self.viewer is None:
             if mode == "human":
