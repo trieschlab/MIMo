@@ -1,7 +1,7 @@
 """ This module defines the vision interface and provides a simple implementation.
 
-:class:`~mimoVision.vision.Vision` is an abstract class defining the interface.
-:class:`~mimoVision.vision.SimpleVision` is a concrete implementation simply treating each eye as a single camera.
+The interface is defined as an abstract class in :class:`~mimoVision.vision.Vision`.
+A simple implementation treating each eye as a single camera is in :class:`~mimoVision.vision.SimpleVision`.
 
 """
 
@@ -38,9 +38,9 @@ class Vision:
     def render_camera(self, width: int, height: int, camera_name: str):
         """ Renders images of a given camera.
 
-        Given the name of a camera in the scene, renders an image with the resolution provided by `width` and `height`.
-        The vertical field of view is defined in the scene xml, with the horizontal field of view determined by the
-        rendering resolution.
+        Given the name of a camera in the scene, renders an image  with it using the resolution provided by `width` and
+        `height`. The vertical field of view is defined in the scene xml, with the horizontal field of view determined
+        by the rendering resolution.
 
         Args:
             width: The width of the output image
@@ -70,29 +70,29 @@ class Vision:
 class SimpleVision(Vision):
     """ A simple vision system with one camera for each output.
 
-    The output is simply one RGB image for each camera in the configuration.
+    The output is simply one RGB image for each camera in the configuration. The constructor takes two arguments: `env`,
+    which is the environment we are working with, and `camera_parameters`.
+    The parameter `camera_parameters` should be a dictionary with the following structure::
+
+        {
+            'camera_name': {'width': width, 'height': height},
+            'other_camera_name': {'width': width, 'height': height},
+        }
+
+    The keys of the dictionary are camera names, while the value is another dictionary listing the width and height
+    of the output image. The default MIMo model has two cameras, one in each eye, named `eye_left` and `eye_right`.
+    Note that the cameras must already exist in the scene xml!
 
     Attributes:
         env: The environment to which this module should be attached
         camera_parameters: A dictionary containing the configuration.
-        sensor_outputs: A dictionary containing the outputs produced by the sensors. This is be populated by
+        sensor_outputs: A dictionary containing the outputs produced by the sensors. This is populated by
             :meth:`.get_vision_obs`
         viewer: The currently active render context.
 
     """
     def __init__(self, env, camera_parameters):
         """ Constructor.
-
-        The parameter `camera_parameters` should be a dictionary with the following structure::
-
-            {
-                'camera_name': {'width': width, 'height': height},
-                'other_camera_name': {'width': width, 'height': height},
-            }
-
-        The keys of the dictionary are camera names, while the value is another dictionary listing the width and height
-        of the output image. The default MIMo model has two cameras, one in each eye, named `eye_left` and `eye_right`.
-        Note that the cameras must already exist in the scene xml!
 
         Args:
             env: The environment to which this module should be attached
@@ -108,7 +108,7 @@ class SimpleVision(Vision):
         else:
             self.offscreen_context = self._get_viewer('rgb_array').opengl_context
 
-    def render_camera(self, width, height, camera_name):
+    def render_camera(self, width: int, height: int, camera_name: str):
         mode = "rgb_array"
         self._get_viewer(mode).render(
             width,
@@ -134,7 +134,8 @@ class SimpleVision(Vision):
         """ Produces the current vision output.
 
         This function renders each camera with the resolution as defined in :attr:`.camera_parameters`. The images are
-        stored in :attr:`.sensor_outputs` under the name of the associated camera. Uses :meth:`.render_camera`.
+        stored in :attr:`.sensor_outputs` under the name of the associated camera. Uses :meth:`.render_camera`. The
+        images are rendered using an offscreen render context.
 
         Returns:
             A dictionary of numpy arrays. Keys are camera names and the values are the corresponding images.
@@ -157,10 +158,10 @@ class SimpleVision(Vision):
         return imgs
 
     def save_obs_to_file(self, directory: str, suffix: str = ""):
-        """ Saves the output images.
+        """ Saves the output images to file.
 
-        Everytime this function is called all images in :attr:`.sensor_outputs` are saved to files in `directory`. The
-        filename is determined by the camera name and `suffix`. This is very slow!
+        Everytime this function is called all images in :attr:`.sensor_outputs` are saved to separate files in
+        `directory`. The filename is determined by the camera name and `suffix`. Saving large images takes a long time!
 
         Args:
             directory: The output directory. It will be created if it does not already exist.
