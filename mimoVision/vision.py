@@ -17,8 +17,8 @@ class Vision:
     """ Abstract base class for vision.
 
     This class defines the functions that all implementing classes must provide.
-    :meth:`~.get_vision_obs` should produce the vision outputs that will be returned to the environment. These outputs
-    should also be stored in :attr:`~.sensor_outputs`. :meth:`~.render_camera` can be used to render any camera in the
+    :meth:`.get_vision_obs` should produce the vision outputs that will be returned to the environment. These outputs
+    should also be stored in :attr:`.sensor_outputs`. :meth:`.render_camera` can be used to render any camera in the
     scene.
 
     Attributes:
@@ -26,7 +26,7 @@ class Vision:
         camera_parameters: A dictionary containing the configuration. The exact from will depend on the specific
             implementation.
         sensor_outputs: A dictionary containing the outputs produced by the sensors. Shape will depend on the specific
-            implementation. This should be populated by :meth:`~get_vision_obs`
+            implementation. This should be populated by :meth:`.get_vision_obs`
 
     """
 
@@ -57,7 +57,7 @@ class Vision:
         """ Produces the current vision output.
 
         This function should perform the whole sensory pipeline and return the vision output as defined in
-        :attr:`~camera_parameters`. Exact return value and functionality will depend on the implementation, but should
+        :attr:`.camera_parameters`. Exact return value and functionality will depend on the implementation, but should
         always be a dictionary containing images as values.
 
         Returns:
@@ -91,13 +91,13 @@ class SimpleVision(Vision):
         # original image is upside-down, so flip it
         return data[::-1, :, :]
 
-    def swap_context(self, window):
+    def _swap_context(self, window):
         glfw.make_context_current(window)
 
     def get_vision_obs(self):
         # Have to manage contexts ourselves to avoid buffer reuse issues
         if self.env.sim._render_context_window is not None:
-            self.swap_context(self.offscreen_context.window)
+            self._swap_context(self.offscreen_context.window)
 
         imgs = {}
         for camera in self.camera_parameters:
@@ -106,12 +106,22 @@ class SimpleVision(Vision):
             imgs[camera] = self.render_camera(width, height, camera)
 
         if self.env.sim._render_context_window is not None:
-            self.swap_context(self.env.sim._render_context_window.window)
+            self._swap_context(self.env.sim._render_context_window.window)
 
         self.sensor_outputs = imgs
         return imgs
 
-    def save_obs_to_file(self, directory, suffix: str = ""):
+    def save_obs_to_file(self, directory: str, suffix: str = ""):
+        """ Saves the output images.
+
+        Everytime this function is called all images in :attr:`.sensor_outputs` are saved to files in `directory`. The
+        filename is determiend by the camera name and `suffix`. This is very slow!
+
+        Args:
+            directory: The output directory. Will be created if it does not exist.
+            suffix: Optional file suffix. Useful for a step counter.
+
+        """
         os.makedirs(directory, exist_ok=True)
         if self.sensor_outputs is None or len(self.sensor_outputs) == 0:
             raise RuntimeWarning("No image observations to save!")
