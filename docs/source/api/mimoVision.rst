@@ -5,7 +5,8 @@ mimoVision package
    :toctree: _autosummary
    :recursive:
    
-   mimoVision.vision
+   mimoVision.vision.Vision
+   mimoVision.vision.SimpleVision
 
 mimoVision.vision
 -----------------
