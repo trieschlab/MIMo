@@ -1,7 +1,7 @@
 """ This module defines the vision interface and provides a simple implementation.
 
-:class:'mimoVision.vision.Vision' is an abstract class defining the interface.
-:class:'mimoVision.vision.SimpleVision' is a concrete implementation simply treating each eye as a single camera.
+:class:~`mimoVision.vision.Vision` is an abstract class defining the interface.
+:class:~`mimoVision.vision.SimpleVision` is a concrete implementation simply treating each eye as a single camera.
 
 """
 
