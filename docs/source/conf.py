@@ -20,6 +20,7 @@ extensions = [
     'sphinx.ext.napoleon',
 ]
 autodoc_mock_imports = ["mujoco_py"]
+autodoc_member_order = 'bysource'
 numpydoc_class_members_toctree = False
 automodapi_toctreedirnm = 'generated'
 automodsumm_inherited_members = True
