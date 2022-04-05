@@ -79,9 +79,8 @@ class SimpleVision(Vision):
             'other_camera_name': {'width': width, 'height': height},
         }
 
-    The keys of the dictionary are camera names, while the value is another dictionary listing the width and height
-    of the output image. The default MIMo model has two cameras, one in each eye, named `eye_left` and `eye_right`.
-    Note that the cameras must already exist in the scene xml!
+    The default MIMo model has two cameras, one in each eye, named `eye_left` and `eye_right`. Note that the cameras in
+    the dictionary must exist in the scene xml or errors will occur!
 
     Attributes:
         env: The environment to which this module should be attached
@@ -133,9 +132,9 @@ class SimpleVision(Vision):
     def get_vision_obs(self):
         """ Produces the current vision output.
 
-        This function renders each camera with the resolution as defined in :attr:`.camera_parameters`. The images are
-        stored in :attr:`.sensor_outputs` under the name of the associated camera. Uses :meth:`.render_camera`. The
-        images are rendered using an offscreen render context.
+        This function renders each camera with the resolution as defined in :attr:`.camera_parameters` using an
+        offscreen render context. The images are stored in :attr:`.sensor_outputs` under the name of the associated
+        camera. Uses :meth:`.render_camera`.
 
         Returns:
             A dictionary of numpy arrays. Keys are camera names and the values are the corresponding images.
