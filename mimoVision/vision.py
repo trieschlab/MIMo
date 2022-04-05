@@ -1,7 +1,7 @@
 """ This module defines the vision interface and provides a simple implementation.
 
-:class:`mimoVision.vision.Vision` is an abstract class defining the interface.
-:class:`mimoVision.vision.SimpleVision` is a concrete implementation simply treating each eye as a single camera.
+:class:`~mimoVision.vision.Vision` is an abstract class defining the interface.
+:class:`~mimoVision.vision.SimpleVision` is a concrete implementation simply treating each eye as a single camera.
 
 """
 
@@ -17,8 +17,8 @@ class Vision:
     """ Abstract base class for vision.
 
     This class defines the functions that all implementing classes must provide.
-    :meth:'get_vision_obs' should produce the vision outputs that will be returned to the environment. These outputs
-    should also be stored in :attr:~'sensor_outputs'. :meth:'render_camera' can be used to render any camera in the
+    :meth:`~.get_vision_obs` should produce the vision outputs that will be returned to the environment. These outputs
+    should also be stored in :attr:`~.sensor_outputs`. :meth:`~.render_camera` can be used to render any camera in the
     scene.
 
     Attributes:
@@ -26,7 +26,7 @@ class Vision:
         camera_parameters: A dictionary containing the configuration. The exact from will depend on the specific
             implementation.
         sensor_outputs: A dictionary containing the outputs produced by the sensors. Shape will depend on the specific
-            implementation. This should be populated by :meth:~'get_vision_obs'
+            implementation. This should be populated by :meth:`~get_vision_obs`
 
     """
 
@@ -48,7 +48,7 @@ class Vision:
             camera_name: The name of the camera that will be used for rendering.
 
         Returns:
-            ndarray: A numpy array with the containing the output image.
+            A numpy array with the containing the output image.
 
         """
         raise NotImplementedError
@@ -57,11 +57,11 @@ class Vision:
         """ Produces the current vision output.
 
         This function should perform the whole sensory pipeline and return the vision output as defined in
-        :attr:~'camera_parameters'. Exact return value and functionality will depend on the implementation, but should
+        :attr:`~camera_parameters`. Exact return value and functionality will depend on the implementation, but should
         always be a dictionary containing images as values.
 
         Returns:
-            dict: A dictionary of numpy arrays with the output images.
+            A dictionary of numpy arrays with the output images.
 
         """
         raise NotImplementedError
