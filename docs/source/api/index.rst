@@ -1,5 +1,5 @@
-MIMo
-====
+API
+======================
 
 .. toctree::
    :maxdepth: 4
