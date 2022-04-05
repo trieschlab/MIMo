@@ -24,9 +24,6 @@ class Vestibular:
         sensor_outputs: A list of outputs corresponding to the configuration dictionary. This should be populated by
             :meth:`.get_vestibular_obs`.
 
-    Methods:
-        get_vestibular_obs: Produce the sensor outputs.
-
     """
     def __init__(self, env, vestibular_parameters):
         self.env = env
@@ -65,10 +62,6 @@ class SimpleVestibular(Vestibular):
         vestibular_parameters: A dictionary containing the configuration.
         sensor_outputs: A list of outputs corresponding to the configuration dictionary. This is populated by
             :meth:`.get_vestibular_obs`.
-            
-    Methods:
-        get_vestibular_obs: Produce the sensor outputs.
-
 
     """
     def __init__(self, env, vestibular_parameters):
