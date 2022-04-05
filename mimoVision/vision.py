@@ -1,3 +1,10 @@
+""" This module defines the vision interface and provides a simple implementation.
+
+:class:~'Vision' is an abstract class defining the interface.
+:class:~'SimpleVision' is a concrete implementation simply treating each eye as a single camera.
+
+"""
+
 import os
 import sys
 
@@ -7,15 +14,56 @@ import glfw
 
 
 class Vision:
+    """ Abstract base class for vision.
+
+    This class defines the functions that all implementing classes must provide.
+    :meth:'get_vision_obs' should produce the vision outputs that will be returned to the environment. These outputs
+    should also be stored in :attr:~'sensor_outputs'. :meth:'render_camera' can be used to render any camera in the
+    scene.
+
+    Attributes:
+        env: The environment to which this module should be attached
+        camera_parameters: A dictionary containing the configuration. The exact from will depend on the specific
+            implementation.
+        sensor_outputs: A dictionary containing the outputs produced by the sensors. Shape will depend on the specific
+            implementation. This should be populated by :meth:~'get_vision_obs'
+
+    """
+
     def __init__(self, env, camera_parameters):
         self.env = env
         self.camera_parameters = camera_parameters
         self.sensor_outputs = {}
 
-    def render_camera(self, width, height, camera_name):
+    def render_camera(self, width: int, height: int, camera_name: str):
+        """ Renders images of a given camera.
+
+        Given the name of a camera in the scene, renders an image with the resolution provided by `width` and `height`.
+        The vertical field of view is defined in the scene xml, with the horizontal field of view determined by the
+        rendering resolution.
+
+        Args:
+            width: The width of the output image
+            height: The height of the output image
+            camera_name: The name of the camera that will be used for rendering.
+
+        Returns:
+            ndarray: A numpy array with the containing the output image.
+
+        """
         raise NotImplementedError
 
     def get_vision_obs(self):
+        """ Produces the current vision output.
+
+        This function should perform the whole sensory pipeline and return the vision output as defined in
+        :attr:~'camera_parameters'. Exact return value and functionality will depend on the implementation, but should
+        always be a dictionary containing images as values.
+
+        Returns:
+            dict: A dictionary of numpy arrays with the output images.
+
+        """
         raise NotImplementedError
 
 
