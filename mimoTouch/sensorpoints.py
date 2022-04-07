@@ -1,3 +1,7 @@
+""" This module contains functions for distributing points over geometric primitives.
+
+"""
+
 import math
 
 import numpy as np
@@ -10,8 +14,22 @@ from mimoEnv.utils import EPS, normalize_vectors
 #       Maybe mujoco raycast methods can be used here, if we can exclude other objects?
 
 def spread_points_box(resolution: float, sizes: np.array, return_normals=False):
-    """Spreads points over a box by subdividing into smaller boxes.
-    Sizes is an array containing the three edge lengths of the box"""
+    """ Spreads points over the surface of a box.
+
+    Spreads points over the surface of a box such that the points are spaced at approximately `resolution` distance to
+    each other. The box is subdivided into an integer number of segments. If the box is too small for the resolution a
+    single point at the center of the box is returned instead. The box is centered on (0,0,0).
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        sizes: The size of the box. Should be a numpy array of shape (3,).
+        return_normals: If True we return the normal vector of each point in addition to the position.
+
+    Returns:
+        A numpy array containing the position of the points. Shape (n, 3) for n points.
+        A second numpy array containing the normal vectors, if `return_normals` is `True`.
+
+    """
     assert len(sizes) == 3, "Size parameter does not fit box!"
     # If distance between points is greater than size of box, have only one point in center of box
     if resolution > sizes.max():
@@ -97,6 +115,23 @@ def spread_points_box(resolution: float, sizes: np.array, return_normals=False):
 
 
 def spread_points_sphere(resolution: float, radius: float, return_normals=False):
+    """ Spreads points over the surface of a sphere.
+
+    Spreads points over the surface of a sphere such that the points are spaced at approximately `resolution` distance to
+    each other. This is done by splitting the sphere into latitude rings and spreading a variable number of points over
+    each ring. If the sphere is too small for the resolution a single point at the center of the sphere is returned
+    instead. The sphere is centered on (0,0,0).
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        radius: The radius of the sphere.
+        return_normals: If True we return the normal vector of each point in addition to the position.
+
+    Returns:
+        A numpy array containing the position of the points. Shape (n, 3) for n points.
+        A second numpy array containing the normal vectors, if `return_normals` is `True`.
+
+    """
     # If resolution would lead to very small number of sensor points, instead have single point at center of sphere
     if resolution > radius:
         if return_normals:
@@ -127,8 +162,23 @@ def spread_points_sphere(resolution: float, radius: float, return_normals=False)
 
 # TODO: Proper points instead of spherical projection
 def spread_points_ellipsoid(resolution: float, radii, return_normals=False):
-    """ Spread points over an ellipsoid using a spherical projection. radii should be list/array (a, b, c), where
-    a is the x-radius, b the y-radius and c the z-radius"""
+    """ Spreads points over the surface of an ellipsoid.
+
+    Spreads points over the surface of an ellipsoid. This is done by spreading points over a sphere and then projecting
+    those onto the ellipsoid. As a result the distance between points varies more strongly the less spherical the
+    ellipsoid gets. If the ellipsoid is too small for the resolution a single point at the center is returned instead.
+    The ellipsoid is centered on (0,0,0).
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        radii: A numpy array of shape (3,) containing the radii for the three axis.
+        return_normals: If True we return the normal vector of each point in addition to the position.
+
+    Returns:
+        A numpy array containing the position of the points. Shape (n, 3) for n points.
+        A second numpy array containing the normal vectors, if `return_normals` is `True`.
+
+    """
     max_r = np.max(radii)
     # If resolution would lead to very small number of sensor points, instead have single point at center of sphere
     if resolution > max_r:
@@ -161,7 +211,22 @@ def spread_points_ellipsoid(resolution: float, radii, return_normals=False):
 
 
 def _spread_points_pipe(resolution: float, length: float, radius: float):
-    """ Spreads points around the outer surface of a cylinder, without caps. Always returns normal vectors. """
+    """ Spreads points over the surface of a pipe.
+
+    Spreads points over the surface of a pipe, with no caps, such that the distance between points is approximately
+    `resolution`. This is done by subdividing the cylinder into an integer number of pie segments.
+    If the pipe is too small for the resolution a single point at the center is returned instead.
+    The pipe is centered on (0,0,0) with the longitudinal axis aligned with the z-axis.
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        length: The length of the pipe.
+        radius: The radius of the pipe.
+
+    Returns:
+        Two numpy arrays containing the position and normals of the points. Both arrays have shape (n, 3) for n points.
+
+    """
     # Number of subdivisions along length
     n_length = int(math.ceil(length / resolution)) + 1
     # Number of subdivisions around circumference
@@ -185,6 +250,23 @@ def _spread_points_pipe(resolution: float, length: float, radius: float):
 
 
 def spread_points_pipe(resolution: float, length: float, radius: float, return_normals=False):
+    """ Spreads points over the surface of a pipe.
+
+    Spreads points over the surface of a pipe, with no caps, such that the distance between points is approximately
+    `resolution`. This is done by subdividing the cylinder into an integer number of pie segments.
+    If the pipe is too small for the resolution a single point at the center is returned instead.
+    The pipe is centered on (0,0,0) with the longitudinal axis aligned with the z-axis.
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        length: The length of the pipe.
+        radius: The radius of the pipe.
+        return_normals: If True we return the normal vector of each point in addition to the position.
+
+    Returns:
+        A numpy array containing the position of the points. Shape (n, 3) for n points.
+        A second numpy array containing the normal vectors, if `return_normals` is `True`.
+    """
     points, normals = _spread_points_pipe(resolution, length, radius)
     if return_normals:
         return points, normalize_vectors(normals)
@@ -193,7 +275,24 @@ def spread_points_pipe(resolution: float, length: float, radius: float, return_n
 
 
 def spread_points_cylinder(resolution: float, length: float, radius: float, return_normals=False):
-    """ Spreads points around the outer surface of a cylinder, including caps """
+    """ Spreads points over the surface of a cylinder.
+
+    Spreads points over the surface of a cylinder, such that the distance between points is approximately `resolution`.
+    This is done by subdividing the cylinder into an integer number of pie segments. The caps are split into rings of
+    different radii with points spread over each ring.
+    If the cylinder is too small for the resolution a single point at the center is returned instead.
+    The cylinder is centered on (0,0,0) with the longitudinal axis aligned with the z-axis.
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        length: The length of the cylinder.
+        radius: The radius of the cylinder.
+        return_normals: If True we return the normal vector of each point in addition to the position.
+
+    Returns:
+        A numpy array containing the position of the points. Shape (n, 3) for n points.
+        A second numpy array containing the normal vectors, if `return_normals` is `True`.
+    """
     # Number of subdivisions along length
     n_length = int(math.ceil(length / resolution))
     # Number of subdivisions around circumference
@@ -253,6 +352,25 @@ def spread_points_cylinder(resolution: float, length: float, radius: float, retu
 
 
 def spread_points_capsule(resolution: float, length: float, radius: float, return_normals=False):
+    """ Spreads points over the surface of a capsule.
+
+    A capsule is a cylinder with a hemisphere capping each end. Spreads points over the surface of a capsule, such that
+    the distance between points is approximately `resolution`.
+    This is done by subdividing the capsule into an integer number of pie segments. The caps are split into rings of
+    latitude with points spread over each ring.
+    If the capsule is too small for the resolution a single point at the center is returned instead.
+    The capsule is centered on (0,0,0) with the longitudinal axis aligned with the z-axis.
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        length: The length of the cylindrical section.
+        radius: The radius of the cylinder and hemispheres.
+        return_normals: If True we return the normal vector of each point in addition to the position.
+
+    Returns:
+        A numpy array containing the position of the points. Shape (n, 3) for n points.
+        A second numpy array containing the normal vectors, if `return_normals` is `True`.
+    """
     # Number of subdivisions around circumference
     n_circum = int(math.ceil(2 * math.pi * radius / resolution))
 
