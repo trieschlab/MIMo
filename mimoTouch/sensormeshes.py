@@ -1,3 +1,10 @@
+""" This module contains functions for distributing points over geometric primitives.
+
+The functions here function much like those in :mod:'mimoTouch.sensorpoints', but the points are structured in a
+watertight mesh instead of being a simple point cloud.
+
+"""
+
 import math
 
 import numpy as np
@@ -10,8 +17,20 @@ import mimoTouch.sensorpoints
 
 
 def mesh_box(resolution: float, sizes: np.array):
-    """Spreads points over a box by subdividing into smaller boxes.
-    Sizes is an array containing the three edge half-lengths of the box"""
+    """ Spreads a mesh over the surface of a box.
+
+    Spreads a mesh over the surface of a box such that the points are spaced at approximately `resolution` distance to
+    each other. The box is subdivided into an integer number of segments. If the box is too small for the resolution a
+    single point at the center of the box is returned instead. The box is centered on (0,0,0).
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        sizes: The size of the box. Should be a numpy array of shape (3,).
+
+    Returns:
+        A :class:`trimesh.Trimesh` object containing the mesh.
+
+    """
     assert len(sizes) == 3, "Size parameter does not fit box!"
     # If distance between points is greater than size of box, have only one point in center of box
     if resolution > sizes.max():
@@ -73,6 +92,21 @@ def mesh_box(resolution: float, sizes: np.array):
 
 
 def mesh_sphere(resolution: float, radius: float):
+    """ Spreads a mesh over the surface of a sphere.
+
+    Spreads a mesh over the surface of a sphere such that the points are spaced at approximately `resolution` distance
+    to each other. This is done by splitting the sphere into latitude rings and spreading a variable number of points
+    over each ring. The points are meshified by taking the convex hull over the points. If the sphere is too small for
+    the resolution a single point at the center of the sphere is returned instead. The sphere is centered on (0,0,0).
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        radius: The radius of the sphere.
+
+    Returns:
+        A :class:`trimesh.Trimesh` object containing the mesh.
+
+    """
     # If resolution would lead to very small number of sensor points, instead have single point at center of sphere
     points = mimoTouch.sensorpoints.spread_points_sphere(resolution=resolution, radius=radius)
     mesh = trimesh.points.PointCloud(points)
@@ -83,6 +117,22 @@ def mesh_sphere(resolution: float, radius: float):
 
 
 def mesh_ellipsoid(resolution: float, radii):
+    """ Spreads a mesh over the surface of an ellipsoid.
+
+    Spreads points over the surface of an ellipsoid. This is done by spreading points over a sphere and then projecting
+    them onto the ellipsoid. Finally the points are turned into a watertight mesh by taking the convex hull over the
+    points. Since the points are projected the distance between points varies more strongly the less spherical the
+    ellipsoid gets. If the ellipsoid is too small for the resolution a single point at the center is returned instead.
+    The ellipsoid is centered on (0,0,0).
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        radii: A numpy array of shape (3,) containing the radii for the three axis.
+
+    Returns:
+        A :class:`trimesh.Trimesh` object containing the mesh.
+
+    """
     points = mimoTouch.sensorpoints.spread_points_ellipsoid(resolution=resolution, radii=radii)
     mesh = trimesh.points.PointCloud(points)
     if points.shape[0] == 1:
@@ -92,7 +142,23 @@ def mesh_ellipsoid(resolution: float, radii):
 
 
 def mesh_pipe(resolution: float, length: float, radius: float):
-    """ Spreads points around the outer surface of a cylinder, without caps. """
+    """ Spreads a mesh over the surface of a pipe.
+
+    Spreads points over the surface of a pipe, with no caps, such that the distance between points is approximately
+    `resolution`. This is done by subdividing the cylinder into an integer number of pie segments.
+    If the pipe is too small for the resolution a single point at the center is returned instead.
+    The pipe is centered on (0,0,0) with the longitudinal axis aligned with the z-axis. The mesh produced by this
+    function is not watertight, since it is missing caps.
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        length: The length of the pipe.
+        radius: The radius of the pipe.
+
+    Returns:
+        A :class:`trimesh.Trimesh` object containing the mesh.
+
+    """
     # Number of subdivisions along length
     n_length = int(math.ceil(length / resolution)) + 1
     # Number of subdivisions around circumference
@@ -124,7 +190,24 @@ def mesh_pipe(resolution: float, length: float, radius: float):
 
 
 def mesh_cylinder(resolution: float, length: float, radius: float):
-    """ Spreads points around the outer surface of a cylinder, including caps """
+    """ Spreads a mesh over the surface of a cylinder.
+
+    Spreads points over the surface of a cylinder, such that the distance between points is approximately `resolution`.
+    This is done by subdividing the cylinder into an integer number of pie segments. The caps are split into rings of
+    different radii with points spread over each ring. The cylindrical section is triangulated manually while the caps
+    are processed with the Delaunay triangulation from scipy.
+    If the cylinder is too small for the resolution a single point at the center is returned instead.
+    The cylinder is centered on (0,0,0) with the longitudinal axis aligned with the z-axis.
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        length: The length of the cylinder.
+        radius: The radius of the cylinder.
+
+    Returns:
+        A :class:`trimesh.Trimesh` object containing the mesh.
+
+    """
     # Number of subdivisions along length
     n_length = int(math.ceil(length / resolution))
     # Number of subdivisions around circumference
@@ -176,6 +259,24 @@ def mesh_cylinder(resolution: float, length: float, radius: float):
 
 
 def mesh_capsule(resolution: float, length: float, radius: float):
+    """ Spreads a mesh over the surface of a capsule.
+
+    A capsule is a cylinder with a hemisphere capping each end. Spreads points over the surface of a capsule, such that
+    the distance between points is approximately `resolution`.
+    This is done by subdividing the capsule into an integer number of pie segments. The caps are split into rings of
+    latitude with points spread over each ring.
+    If the capsule is too small for the resolution a single point at the center is returned instead.
+    The capsule is centered on (0,0,0) with the longitudinal axis aligned with the z-axis.
+
+    Args:
+        resolution: Approximate distance between neighbouring points on the surface.
+        length: The length of the cylindrical section.
+        radius: The radius of the cylinder and hemispheres.
+
+    Returns:
+        A :class:`trimesh.Trimesh` object containing the mesh.
+
+    """
     # Number of subdivisions around circumference
     n_circum = int(math.ceil(2 * math.pi * radius / resolution))
 

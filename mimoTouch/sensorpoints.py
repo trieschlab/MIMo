@@ -266,6 +266,7 @@ def spread_points_pipe(resolution: float, length: float, radius: float, return_n
     Returns:
         A numpy array containing the position of the points. Shape (n, 3) for n points.
         A second numpy array containing the normal vectors, if `return_normals` is `True`.
+
     """
     points, normals = _spread_points_pipe(resolution, length, radius)
     if return_normals:
@@ -292,6 +293,7 @@ def spread_points_cylinder(resolution: float, length: float, radius: float, retu
     Returns:
         A numpy array containing the position of the points. Shape (n, 3) for n points.
         A second numpy array containing the normal vectors, if `return_normals` is `True`.
+
     """
     # Number of subdivisions along length
     n_length = int(math.ceil(length / resolution))
@@ -370,6 +372,7 @@ def spread_points_capsule(resolution: float, length: float, radius: float, retur
     Returns:
         A numpy array containing the position of the points. Shape (n, 3) for n points.
         A second numpy array containing the normal vectors, if `return_normals` is `True`.
+
     """
     # Number of subdivisions around circumference
     n_circum = int(math.ceil(2 * math.pi * radius / resolution))
