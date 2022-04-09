@@ -23,7 +23,7 @@ from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spre
                                    spread_points_capsule
 
 #: A key to identify the geom type ids used by MuJoCo.
-from sensormeshes import mesh_box, mesh_sphere, mesh_capsule, mesh_cylinder, mesh_ellipsoid
+from mimoTouch.sensormeshes import mesh_box, mesh_sphere, mesh_capsule, mesh_cylinder, mesh_ellipsoid
 
 GEOM_TYPES = {"PLANE": 0, "HFIELD": 1, "SPHERE": 2, "CAPSULE": 3, "ELLIPSOID": 4, "CYLINDER": 5, "BOX": 6, "MESH": 7}
 
