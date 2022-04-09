@@ -1,6 +1,6 @@
 """ This module contains functions for distributing points over geometric primitives.
 
-The functions here function much like those in :mod:'mimoTouch.sensorpoints', but the points are structured in a
+The functions here function much like those in :mod:`mimoTouch.sensorpoints`, but the points are structured in a
 watertight mesh instead of being a simple point cloud.
 
 """

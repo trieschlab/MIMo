@@ -1,7 +1,7 @@
 """ This module defines the touch system interface and provides a simple implementation.
 
 The interface is defined as an abstract class in :class:`~mimoTouch.touch.Touch`.
-A simple implementation with a cloud of sensor points is in :class:`~mimoTouch.touch.SimpleTouch`.
+A simple implementation with a cloud of sensor points is in :class:`~mimoTouch.touch.DiscreteTouch`.
 
 """
 
@@ -26,7 +26,7 @@ class Touch:
     Additionally the output for each body part should be stored in :attr:`.sensor_outputs`. The exact definition of
     'body part' is left to the implementing class.
 
-    The constructor takes two arguments, `env` and touch_params`:
+    The constructor takes two arguments, `env` and `touch_params`:
     `env` should be an openAI gym environment using MuJoCo, while `touch_params` is a configuration dictionary. The
     exact form will depend on the specific implementation, but it must contain these three entries:
 
@@ -544,9 +544,9 @@ class DiscreteTouch(Touch):
     def force_vector_global(self, contact_id, geom_id):
         """ Touch function. Returns the full contact force in world frame.
 
-        Given a contact returns the full contact force, i.e. the normal force and the two tangential friction forces,
-        in the world coordinate frame. The geom is required to account for MuJoCo conventions and convert coordinate
-        frames.
+        Given a contact returns the full contact force, i.e. the vector sum of the normal force and the two tangential
+        friction forces, in the world coordinate frame. The geom is required to account for MuJoCo conventions and
+        convert coordinate frames.
 
         Args:
             contact_id: The ID of the contact.
@@ -554,6 +554,7 @@ class DiscreteTouch(Touch):
 
         Returns:
             A 3d vector of the forces.
+
         """
         contact = self.m_data.contact[contact_id]
         forces = self.get_raw_force(contact_id, geom_id)
@@ -572,6 +573,7 @@ class DiscreteTouch(Touch):
 
         Returns:
             A 3d vector of the forces.
+
         """
         global_forces = self.force_vector_global(contact_id, geom_id)
         relative_forces = rotate_vector_transpose(global_forces, env_utils.get_geom_rotation(self.m_data, geom_id))
@@ -585,7 +587,7 @@ class DiscreteTouch(Touch):
 
         For each active contact with a sensing geom we build a tuple ``(contact_id, geom_id, forces)``, where
         `contact_id` is the ID of the contact in the MuJoCo arrays, `geom_id` is the ID of the sensing geom and
-        `forces` is a numpy array of the raw output force, as determined by :attr:`.touch_type`
+        `forces` is a numpy array of the raw output force, as determined by :attr:`.touch_type`.
 
         Returns:
             A list of tuples with contact information.
@@ -617,7 +619,7 @@ class DiscreteTouch(Touch):
 
         Creates a dictionary with an array of zeros for each geom with sensors. A geom with 'n' sensors has an empty
         output array of shape `(n, size)`. The output of this function is equivalent to the touch sensor output if
-        there are no contact.
+        there are no contacts.
 
         Args:
             size: The size of a single sensor output.
@@ -657,7 +659,7 @@ class DiscreteTouch(Touch):
         the raw output force, which is then distributed over the sensors using :attr:`.response_function`.
 
         The indices of the output dictionary :attr:`.sensor_outputs` and the sensor dictionary :attr:`.sensor_positions`
-        are aligned, such that the ith sensor on 'geom' has position ``.sensor_positions[geom][i]`` and output in
+        are aligned, such that the ith sensor on `geom` has position ``.sensor_positions[geom][i]`` and output in
         ``.sensor_outputs[geom][i]``.
 
         Returns:
