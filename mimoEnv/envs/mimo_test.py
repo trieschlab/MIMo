@@ -4,7 +4,7 @@ from gym import utils
 
 from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML, \
     DEFAULT_VISION_PARAMS, DEFAULT_VESTIBULAR_PARAMS, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS
-from mimoTouch.touch_trimesh import TrimeshTouch
+from touch import TrimeshTouch
 import mimoEnv.utils as env_utils
 
 
@@ -42,15 +42,16 @@ class MIMoEnvDummy(MIMoEnv):
                 print(key, self.observation_space[key].shape)
             print("\nAction space: ", self.action_space.shape)
 
-
     def _touch_setup(self, touch_params):
         self.touch = TrimeshTouch(self, touch_params=touch_params)
 
         # Count and print the number of sensor points on each body
         count_touch_sensors = 0
-        #print("Number of sensor points for each body: ")
+        if self.show_sensors:
+            print("Number of sensor points for each body: ")
         for body_id in self.touch.sensor_positions:
-        #    print(self.sim.model.body_id2name(body_id), self.touch.sensor_positions[body_id].shape[0])
+            if self.show_sensors:
+                print(self.sim.model.body_id2name(body_id), self.touch.sensor_positions[body_id].shape[0])
             count_touch_sensors += self.touch.get_sensor_count(body_id)
         print("Total number of sensor points: ", count_touch_sensors)
 
@@ -111,6 +112,7 @@ class MIMoTestEnv(MIMoEnvDummy):
     def __init__(
         self,
         model_path=MIMO_XML,
+        n_substeps=2,
         proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
         touch_params=DEFAULT_TOUCH_PARAMS,
         vision_params=DEFAULT_VISION_PARAMS,
@@ -123,6 +125,7 @@ class MIMoTestEnv(MIMoEnvDummy):
         MIMoEnvDummy.__init__(
             self,
             model_path=model_path,
+            n_substeps=n_substeps,
             proprio_params=proprio_params,
             touch_params=touch_params,
             vision_params=vision_params,
