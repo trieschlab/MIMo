@@ -45,7 +45,7 @@ intersphinx_mapping = {
 }
 intersphinx_disabled_domains = ['std']
 
-autosummary_generate = False
+autosummary_generate = True
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
