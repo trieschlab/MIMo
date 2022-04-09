@@ -17,14 +17,13 @@ import mujoco_py
 import trimesh
 from trimesh import PointCloud
 
-import utils as env_utils
+import mimoEnv.utils as env_utils
 from mimoEnv.utils import rotate_vector_transpose, rotate_vector, EPS
 from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spread_points_cylinder, \
                                    spread_points_capsule
 
 #: A key to identify the geom type ids used by MuJoCo.
 from sensormeshes import mesh_box, mesh_sphere, mesh_capsule, mesh_cylinder, mesh_ellipsoid
-from utils import EPS
 
 GEOM_TYPES = {"PLANE": 0, "HFIELD": 1, "SPHERE": 2, "CAPSULE": 3, "ELLIPSOID": 4, "CYLINDER": 5, "BOX": 6, "MESH": 7}
 
