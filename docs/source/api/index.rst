@@ -5,9 +5,11 @@ API
    :maxdepth: 4
 
    MIMoEnv
-   Sample environments
+   sample_environments
+   experiments
    mimoActuation
    mimoProprioception
    mimoTouch
    mimoVestibular
    mimoVision
+   utility
