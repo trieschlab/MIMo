@@ -668,9 +668,9 @@ class DiscreteTouch(Touch):
         :attr:`.touch_type` and :attr:`.response_type`, for each sensor. :attr:`.touch_function` is called to compute
         the raw output force, which is then distributed over the sensors using :attr:`.response_function`.
 
-        The indices of the output dictionary :attr:`.sensor_outputs` and the sensor dictionary :attr:`.sensor_positions`
-        are aligned, such that the ith sensor on `geom` has position ``.sensor_positions[geom][i]`` and output in
-        ``.sensor_outputs[geom][i]``.
+        The indices of the output dictionary :attr:`~mimoTouch.touch.DiscreteTouch.sensor_outputs` and the sensor
+        dictionary :attr:`.sensor_positions` are aligned, such that the ith sensor on `geom` has position
+        ``.sensor_positions[geom][i]`` and output in ``.sensor_outputs[geom][i]``.
 
         Returns:
             A numpy array containing all the touch sensations.

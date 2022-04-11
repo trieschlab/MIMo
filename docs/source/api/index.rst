@@ -4,7 +4,7 @@ API
 .. toctree::
    :maxdepth: 4
 
-   MIMoEnv
+   mimoclass
    sample_environments
    experiments
    mimoActuation

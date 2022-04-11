@@ -5,8 +5,8 @@ MIMoEnv base class
    :maxdepth: 4
 
    mimoEnv.envs.mimo_env
-   mimoEnv.utils
 
+   
 MIMoEnv
 -------
    
