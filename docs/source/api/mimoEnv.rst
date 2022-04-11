@@ -6,6 +6,8 @@ MIMoEnv base class
 
    mimoEnv.envs.mimo_env
 
+MIMoEnv
+-------
    
 .. automodule:: mimoEnv.envs.mimo_env
    :members:

@@ -100,8 +100,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     - :meth:`._is_done`, which determines the `done` return value after each step.
     - :meth:`._proprio_setup`, :meth:`._touch_setup`, :meth:`._vision_setup`, :meth:`._vestibular_setup`, these
-      functions initialize the associated sensor modality. These should be overriden if you want to replace the default
-      implementation.
+      functions initialize the associated sensor modality. These should be overridden if you want to replace the default
+      implementation. Default implementations are :class:`~mimoProprioception.proprio.SimpleProprioception`,
+      :class:`~mimoTouch.touch.DiscreteTouch`, :class:`~mimoVision.vision.SimpleVision`,
+      :class:`~mimoVestibular.vestibular.SimpleVestibular`.
     - :meth:`._get_proprio_obs`, :meth:`._get_touch_obs`, :meth:`._get_vision_obs`, :meth:`._get_vestibular_obs`, these
       functions collect the observations of the associated sensor modality. These allow you to do post processing on
       the output without having to alter the base implementations.

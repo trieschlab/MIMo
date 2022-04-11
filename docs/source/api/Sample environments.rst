@@ -1,5 +1,5 @@
-mimoEnv package
-===============
+Sample environments
+===================
 
 Subpackages
 -----------

@@ -4,7 +4,7 @@ from gym import utils
 
 from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML, \
     DEFAULT_VISION_PARAMS, DEFAULT_VESTIBULAR_PARAMS, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS
-from touch import TrimeshTouch
+from mimoTouch.touch import TrimeshTouch
 import mimoEnv.utils as env_utils
 
 
