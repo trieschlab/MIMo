@@ -1,61 +1,13 @@
-mimoEnv package
-===============
-
-Subpackages
------------
+MIMoEnv base class
+==================
 
 .. toctree::
    :maxdepth: 4
 
-   mimoEnv.envs
+   mimoEnv.envs.mimo_env
 
-Submodules
-----------
-
-mimoEnv.benchmark module
-------------------------
-
-.. automodule:: mimoEnv.benchmark
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-mimoEnv.reach module
---------------------
-
-.. automodule:: mimoEnv.reach
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-mimoEnv.standup module
-----------------------
-
-.. automodule:: mimoEnv.standup
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-mimoEnv.test module
--------------------
-
-.. automodule:: mimoEnv.test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-mimoEnv.utils module
---------------------
-
-.. automodule:: mimoEnv.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: mimoEnv
+   
+.. automodule:: mimoEnv.envs.mimo_env
    :members:
    :undoc-members:
    :show-inheritance:

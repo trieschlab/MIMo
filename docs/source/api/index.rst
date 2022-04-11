@@ -4,8 +4,9 @@ API
 .. toctree::
    :maxdepth: 4
 
+   MIMoEnv
+   Sample environments
    mimoActuation
-   mimoEnv
    mimoProprioception
    mimoTouch
    mimoVestibular
