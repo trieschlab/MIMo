@@ -4,8 +4,11 @@ Utility functions
 .. contents::
    :depth: 4
 
+Function summaries
+------------------
+   
 Vector operations
------------------
++++++++++++++++++
 
 .. autosummary::
    :toctree: _autosummary
@@ -18,7 +21,7 @@ Vector operations
    mimoEnv.utils.normalize_vectors
    
 MuJoCo access utilities
------------------------
++++++++++++++++++++++++
  
  .. autosummary::
    :toctree: _autosummary
@@ -35,7 +38,7 @@ MuJoCo access utilities
    mimoEnv.utils.material_name2id
    
 MuJoCo coordinate frame utilities
----------------------------------
++++++++++++++++++++++++++++++++++
  
  .. autosummary::
    :toctree: _autosummary
@@ -64,7 +67,7 @@ MuJoCo coordinate frame utilities
    mimoEnv.utils.body_rot_to_body
    
 Plotting utilities
-------------------
+++++++++++++++++++
 
  .. autosummary::
    :toctree: _autosummary
@@ -74,8 +77,8 @@ Plotting utilities
    mimoEnv.utils.plot_points
    mimoEnv.utils.plot_forces
    
-mimoEnv.utils
--------------
+Function documentation
+----------------------
 
 .. automodule:: mimoEnv.utils
    :members:

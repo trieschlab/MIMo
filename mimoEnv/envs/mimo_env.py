@@ -121,18 +121,23 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     The constructor takes the following arguments:
 
-    - `model_path`: The path to the scene xml.
-    - `initial_qpos`: A dictionary of the default joint positions. Keys are the joint names.
+    - `model_path`: The path to the scene xml. Required.
+    - `initial_qpos`: A dictionary of the initial joint positions. Keys are the joint names. Only required if the
+      initial position varies from that defined the XMLs.
     - `n_substeps`: The number of physics substeps for each simulation step. The duration of each physics step is set
-      in the scene xml.
-    - `proprio_params`: The configuration dictionary for the proprioceptive system. Default `None`.
-    - `touch_params`: The configuration dictionary for the touch system. Default `None`.
-    - `vision_params`: The configuration dictionary for the vision system. Default `None`.
-    - `vestibular_params`: The configuration dictionary for the vestibular system. Default `None`.
+      in the scene XML.
+    - `proprio_params`: The configuration dictionary for the proprioceptive system. If `None` the module is disabled.
+      Default `None`.
+    - `touch_params`: The configuration dictionary for the touch system. If `None` the module is disabled.
+      Default `None`.
+    - `vision_params`: The configuration dictionary for the vision system. If `None` the module is disabled.
+      Default `None`.
+    - `vestibular_params`: The configuration dictionary for the vestibular system. If `None` the module is disabled.
+      Default `None`.
     - `goals_in_observation`: If `True` the desired and achieved goals are included in the observation dictionary.
       Default `True`.
-    - `done_active`: If `True`, :meth:`._is_done` returns `True` if the simulation reaches a success or failure state. If
-      `False`, :meth:`._is_done` always returns `False` and the function calling :meth:`.step` has to figure out when
+    - `done_active`: If `True`, :meth:`._is_done` returns `True` if the simulation reaches a success or failure state.
+      If `False`, :meth:`._is_done` always returns `False` and the function calling :meth:`.step` has to figure out when
       to stop or reset the simulation on its own.
 
     Attributes:
@@ -160,7 +165,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     """
 
     def __init__(self,
-                 model_path=None,
+                 model_path,
                  initial_qpos={},
                  n_substeps=2,
                  proprio_params=None,
