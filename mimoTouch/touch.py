@@ -1170,6 +1170,7 @@ class TrimeshTouch(Touch):
         """ Finds all sensors on a body that are within a given distance to a position.
 
         The distance used is the direct euclidean distance. A sensor is included in the output if and only if:
+
         - It is within the distance limit to the position.
         - There is a path from the sensor to the vertex closest to the position such that all vertices on that path are
           also within the distance limit.

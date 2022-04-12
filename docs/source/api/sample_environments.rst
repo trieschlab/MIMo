@@ -14,6 +14,7 @@ modalities enabled using the default configurations.
 
    
 .. _sec reach:
+
 Reach Experiment
 ----------------
    
@@ -37,6 +38,7 @@ Training script
 
 
 .. _sec standup:
+
 Standup Experiment
 ------------------
 
@@ -60,6 +62,7 @@ Training script
 
 
 .. _sec benchmark:
+
 Benchmarking
 ------------
 
@@ -87,6 +90,7 @@ Script
    
    
 .. _sec demo:
+
 Demo showroom
 -------------
 

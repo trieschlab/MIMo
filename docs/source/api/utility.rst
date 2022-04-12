@@ -1,8 +1,10 @@
 Utility functions
 =================
 
-.. toctree::
-   :maxdepth: 4
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+   :nosignatures:
 
    mimoEnv.utils
 
