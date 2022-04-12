@@ -1,17 +1,41 @@
 MIMoEnv base class
 ==================
 
-.. toctree::
-   :maxdepth: 4
+This module defines the base MIMo environment.
 
-   mimoEnv.envs.mimo_env
+The abstract base class is :class:`~mimoEnv.envs.mimo_env.MIMoEnv`. Default parameters for all the sensory modalities
+are provided as well.
 
-   
+.. contents::
+   :depth: 4
+
+
 MIMoEnv
 -------
    
-.. automodule:: mimoEnv.envs.mimo_env
+.. autoclass:: mimoEnv.envs.mimo_env.MimoEnv
    :members:
    :undoc-members:
    :show-inheritance:
-  
+   :private-members:
+   
+Default data fields
+-------------------
+
+.. autodata:: mimoEnv.envs.mimo_env.MIMO_XML
+   :no-value:
+   
+.. autodata:: mimoEnv.envs.mimo_env.EMOTES
+   :no-value:
+   
+.. autodata:: mimoEnv.envs.mimo_env.DEFAULT_PROPRIOCEPTION_PARAMS
+   :no-value:
+   
+.. autodata:: mimoEnv.envs.mimo_env.DEFAULT_TOUCH_PARAMS
+   :no-value:
+
+.. autodata:: mimoEnv.envs.mimo_env.DEFAULT_VISION_PARAMS
+   :no-value:
+
+.. autodata:: mimoEnv.envs.mimo_env.DEFAULT_VESTIBULAR_PARAMS
+   :no-value:

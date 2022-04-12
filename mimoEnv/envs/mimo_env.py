@@ -84,7 +84,12 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     This class meets the interface requirements for basic gym classes and adds some additional features. The
     observation space is of dictionary type.
-    By default all sensory modalities are disabled and the only sensor output are the relative joint positions.
+    Sensory modules are configured by a parameter dictionary. Default configuration dictionaries are included in the
+    same module as this class. Passing these to the constructor will enable the relevant sensory module.
+    :data:`DEFAULT_PROPRIOCEPTION_PARAMS`, :data:`DEFAULT_TOUCH_PARAMS` :data:`DEFAULT_VISION_PARAMS`,
+    :data:`DEFAULT_VESTIBULAR_PARAMS`.
+    Not passing a dictionary disables the relevant module.
+    By default all sensory modalities are disabled and the only sensor outputs are the relative joint positions.
 
     Implementing subclasses will have to override the following functions:
 
