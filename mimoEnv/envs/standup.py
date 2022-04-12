@@ -2,15 +2,15 @@ import os
 import numpy as np
 import mujoco_py
 
-from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_VESTIBULAR_PARAMS
+from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_VESTIBULAR_PARAMS
 
-MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "standup_scene.xml"))
+STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
 
 
 class MIMoStandupEnv(MIMoEnv):
 
     def __init__(self,
-                 model_path=MIMO_XML,
+                 model_path=STANDUP_XML,
                  initial_qpos={},
                  n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,

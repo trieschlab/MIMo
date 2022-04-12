@@ -3,9 +3,9 @@ import numpy as np
 import copy
 import mujoco_py
 
-from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS
+from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
 
-REACH_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "reach_scene.xml"))
+REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
 
 
 class MIMoReachEnv(MIMoEnv):

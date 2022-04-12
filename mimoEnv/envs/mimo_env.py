@@ -160,7 +160,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     """
 
     def __init__(self,
-                 model_path=MIMO_XML,
+                 model_path=None,
                  initial_qpos={},
                  n_substeps=2,
                  proprio_params=None,
