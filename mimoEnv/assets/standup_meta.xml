@@ -140,6 +140,7 @@
 		<motor name="act:right_wrist_rotation" 		joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
 		<motor name="act:right_wrist_flexion" 		joint="robot:right_hand2" 				gear="1.24"	forcerange="-1 .57"/>
 		<motor name="act:right_wrist_ulnar" 		joint="robot:right_hand3" 				gear=".95"	forcerange="-.87 1"/>
+		<motor name="act:right_fingers" 			joint="robot:right_fingers" 			gear=".69"	forcerange="-1 .33"/>
 
 		<motor name="act:left_shoulder_horizontal" 	joint="robot:left_shoulder_horizontal" 	gear="1.8" 	forcerange="-1 1"/>
 		<motor name="act:left_shoulder_abduction" 	joint="robot:left_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
@@ -148,18 +149,17 @@
 		<motor name="act:left_wrist_rotation" 		joint="robot:left_hand1"  				gear=".7"	forcerange="-1 1"/>
 		<motor name="act:left_wrist_flexion" 		joint="robot:left_hand2"  				gear="1.24"	forcerange="-1 .57"/>
 		<motor name="act:left_wrist_ulnar" 			joint="robot:left_hand3"  				gear=".95"	forcerange="-.87 1"/>
+		<motor name="act:left_fingers" 				joint="robot:left_fingers" 				gear=".69" 	forcerange="-1 .33"/>
 
 		<motor name="act:right_hip_flex" 			joint="robot:right_hip1" 		gear="8" 	forcerange="-1 1"/>
 		<motor name="act:right_hip_abduction" 		joint="robot:right_hip2" 		gear="6.24" forcerange="-1 1"/>
 		<motor name="act:right_hip_rotation" 		joint="robot:right_hip3" 		gear="3.54"	forcerange="-.75 1"/>
 		<motor name="act:right_knee" 				joint="robot:right_knee" 		gear="10" 	forcerange="-.65 1"/>
-		<motor name="act:right_foot_flexion" 		joint="robot:right_foot1" 		gear="7.6"	forcerange="-1 .5"/>
 
 		<motor name="act:left_hip_flex" 			joint="robot:left_hip1" 		gear="8" 	forcerange="-1 1"/>
 		<motor name="act:left_hip_abduction" 		joint="robot:left_hip2" 		gear="6.24" forcerange="-1 1"/>
 		<motor name="act:left_hip_rotation" 		joint="robot:left_hip3"			gear="3.54" forcerange="-.75 1"/>
 		<motor name="act:left_knee" 				joint="robot:left_knee" 		gear="10" 	forcerange="-.65 1"/>
-		<motor name="act:left_foot_flexion" 		joint="robot:left_foot1" 		gear="7.6"	forcerange="-1 .5"/>
 
 	</actuator>
 	
