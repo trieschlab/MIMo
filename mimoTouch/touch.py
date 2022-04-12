@@ -1433,7 +1433,6 @@ class TrimeshTouch(Touch):
 
         Returns:
             A single concatenated numpy array.
-
         """
         sensor_arrays = []
         for body_id in sorted(self.meshes):
@@ -1447,13 +1446,12 @@ class TrimeshTouch(Touch):
         :attr:`.touch_type` and :attr:`.response_type`, for each sensor. :attr:`.touch_function` is called to compute
         the raw output force, which is then distributed over the sensors using :attr:`.response_function`.
 
-        The indices of the output dictionary :attr:`.sensor_outputs` and the sensor dictionary :attr:`.sensor_positions`
-        are aligned, such that the ith sensor on `body` has position ``.sensor_positions[body][i]`` and output in
-        ``.sensor_outputs[body][i]``.
+        The indices of the output dictionary :attr:`~mimoTouch.touch.TrimeshTouch.sensor_outputs` and the sensor
+        dictionary :attr:`.sensor_positions` are aligned, such that the ith sensor on `body` has position
+        ``.sensor_positions[body][i]`` and output in ``.sensor_outputs[body][i]``.
 
         Returns:
             A numpy array containing all the touch sensations.
-
         """
         contact_tuples = self.get_contacts()
         self.sensor_outputs = self.get_empty_sensor_dict(self.touch_size)  # Initialize output dictionary
@@ -1482,7 +1480,6 @@ class TrimeshTouch(Touch):
             contact_id: The ID of the contact.
             body_id: The ID of the sensing body.
             force: The raw force.
-
         """
         # Get all sensors within distance (distance here is just double the sensor scale)
         scale = self.sensor_scales[body_id]
@@ -1507,7 +1504,6 @@ class TrimeshTouch(Touch):
             contact_id: The ID of the contact.
             body_id: The ID of the body.
             force: The raw output force.
-
         """
         # Get the nearest sensor to this contact, add the force to it
         contact_pos = self.get_contact_position_relative(contact_id=contact_id, body_id=body_id)
@@ -1526,7 +1522,6 @@ class TrimeshTouch(Touch):
         Args:
             body_id: The ID of the body.
             body_name: The name of the body. This is ignored if the ID is provided!
-
         """
         body_id = env_utils.get_body_id(self.m_model, body_id=body_id, body_name=body_name)
 
@@ -1544,7 +1539,6 @@ class TrimeshTouch(Touch):
         Args:
             body_id: The ID of the body.
             body_name: The name of the body. This is ignored if the ID is provided!
-
         """
         body_id = env_utils.get_body_id(self.m_model, body_id=body_id, body_name=body_name)
 
@@ -1574,7 +1568,6 @@ class TrimeshTouch(Touch):
             title: The title of the plot.
             focus: Coordinates are moved into a consistent reference frame. This parameter determines that reference
                 frame. Must be one of ``["world", "first"]``.
-
         """
         assert len(body_ids) > 0 or len(body_names) > 0
         assert focus in ["world", "first"]
@@ -1616,7 +1609,6 @@ class TrimeshTouch(Touch):
             body_id: The ID of the root body for the subtree.
             body_name: The names of the root bodies. This is ignored if an ID is provided!
             title: The title of the plot.
-
         """
         body_id = env_utils.get_body_id(self.m_model, body_id=body_id, body_name=body_name)
         # Go through all bodies and note their child bodies

@@ -2,7 +2,7 @@ Sample environments
 ===================
 
 This section describes the code used for the experiments and demos from the paper PAPERTITLE, LINK. 
-The :ref:`reach <reach>`, :ref:`standup <sec standup>` and self-body experiments each involve an 
+The :ref:`reach <sec reach>`, :ref:`standup <sec standup>` and self-body experiments each involve an 
 environment and a training script using the RL algorithms from StableBaselines3 LINK.
 There is a simple :ref:`benchmarking <sec benchmark>` scenario in which MIMo takes random actions.
 Finally there is a :ref:`demo <sec demo>` environment in a simple room with some toys, with all sensory 

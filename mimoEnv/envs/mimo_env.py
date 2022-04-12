@@ -342,6 +342,13 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         reward = self.compute_reward(achieved_goal, self.goal, info)
         return obs, reward, done, info
 
+    def _step_callback(self):
+        """A custom callback that is called after stepping the simulation.
+
+        Can be used to enforce additional constraints on the simulation state.
+        """
+        pass
+
     def reset(self):
         """ Attempt to reset the simulator and sample a new goal.
 
