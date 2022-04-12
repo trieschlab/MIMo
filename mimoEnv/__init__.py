@@ -1,7 +1,7 @@
 from gym.envs.registration import register
 
-register(id='MIMo-v0',
-         entry_point='mimoEnv.envs:MIMoTestEnv',
+register(id='MIMoDummy-v0',
+         entry_point='mimoEnv.envs:MIMoDummyEnv',
          max_episode_steps=1000,
          )
 

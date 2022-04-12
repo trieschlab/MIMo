@@ -22,9 +22,9 @@ MIMoEnv
 Default data fields
 -------------------
 
-.. autodata:: mimoEnv.envs.mimo_env.MIMO_XML
+.. autodata:: mimoEnv.envs.mimo_env.SCENE_DIRECTORY
    :no-value:
-   
+
 .. autodata:: mimoEnv.envs.mimo_env.EMOTES
    :no-value:
    

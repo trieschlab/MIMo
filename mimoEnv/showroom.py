@@ -1,21 +1,23 @@
 import gym
 import time
+import os
 import numpy as np
 import mimoEnv
+from mimoEnv.envs.mimo_env import SCENE_DIRECTORY
 
-env = gym.make("MIMo-v0", show_sensors=True, print_space_sizes=True)
+showroom_xml = os.path.join(SCENE_DIRECTORY, "showroom.xml")
 
-max_steps = 250
+env = gym.make("MIMoDummy-v0", model_path=showroom_xml, show_sensors=True, print_space_sizes=True)
+
+max_steps = 500
 
 obs = env.reset()
 
 start = time.time()
 for step in range(max_steps):
-    #action = env.action_space.sample()
     action = np.zeros(env.action_space.shape)
     obs, reward, done, info = env.step(action)
-    #env.render()
-    #time.sleep(1)
+    env.render()
     if done:
         env.reset()
 

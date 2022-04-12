@@ -1,27 +1,32 @@
 import numpy as np
+import os
 
 from gym import utils
 
-from mimoEnv.envs.mimo_env import MIMoEnv, MIMO_XML, \
+from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, \
     DEFAULT_VISION_PARAMS, DEFAULT_VESTIBULAR_PARAMS, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS
 from mimoTouch.touch import TrimeshTouch
 import mimoEnv.utils as env_utils
 
 
-class MIMoEnvDummy(MIMoEnv):
+DEMO_XML = os.path.join(SCENE_DIRECTORY, "showroom.xml")
+BENCHMARK_XML = os.path.join(SCENE_DIRECTORY, "benchmark_scene.xml")
+
+
+class MIMoDummyEnv(MIMoEnv):
 
     def __init__(self,
-                 model_path=MIMO_XML,
+                 model_path=BENCHMARK_XML,
                  initial_qpos={},
                  n_substeps=2,
-                 proprio_params=None,
-                 touch_params=None,
-                 vision_params=None,
-                 vestibular_params=None,
-                 goals_in_observation=True,
-                 done_active=False,
+                 proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
+                 touch_params=DEFAULT_TOUCH_PARAMS,
+                 vision_params=DEFAULT_VISION_PARAMS,
+                 vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
+                 goals_in_observation=False,
+                 done_active=True,
                  show_sensors=False,
-                 print_space_sizes=False):
+                 print_space_sizes=False,):
 
         self.steps = 0
         self.show_sensors = show_sensors
@@ -61,26 +66,6 @@ class MIMoEnvDummy(MIMoEnv):
                 body_name = self.sim.model.body_id2name(body_id)
                 env_utils.plot_points(self.touch.sensor_positions[body_id], limit=1., title=body_name)
 
-#    def _get_obs(self):
-#        """Returns the observations."""
-#        obs = super()._get_obs()
-#
-#        if self.vision_params:
-#            self.vision.save_obs_to_file(directory="imgs", suffix="_" + str(self.steps))
-#
-#        #for body_name in self.touch_params["scales"]:
-#        #    self.touch.plot_force_body(body_name=body_name)
-#        #self.touch.plot_force_body(body_name="left_lower_leg")
-#        self.touch.plot_force_body_subtree(body_name="left_lower_leg")
-#
-#        # Toggle through all of the emotions
-#        #emotes = sorted(self.facial_expressions.keys())
-#        #if self.steps % 20 == 0:
-#        #    new_emotion = emotes[(self.steps // 20) % 4]
-#        #    self.swap_facial_expression(new_emotion)
-#
-#        return obs
-
     def _step_callback(self):
         self.steps += 1
 
@@ -106,32 +91,3 @@ class MIMoEnvDummy(MIMoEnv):
         """ Computes the reward given the current state (achieved goal) and the desired state (desired_goal). Returns a
         dummy value for this test environment"""
         return 0
-
-
-class MIMoTestEnv(MIMoEnvDummy):
-    def __init__(
-        self,
-        model_path=MIMO_XML,
-        n_substeps=2,
-        proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
-        touch_params=DEFAULT_TOUCH_PARAMS,
-        vision_params=DEFAULT_VISION_PARAMS,
-        vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
-        goals_in_observation=False,
-        done_active=True,
-        show_sensors=False,
-        print_space_sizes=False,
-    ):
-        MIMoEnvDummy.__init__(
-            self,
-            model_path=model_path,
-            n_substeps=n_substeps,
-            proprio_params=proprio_params,
-            touch_params=touch_params,
-            vision_params=vision_params,
-            vestibular_params=vestibular_params,
-            goals_in_observation=goals_in_observation,
-            done_active=done_active,
-            show_sensors=show_sensors,
-            print_space_sizes=print_space_sizes
-        )

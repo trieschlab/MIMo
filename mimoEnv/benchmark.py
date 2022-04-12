@@ -35,7 +35,7 @@ for resolution in resolutions:
         pr = cProfile.Profile()
         pr.enable()
         init_start = time.time()
-        env = gym.make("MIMo-v0", touch_params=TOUCH_PARAMS, vision_params=VISION_PARAMS)
+        env = gym.make("MIMoDummy-v0", touch_params=TOUCH_PARAMS, vision_params=VISION_PARAMS)
         obs = env.reset()
 
         start = time.time()

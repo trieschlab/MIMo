@@ -17,8 +17,8 @@ from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception
 import mimoEnv.utils as mimo_utils
 
-#: Path to the sample scene.
-MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "Sample_Scene.xml"))
+#: Path to the scene directory
+SCENE_DIRECTORY = os.path.abspath(os.path.join(__file__, "..", "..", "assets"))
 
 #: Valid facial expressions
 EMOTES = {
