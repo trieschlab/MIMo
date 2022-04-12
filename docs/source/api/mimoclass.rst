@@ -13,7 +13,7 @@ are provided as well.
 MIMoEnv
 -------
    
-.. autoclass:: mimoEnv.envs.mimo_env.MimoEnv
+.. autoclass:: mimoEnv.envs.mimo_env.MIMoEnv
    :members:
    :undoc-members:
    :show-inheritance:
