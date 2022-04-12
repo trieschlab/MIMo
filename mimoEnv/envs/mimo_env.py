@@ -120,17 +120,18 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     These functions come with default implementations that should handle most scenarios.
 
     The constructor takes the following arguments:
+
     - `model_path`: The path to the scene xml.
     - `initial_qpos`: A dictionary of the default joint positions. Keys are the joint names.
     - `n_substeps`: The number of physics substeps for each simulation step. The duration of each physics step is set
       in the scene xml.
     - `proprio_params`: The configuration dictionary for the proprioceptive system. Default `None`.
-    - touch_params: The configuration dictionary for the touch system. Default `None`.
-    - vision_params: The configuration dictionary for the vision system. Default `None`.
-    - vestibular_params: The configuration dictionary for the vestibular system. Default `None`.
-    - goals_in_observation: If `True` the desired and achieved goals are included in the observation dictionary.
+    - `touch_params`: The configuration dictionary for the touch system. Default `None`.
+    - `vision_params`: The configuration dictionary for the vision system. Default `None`.
+    - `vestibular_params`: The configuration dictionary for the vestibular system. Default `None`.
+    - `goals_in_observation`: If `True` the desired and achieved goals are included in the observation dictionary.
       Default `True`.
-    - done_active: If `True`, :meth:`._is_done` returns `True` if the simulation reaches a success or failure state. If
+    - `done_active`: If `True`, :meth:`._is_done` returns `True` if the simulation reaches a success or failure state. If
       `False`, :meth:`._is_done` always returns `False` and the function calling :meth:`.step` has to figure out when
       to stop or reset the simulation on its own.
 
@@ -269,7 +270,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         This should be overridden if you want to use another implementation!
 
         Args:
-            The parameter dictionary.
+            proprio_params: The parameter dictionary.
         """
         self.proprioception = SimpleProprioception(self, proprio_params)
 
@@ -279,7 +280,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         This should be overridden if you want to use another implementation!
 
         Args:
-            The parameter dictionary.
+            touch_params: The parameter dictionary.
         """
         self.touch = DiscreteTouch(self, touch_params)
 
@@ -289,7 +290,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         This should be overridden if you want to use another implementation!
 
         Args:
-            The parameter dictionary.
+            vision_params: The parameter dictionary.
         """
         self.vision = SimpleVision(self, vision_params)
 
@@ -299,7 +300,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         This should be overridden if you want to use another implementation!
 
         Args:
-            The parameter dictionary.
+            vestibular_params: The parameter dictionary.
         """
         self.vestibular = SimpleVestibular(self, vestibular_params)
 
@@ -342,11 +343,12 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         return obs, reward, done, info
 
     def reset(self):
-        """ Attempt to reset the simulator and sample a new goal. Since we randomize initial conditions, it
-        # is possible to get into a state with numerical issues (e.g. due to penetration or
-        # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
-        # In this case, we just keep randomizing until we eventually achieve a valid initial
-        # configuration.
+        """ Attempt to reset the simulator and sample a new goal.
+
+        Resets the simulation state, samples a new goal and collects an initial set of observations.
+        This function calls :meth:`._reset_sim` until it returns `True`. This is useful if your resetting function has
+        a randomized component that can end up in an illegal state. In this case this function will try again until a
+        valid state is reached.
 
         Returns:
             The observations after reset.
@@ -361,9 +363,13 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     def _reset_sim(self):
         """Resets a simulation and indicates whether or not it was successful.
-        If a reset was unsuccessful (e.g. if a randomized state caused an error in the
-        simulation), this method should indicate such a failure by returning False.
-        In such a case, this method will be called again to attempt a the reset again.
+
+        Resets the simulation state and returns whether or not the reset was successfull. This is useful if your
+        resetting function has a randomized component that can end up in an illegal state. In this case this function
+        will be called again until a valid state is reached.
+
+        Returns:
+            Whether we reset into a valid state.
         """
         self.sim.set_state(self.initial_state)
         self.sim.forward()
@@ -537,9 +543,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         raise NotImplementedError
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        """Compute the step reward. This externalizes the reward function and makes
-        it dependent on a desired goal and the one that was achieved. If you wish to include
-        additional rewards that are independent of the goal, you can include the necessary values
+        """Compute the step reward.
+
+        This externalizes the reward function and makes it dependent on a desired goal and the one that was achieved.
+        If you wish to include additional rewards that are independent of the goal, you can include the necessary values
         to derive it in 'info' and compute it accordingly.
 
         Args:
