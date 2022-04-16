@@ -12,17 +12,18 @@ def test(env, test_for=1000, model=None):
             action = env.action_space.sample()
         else:
             action, _ = model.predict(obs)
-        obs, _, done, _ = env.step(action)
-        env.render()
+        obs, rew, done, info = env.step(action)
         if done:
             time.sleep(1)
             obs = env.reset()
+        env.render()
     env.reset()
+    env.close()
 
 
 def main():
 
-    env = gym.make('MIMoReach-v0')
+    env = gym.make('MIMoSelfBody-v0')
     _ = env.reset()
 
     parser = argparse.ArgumentParser()
@@ -63,7 +64,7 @@ def main():
     if algorithm is None:
         model = None
     elif load_model:
-        model = RL.load("models/reach" + load_model, env)
+        model = RL.load("models/selfbody" + load_model, env)
     else:
         model = RL("MultiInputPolicy", env, tensorboard_log="models/tensorboard_logs/", verbose=1)
 
@@ -74,7 +75,7 @@ def main():
         train_for_iter = min(train_for, save_every)
         train_for = train_for - train_for_iter
         model.learn(total_timesteps=train_for_iter)
-        model.save("models/reach" + save_model + "_" + str(counter))
+        model.save("models/selfbody" + save_model + "_" + str(counter))
     
     test(env, model=model, test_for=test_for)
 

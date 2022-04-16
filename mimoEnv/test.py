@@ -5,7 +5,7 @@ import mimoEnv
 
 
 def main():
-    env = gym.make("MIMo-v0", show_sensors=False, print_space_sizes=True)
+    env = gym.make("MIMoSelfBody-v0")
 
     max_steps = 5000
 
@@ -13,11 +13,10 @@ def main():
 
     start = time.time()
     for step in range(max_steps):
-        #action = env.action_space.sample()
-        action = np.zeros(env.action_space.shape)
+        action = env.action_space.sample()
+        #action = np.zeros(env.action_space.shape)
         obs, reward, done, info = env.step(action)
         env.render()
-        #time.sleep(1)
         if done:
             env.reset()
 

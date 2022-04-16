@@ -1,0 +1,170 @@
+import os
+import numpy as np
+import mujoco_py
+
+from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS
+import mimoEnv.utils as env_utils
+
+TOUCH_PARAMS = {
+    "scales": {
+        "left_foot": 0.05,
+        "right_foot": 0.05,
+        "left_lower_leg": 0.1,
+        "right_lower_leg": 0.1,
+        "left_upper_leg": 0.1,
+        "right_upper_leg": 0.1,
+        "hip": 0.1,
+        "lower_body": 0.1,
+        "upper_body": 0.1,
+        "head": 0.1,
+        "left_upper_arm": 0.01,
+        "left_lower_arm": 0.01,
+        "right_fingers": 0.01
+    },
+    "touch_function": "force_vector",
+    "response_function": "spread_linear",
+}
+
+SITTING_POSITION = {
+    "mimo_location": np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]),
+    "robot:hip_lean1": np.array([0.039088]), "robot:hip_rot1": np.array([0.113112]),
+    "robot:hip_bend1": np.array([0.5323]), "robot:hip_lean2": np.array([0]), "robot:hip_rot2": np.array([0]),
+    "robot:hip_bend2": np.array([0.5323]),
+    "robot:head_swivel": np.array([0]), "robot:head_tilt": np.array([0]), "robot:head_tilt_side": np.array([0]),
+    "robot:left_eye_horizontal": np.array([0]), "robot:left_eye_vertical": np.array([0]),
+    "robot:left_eye_torsional": np.array([0]), "robot:right_eye_horizontal": np.array([0]),
+    "robot:right_eye_vertical": np.array([0]), "robot:right_eye_torsional": np.array([0]),
+    "robot:left_shoulder_horizontal": np.array([0.683242]), "robot:left_shoulder_ad_ab": np.array([0.3747]),
+    "robot:left_shoulder_rotation": np.array([-0.62714]), "robot:left_elbow": np.array([-0.756016]),
+    "robot:left_hand1": np.array([0.28278]), "robot:left_hand2": np.array([0]), "robot:left_hand3": np.array([0]),
+    "robot:left_fingers": np.array([-0.461583]),
+    "robot:right_hip1": np.array([-1.51997]), "robot:right_hip2": np.array([-0.397578]),
+    "robot:right_hip3": np.array([0.0976615]), "robot:right_knee": np.array([-1.85479]),
+    "robot:right_foot1": np.array([-0.585865]), "robot:right_foot2": np.array([-0.358165]),
+    "robot:right_foot3": np.array([0]), "robot:right_toes": np.array([0]),
+    "robot:left_hip1": np.array([-1.23961]), "robot:left_hip2": np.array([-0.8901]),
+    "robot:left_hip3": np.array([0.7156]), "robot:left_knee": np.array([-2.531]),
+    "robot:left_foot1": np.array([-0.63562]), "robot:left_foot2": np.array([0.5411]),
+    "robot:left_foot3": np.array([0.366514]), "robot:left_toes": np.array([0.24424]),
+}
+""" Initial position of MIMo by specifying initial values for all joints.
+We grabbed these values by posing MIMo using the MuJoCo simulate executable and the positional actuator file.
+We need these not just for the initial position but also resetting the position (excluding the right arm) each step. """
+
+MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "selfbody_scene.xml"))
+
+
+class MIMoSelfBodyEnv(MIMoEnv):
+
+    def __init__(self,
+                 model_path=MIMO_XML,
+                 initial_qpos=SITTING_POSITION,
+                 n_substeps=1,
+                 proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
+                 touch_params=TOUCH_PARAMS,
+                 vision_params=None,
+                 vestibular_params=None,
+                 ):
+
+        self.target_geom = 0  # The geom on MIMo we are trying to touch
+        self.target_body = 0  # The body that the goal geom belongs to
+        self.goal = np.zeros(37)
+
+        super().__init__(model_path=model_path,
+                         initial_qpos=initial_qpos,
+                         n_substeps=n_substeps,
+                         proprio_params=proprio_params,
+                         touch_params=touch_params,
+                         vision_params=vision_params,
+                         vestibular_params=vestibular_params,
+                         goals_in_observation=True,
+                         done_active=True)
+
+        self.init_sitting_qpos = self.sim.data.qpos.copy()
+
+    def _sample_goal(self):
+        """Samples a new goal and returns it.
+
+        The goal consists of a target geom that we try to touch, returned as a one-hot encoding.
+        We also populate :attr:`.target_geom` and :attr:`.target_body`. which are used by other functions.
+        """
+        # randomly select geom as target (except for 2 latest geoms that correspong to fingers)
+        active_geom_codes = list(self.touch.sensor_outputs.keys())
+        target_geom_idx = np.random.randint(len(active_geom_codes) - 2)
+        self.target_geom = active_geom_codes[int(target_geom_idx)]
+        # We want the output of the desired goal as a one hot encoding,
+        # rather than the raw index
+        target_geom_onehot = np.zeros(37)  # 36 geoms in MIMo
+        if isinstance(self.target_geom, int):
+            target_geom_onehot[self.target_geom] = 1
+
+        for body_id in self.touch.sensor_scales:
+            body_geoms = env_utils.get_geoms_for_body(self.sim.model, body_id)
+            if self.target_geom in body_geoms:
+                self.target_body = self.sim.model.body_id2name(body_id)
+        print('Target body: ', self.target_body)
+
+        return target_geom_onehot
+
+    def _is_success(self, achieved_goal, desired_goal):
+        """ We have succeeded when we have a touch sensation on the goal body."""
+        # check if contact with target geom:
+        target_geom_touch_max = np.max(self.touch.sensor_outputs[self.target_geom])
+        contact_with_target_geom = (target_geom_touch_max > 0)
+        return contact_with_target_geom
+
+    def compute_reward(self, achieved_goal, desired_goal, info):
+        active_geom_codes = list(self.touch.sensor_outputs.keys())
+
+        fingers_touch_max = max(
+            np.max(self.touch.sensor_outputs[active_geom_codes[-1]]),
+            np.max(self.touch.sensor_outputs[active_geom_codes[-2]])
+        )
+        contact_with_fingers = (fingers_touch_max > 0)
+
+        # compute reward:
+        if info["is_success"]:
+            reward = 500
+        elif contact_with_fingers:
+            target_body_pos = self.sim.data.get_body_xpos(self.target_body)
+            fingers_pos = self.sim.data.get_body_xpos("right_fingers")
+            distance = np.linalg.norm(fingers_pos - target_body_pos)
+            reward = -distance
+        else:
+            reward = -1
+
+        return reward
+
+    def _step_callback(self):
+        """ Manually reset position excluding arm each step.
+
+        This restores the body to the sitting position if it deviated.
+        Avoids some physics issues that would sometimes occur with welds.
+        """
+        # Manually set body to sitting position (except for the right arm joints)
+        for body_name in SITTING_POSITION:
+            env_utils.set_joint_qpos(self.sim.model, self.sim.data, body_name, SITTING_POSITION[body_name])
+
+    def _reset_sim(self):
+        """ Reset to the initial sitting position.
+        """
+        # set qpos as new initial position and velocity as zero
+        qpos = self.init_sitting_qpos
+        qvel = np.zeros(self.sim.data.qvel.shape)
+
+        new_state = mujoco_py.MjSimState(
+            self.initial_state.time, qpos, qvel, self.initial_state.act, self.initial_state.udd_state
+        )
+
+        self.sim.set_state(new_state)
+        self.sim.forward()
+
+        return True
+
+    def _is_failure(self, achieved_goal, desired_goal):
+        """ Dummy function. Always returns False. """
+        return False
+
+    def _get_achieved_goal(self):
+        """ Dummy function. """
+        return np.zeros(1)
