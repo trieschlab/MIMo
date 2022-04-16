@@ -32,7 +32,7 @@ class Proprioception:
     def __init__(self, env, proprio_parameters):
         self.env = env
         self.proprio_parameters = proprio_parameters
-        if "components" not in proprio_parameters:
+        if proprio_parameters is None or "components" not in proprio_parameters:
             self.output_components = []
         else:
             self.output_components = proprio_parameters["components"]
