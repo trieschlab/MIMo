@@ -73,7 +73,7 @@ class MIMoDummyEnv(MIMoEnv):
         `True`.
 
         Args:
-            touch_params: The parameter dictionary.
+            touch_params (dict): The parameter dictionary.
         """
         self.touch = TrimeshTouch(self, touch_params=touch_params)
 
@@ -99,26 +99,45 @@ class MIMoDummyEnv(MIMoEnv):
 
     def _is_success(self, achieved_goal, desired_goal):
         """ Dummy function that always returns `False`.
+
+        Args:
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
+
+        Returns:
+            bool: `False`
         """
         return False
 
     def _is_failure(self, achieved_goal, desired_goal):
         """ Dummy function that always returns `False`.
+
+        Returns:
+            bool: `False`
         """
         return False
 
     def _sample_goal(self):
-        """ A dummy function returning an empty array of shape (0,)
+        """ A dummy function returning an empty array of shape (0,).
+
+        Returns:
+            ndarray: An empty size 0 array.
         """
         return np.zeros((0,))
 
     def _get_achieved_goal(self):
         """Dummy function returning an empty array with the same shape as the goal.
+
+        Returns:
+            ndarray: An empty size 0 array.
         """
         return np.zeros(self.goal.shape)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        """ Dummy function that always returns a dummy value of 0
+        """ Dummy function that always returns a dummy value of 0.
+
+        Returns:
+            float: 0
         """
         return 0
 

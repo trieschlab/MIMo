@@ -79,7 +79,10 @@ class MIMoReachEnv(MIMoEnv):
         return reward
 
     def _is_success(self, achieved_goal, desired_goal):
-        """ Returns `True` if the ball is knocked out of position.
+        """ Determines the goal states.
+
+        Returns:
+            bool: `True` if the ball is knocked out of position.
         """
         target_pos = self.sim.data.get_body_xpos('target')
         success = (np.linalg.norm(target_pos - self.target_init_pos) > 0.01)
@@ -89,7 +92,7 @@ class MIMoReachEnv(MIMoEnv):
         """ Dummy function. Always returns `False`.
 
         Returns:
-            `False`
+            bool: `False`
         """
         return False
 
@@ -97,7 +100,7 @@ class MIMoReachEnv(MIMoEnv):
         """ Dummy function. Returns an empty array.
 
         Returns:
-            An empty array.
+            ndarray: An empty array.
         """
         return np.zeros((0,))
 
@@ -105,7 +108,7 @@ class MIMoReachEnv(MIMoEnv):
         """ Dummy function. Returns an empty array.
 
         Returns:
-            An empty array.
+            ndarray: An empty array.
         """
         return np.zeros((0,))
 
@@ -116,7 +119,7 @@ class MIMoReachEnv(MIMoEnv):
         limited such that MIMo can always reach the ball.
 
         Returns:
-            `True`
+            bool: `True`
         """
 
         self.sim.set_state(self.initial_state)

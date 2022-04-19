@@ -248,7 +248,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         to the qpos dictionary.
 
         Args:
-            initial_qpos: A dictionary with the intial joint position for each joint. Keys are the joint names.
+            initial_qpos (dict): A dictionary with the intial joint position for each joint. Keys are the joint names.
 
         """
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
@@ -275,7 +275,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         This should be overridden if you want to use another implementation!
 
         Args:
-            proprio_params: The parameter dictionary.
+            proprio_params (dict): The parameter dictionary.
         """
         self.proprioception = SimpleProprioception(self, proprio_params)
 
@@ -285,7 +285,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         This should be overridden if you want to use another implementation!
 
         Args:
-            touch_params: The parameter dictionary.
+            touch_params (dict): The parameter dictionary.
         """
         self.touch = DiscreteTouch(self, touch_params)
 
@@ -295,7 +295,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         This should be overridden if you want to use another implementation!
 
         Args:
-            vision_params: The parameter dictionary.
+            vision_params (dict): The parameter dictionary.
         """
         self.vision = SimpleVision(self, vision_params)
 
@@ -305,7 +305,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         This should be overridden if you want to use another implementation!
 
         Args:
-            vestibular_params: The parameter dictionary.
+            vestibular_params (dict): The parameter dictionary.
         """
         self.vestibular = SimpleVestibular(self, vestibular_params)
 
@@ -316,6 +316,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         we are done with this episode or not. :meth:`._get_obs` collects the observations, :meth:`.compute_reward`
         calculates the reward.`:meth:`._is_done` is called to determine if we are done with the episode and
         :meth:`._step_callback` can be used for extra functions each step, such as incrementing a step counter.
+
+        Args:
+            action (ndarray): A numpy array with the control inputs for this step. The shape must match the action
+                space!
 
         Returns:
             A tuple `(observations, reward, done, info)` as described above, with info containing extra information,
@@ -339,8 +343,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         }
 
         if not self.goals_in_observation:
-            info["achieved_goal"] = achieved_goal.copy()
-            info["desired_goal"] = self.goal.copy()
+            info["achieved_goal"] = copy.deepcopy(achieved_goal)
+            info["desired_goal"] = copy.deepcopy(self.goal)
 
         done = self._is_done(achieved_goal, self.goal, info)
 
@@ -363,13 +367,13 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         valid state is reached.
 
         Returns:
-            The observations after reset.
+            dict: The observations after reset.
         """
         #
         did_reset_sim = False
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
-        self.goal = self._sample_goal().copy()
+        self.goal = self._sample_goal()
         obs = self._get_obs()
         return obs
 
@@ -381,7 +385,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         will be called again until a valid state is reached.
 
         Returns:
-            Whether we reset into a valid state.
+            bool: Whether we reset into a valid state.
         """
         self.sim.set_state(self.initial_state)
         self.sim.forward()
@@ -393,7 +397,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Override this function if you want to make some simple post-processing!
 
         Returns:
-            A numpy array containing the proprioceptive output.
+            ndarray: A numpy array containing the proprioceptive output.
         """
         return self.proprioception.get_proprioception_obs()
 
@@ -403,7 +407,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Override this function if you want to make some simple post-processing!
 
         Returns:
-            A numpy array containing the touch output.
+            ndarary: A numpy array containing the touch output.
         """
         touch_obs = self.touch.get_touch_obs()
         return touch_obs
@@ -414,8 +418,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Override this function if you want to make some simple post-processing!
 
         Returns:
-            A dictionary with one entry for each separate image. In the default implementation each eye renders one
-            image, so each eye gets one entry.
+            dict: A dictionary with one entry for each separate image. In the default implementation each eye renders
+            one image, so each eye gets one entry.
         """
         vision_obs = self.vision.get_vision_obs()
         return vision_obs
@@ -426,7 +430,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Override this function if you want to make some simple post-processing!
 
         Returns:
-            A numpy array with the vestibular data.
+            np.ndarray: A numpy array with the vestibular data.
         """
         vestibular_obs = self.vestibular.get_vestibular_obs()
         return vestibular_obs
@@ -440,7 +444,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         :attr:`.goals_in_observation` is set to `True`, the achieved and desired goal are also included.
 
         Returns:
-            A dictionary containing simulation outputs with separate entries for each sensor modality.
+            dict: A dictionary containing simulation outputs with separate entries for each sensor modality.
         """
         # robot proprioception:
         proprio_obs = self._get_proprio_obs()
@@ -463,8 +467,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         if self.goals_in_observation:
             achieved_goal = self._get_achieved_goal()
-            observation_dict["achieved_goal"] = achieved_goal.copy()
-            observation_dict["desired_goal"] = self.goal.copy()
+            observation_dict["achieved_goal"] = copy.deepcopy(achieved_goal)
+            observation_dict["desired_goal"] = copy.deepcopy(self.goal)
 
         return observation_dict
 
@@ -477,8 +481,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         of 0 corresponds to no motor torque.
 
         Args:
-            action: A numpy array with control values.
-
+            action (np.ndarray): A numpy array with control values.
         """
         ctrlrange = self.sim.model.actuator_ctrlrange
         actuation_range = (ctrlrange[:, 1] - ctrlrange[:, 0]) / 2.0
@@ -495,8 +498,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         texture ids
 
         Args:
-            emotion: A valid emotion name.
-
+            emotion (str): A valid emotion name.
         """
         assert emotion in self.facial_expressions, "{} is not a valid facial expression!".format(emotion)
         new_tex_id = self.facial_expressions[emotion]
@@ -516,7 +518,15 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         raise NotImplementedError
 
     def _is_failure(self, achieved_goal, desired_goal):
-        """Indicates that we reached a failure state."""
+        """Indicates that we reached a failure state.
+
+        Args:
+            achieved_goal (object): the goal that was achieved during execution
+            desired_goal (object): the desired goal that we asked the agent to attempt to achieve
+
+        Returns:
+            bool: If we reached an unrecoverable failure state.
+        """
         raise NotImplementedError
 
     def _is_done(self, achieved_goal, desired_goal, info):
@@ -528,9 +538,9 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         required.
 
         Args:
-            achieved_goal (object): the goal that was achieved during execution
-            desired_goal (object): the desired goal that we asked the agent to attempt to achieve
-            info (dict): an info dictionary with additional information
+            achieved_goal (object): The goal that was achieved during execution
+            desired_goal (object): The desired goal that we asked the agent to attempt to achieve
+            info (dict): An info dictionary with additional information
 
         Return:
             bool: Whether the current episode is done.
@@ -542,7 +552,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """ Should sample a new goal and return it.
 
         Returns:
-            The desired end state.
+            object: The desired end state.
         """
         raise NotImplementedError
 
@@ -550,7 +560,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """ Should return the goal that was achieved during the simulation.
 
         Returns:
-            The achieved end state.
+            object: The achieved end state.
         """
         raise NotImplementedError
 
