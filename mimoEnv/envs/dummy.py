@@ -112,6 +112,10 @@ class MIMoDummyEnv(MIMoEnv):
     def _is_failure(self, achieved_goal, desired_goal):
         """ Dummy function that always returns `False`.
 
+        Args:
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
+
         Returns:
             bool: `False`
         """
@@ -121,7 +125,7 @@ class MIMoDummyEnv(MIMoEnv):
         """ A dummy function returning an empty array of shape (0,).
 
         Returns:
-            ndarray: An empty size 0 array.
+            numpy.ndarray: An empty size 0 array.
         """
         return np.zeros((0,))
 
@@ -129,12 +133,17 @@ class MIMoDummyEnv(MIMoEnv):
         """Dummy function returning an empty array with the same shape as the goal.
 
         Returns:
-            ndarray: An empty size 0 array.
+            numpy.ndarray: An empty size 0 array.
         """
         return np.zeros(self.goal.shape)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Dummy function that always returns a dummy value of 0.
+
+        Args:
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
+            info (dict): This parameter is ignored.
 
         Returns:
             float: 0

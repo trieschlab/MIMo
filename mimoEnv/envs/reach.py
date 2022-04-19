@@ -14,7 +14,6 @@ reward is given when he touches the ball.
 
 The class with the environment is :class:`~mimoEnv.envs.reach.MIMoReachEnv` while the path to the scene XML is defined
 in :data:`REACH_XML`.
-
 """
 import os
 import numpy as np
@@ -34,6 +33,7 @@ class MIMoReachEnv(MIMoEnv):
     the reward and success conditions are computed directly from the model state, while
     :meth:`~mimoEnv.envs.reach.MIMoReachEnv._sample_goal` and
     :meth:`~mimoEnv.envs.reach.MIMoReachEnv._get_achieved_goal` are dummy functions.
+
     """
     def __init__(self,
                  model_path=REACH_XML,
@@ -81,6 +81,10 @@ class MIMoReachEnv(MIMoEnv):
     def _is_success(self, achieved_goal, desired_goal):
         """ Determines the goal states.
 
+        Args:
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
+
         Returns:
             bool: `True` if the ball is knocked out of position.
         """
@@ -91,6 +95,10 @@ class MIMoReachEnv(MIMoEnv):
     def _is_failure(self, achieved_goal, desired_goal):
         """ Dummy function. Always returns `False`.
 
+        Args:
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
+
         Returns:
             bool: `False`
         """
@@ -100,7 +108,7 @@ class MIMoReachEnv(MIMoEnv):
         """ Dummy function. Returns an empty array.
 
         Returns:
-            ndarray: An empty array.
+            numpy.ndarray: An empty array.
         """
         return np.zeros((0,))
 
@@ -108,7 +116,7 @@ class MIMoReachEnv(MIMoEnv):
         """ Dummy function. Returns an empty array.
 
         Returns:
-            ndarray: An empty array.
+            numpy.ndarray: An empty array.
         """
         return np.zeros((0,))
 

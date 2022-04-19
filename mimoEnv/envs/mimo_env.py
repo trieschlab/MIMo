@@ -241,7 +241,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         self.observation_space = spaces.Dict(spaces_dict)
 
-    def _env_setup(self, initial_qpos: dict):
+    def _env_setup(self, initial_qpos):
         """ This function initializes all the sensory components of the model.
 
         Calls the setup functions for all the sensory components and sets the initial positions of the joints according
@@ -309,7 +309,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.vestibular = SimpleVestibular(self, vestibular_params)
 
-    def step(self, action: np.ndarray):
+    def step(self, action):
         """ The step function for the simulation.
 
         This function takes a simulation step, collects the observations, computes the reward and finally determines if
@@ -318,7 +318,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         :meth:`._step_callback` can be used for extra functions each step, such as incrementing a step counter.
 
         Args:
-            action (ndarray): A numpy array with the control inputs for this step. The shape must match the action
+            action (numpy.ndarray): A numpy array with the control inputs for this step. The shape must match the action
                 space!
 
         Returns:
@@ -397,7 +397,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Override this function if you want to make some simple post-processing!
 
         Returns:
-            ndarray: A numpy array containing the proprioceptive output.
+            numpy.ndarray: A numpy array containing the proprioceptive output.
         """
         return self.proprioception.get_proprioception_obs()
 
@@ -407,7 +407,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Override this function if you want to make some simple post-processing!
 
         Returns:
-            ndarary: A numpy array containing the touch output.
+            numpy.ndarray: A numpy array containing the touch output.
         """
         touch_obs = self.touch.get_touch_obs()
         return touch_obs
@@ -430,7 +430,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Override this function if you want to make some simple post-processing!
 
         Returns:
-            np.ndarray: A numpy array with the vestibular data.
+            numpy.ndarray: A numpy array with the vestibular data.
         """
         vestibular_obs = self.vestibular.get_vestibular_obs()
         return vestibular_obs
@@ -481,7 +481,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         of 0 corresponds to no motor torque.
 
         Args:
-            action (np.ndarray): A numpy array with control values.
+            action (numpy.ndarray): A numpy array with control values.
         """
         ctrlrange = self.sim.model.actuator_ctrlrange
         actuation_range = (ctrlrange[:, 1] - ctrlrange[:, 0]) / 2.0
@@ -491,7 +491,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             self.sim.data.ctrl, ctrlrange[:, 0], ctrlrange[:, 1]
         )
 
-    def swap_facial_expression(self, emotion: str):
+    def swap_facial_expression(self, emotion):
         """ Changes MIMos facial texture.
 
         Valid emotion names are in :attr:`.facial_expression`, which links readable emotion names to their associated
