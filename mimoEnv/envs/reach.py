@@ -1,3 +1,21 @@
+""" This module contains a simple reaching experiment in which MIMo tries to touch a hovering ball.
+
+The scene consists of MIMo and a hovering ball located within reach of MIMos right arm. The task is for MIMo to
+touch the ball.
+MIMo is fixed in position and can only move his right arm. His head automatically tracks the location of the ball,
+i.e. the visual search for the ball is assumed.
+Sensory input consists of the full proprioceptive inputs. All other modalities are disabled.
+
+The ball hovers stationary. An episode is completed successfully if MIMo touches the ball, knocking it out of
+position. There are no failure states. The position of the ball is slightly randomized each trial.
+
+Reward shaping is employed, with a negative reward based on the distance between MIMos hand and the ball. A large fixed
+reward is given when he touches the ball.
+
+The class with the environment is :class:`~mimoEnv.envs.reach.MIMoReachEnv` while the path to the scene XML is defined
+in :data:`REACH_XML`.
+
+"""
 import os
 import numpy as np
 import copy
@@ -5,11 +23,18 @@ import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
 
+#: Path to the reach scene.
 REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
 
 
 class MIMoReachEnv(MIMoEnv):
+    """ MIMo reaches for an object.
 
+    Due to the goal condition we do not use the :attr:`.goal` attribute or the interfaces associated with it. Instead,
+    the reward and success conditions are computed directly from the model state, while
+    :meth:`~mimoEnv.envs.reach.MIMoReachEnv._sample_goal` and
+    :meth:`~mimoEnv.envs.reach.MIMoReachEnv._get_achieved_goal` are dummy functions.
+    """
     def __init__(self,
                  model_path=REACH_XML,
                  initial_qpos={},
@@ -20,8 +45,6 @@ class MIMoReachEnv(MIMoEnv):
                  vestibular_params=None,
                  goals_in_observation=False,
                  done_active=True):
-
-        self.steps = 0
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
@@ -34,6 +57,20 @@ class MIMoReachEnv(MIMoEnv):
                          done_active=done_active)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
+        """ Computes the reward.
+
+        A negative reward is given based on the distance between MIMos fingers and the ball.
+        If contact is made a fixed positive reward of 100 is granted. The achieved and desired goal parameters are
+        ignored.
+
+        Args:
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
+            info (dict): This parameter is ignored.
+
+        Returns:
+            float: The reward as described above.
+        """
         contact = self._is_success(achieved_goal, desired_goal)
         fingers_pos = self.sim.data.get_body_xpos('right_fingers')
         target_pos = self.sim.data.get_body_xpos('target')
@@ -42,28 +79,44 @@ class MIMoReachEnv(MIMoEnv):
         return reward
 
     def _is_success(self, achieved_goal, desired_goal):
-        """Indicates whether or not the achieved goal successfully achieved the desired goal."""
+        """ Returns `True` if the ball is knocked out of position.
+        """
         target_pos = self.sim.data.get_body_xpos('target')
         success = (np.linalg.norm(target_pos - self.target_init_pos) > 0.01)
         return success
 
     def _is_failure(self, achieved_goal, desired_goal):
-        """ Dummy function """
+        """ Dummy function. Always returns `False`.
+
+        Returns:
+            `False`
+        """
         return False
 
     def _sample_goal(self):
-        """ Dummy function """
-        return np.zeros(self._get_proprio_obs().shape)
+        """ Dummy function. Returns an empty array.
+
+        Returns:
+            An empty array.
+        """
+        return np.zeros((0,))
 
     def _get_achieved_goal(self):
-        """ Dummy function """
-        return np.zeros(self._get_proprio_obs().shape)
+        """ Dummy function. Returns an empty array.
+
+        Returns:
+            An empty array.
+        """
+        return np.zeros((0,))
 
     def _reset_sim(self):
-        """Resets a simulation and indicates whether or not it was successful.
-        If a reset was unsuccessful (e.g. if a randomized state caused an error in the
-        simulation), this method should indicate such a failure by returning False.
-        In such a case, this method will be called again to attempt a the reset again.
+        """ Resets the simulation.
+
+        We reset the simulation and then slightly move both MIMos arm and the ball randomly. The randomization is
+        limited such that MIMo can always reach the ball.
+
+        Returns:
+            `True`
         """
 
         self.sim.set_state(self.initial_state)
@@ -95,6 +148,10 @@ class MIMoReachEnv(MIMoEnv):
         return True
 
     def _step_callback(self):
+        """ Adjusts the head and eye positions to track the target.
+
+        Manually computes the joint positions required for the head and eyes to look at the target objects.
+        """
         # manually set head and eye positions to look at target
         target_pos = self.sim.data.get_body_xpos('target')
         head_pos = self.sim.data.get_body_xpos('head')

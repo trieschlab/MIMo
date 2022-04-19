@@ -1,20 +1,39 @@
+""" This module defines a dummy implementation for MIMo, to allow easy testing of modules.
+
+The main class is :class:`~mimoEnv.envs.dummy.MIMoDummyEnv` which implements all methods from the base class as dummy
+functions that returned fixed values. This allows for testing the model without the full gym bureaucracy.
+The second class :class:`~mimoEnv.envs.dummy.MIMoShowroomEnv` is identical to the first, but changes the default
+parameters to load the showroom scene instead.
+"""
+
 import numpy as np
 import os
-
-from gym import utils
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, \
     DEFAULT_VISION_PARAMS, DEFAULT_VESTIBULAR_PARAMS, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS
 from mimoTouch.touch import TrimeshTouch
 import mimoEnv.utils as env_utils
 
-
+#: Path to the demo scene.
 DEMO_XML = os.path.join(SCENE_DIRECTORY, "showroom.xml")
+#: Path to the benchmarking scene.
 BENCHMARK_XML = os.path.join(SCENE_DIRECTORY, "benchmark_scene.xml")
 
 
 class MIMoDummyEnv(MIMoEnv):
+    """ Dummy implementation for :class:`~mimoEnv.envs.mimo_env.MIMoEnv`.
 
+    This class is meant for testing and demonstrating parts of the base class. All abstract methods are implemented as
+    dummy functions that return fixed values. No meaningful goal or reward is specified. The default parameters use the
+    default sensor configurations in a bare scene consisting of MIMo and two objects on an infinite plane.
+    For testing and validation there are two additional parameters compared to the base class.
+
+    - `show_sensors`: If `True`, plot the sensor point distribution for the touch system during initialization.
+      Default `False`.
+    - `print_space_sizes`: If `True`, the shape of the action space and all entries in the observation dictionary is
+      printed during initialization.
+
+    """
     def __init__(self,
                  model_path=BENCHMARK_XML,
                  initial_qpos={},
@@ -48,6 +67,14 @@ class MIMoDummyEnv(MIMoEnv):
             print("\nAction space: ", self.action_space.shape)
 
     def _touch_setup(self, touch_params):
+        """ Perform the setup and initialization of the touch system.
+
+        Uses the more complicated Trimesh implementation. Also plots the sensor points if :attr:`.show_sensors` is
+        `True`.
+
+        Args:
+            touch_params: The parameter dictionary.
+        """
         self.touch = TrimeshTouch(self, touch_params=touch_params)
 
         # Count and print the number of sensor points on each body
@@ -67,33 +94,42 @@ class MIMoDummyEnv(MIMoEnv):
                 env_utils.plot_points(self.touch.sensor_positions[body_id], limit=1., title=body_name)
 
     def _step_callback(self):
+        """ Simply increments the step counter. """
         self.steps += 1
 
     def _is_success(self, achieved_goal, desired_goal):
-        """Indicates whether or not the achieved goal successfully achieved the desired goal. Since this class is just
-        a demo environment to test sensor modalities, we do not care about this! """
+        """ Dummy function that always returns `False`.
+        """
         return False
 
     def _is_failure(self, achieved_goal, desired_goal):
-        """ Indicates whether or not the achieved goal is a failure state. Since this class is just a demo environment
-        to test sensor modalities, we do not care about this! """
+        """ Dummy function that always returns `False`.
+        """
         return False
 
     def _sample_goal(self):
-        """Samples a new goal and returns it. Again just a dummy return."""
-        return np.zeros(self._get_proprio_obs().shape)
+        """ A dummy function returning an empty array of shape (0,)
+        """
+        return np.zeros((0,))
 
     def _get_achieved_goal(self):
-        """Get the goal state actually achieved in this episode/timeframe. Again just a dummy return."""
+        """Dummy function returning an empty array with the same shape as the goal.
+        """
         return np.zeros(self.goal.shape)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        """ Computes the reward given the current state (achieved goal) and the desired state (desired_goal). Returns a
-        dummy value for this test environment"""
+        """ Dummy function that always returns a dummy value of 0
+        """
         return 0
 
 
 class MIMoShowroomEnv(MIMoDummyEnv):
+    """ Same as :class:`~mimoEnv.envs.dummy.MIMoDummyEnv`, but with a different scene.
+
+    Unlike :class:`~mimoEnv.envs.dummy.MIMoDummyEnv` this uses the Showroom scene, in which MIMo is located in a
+    enclosed room with a number of toy blocks and balls of various sizes and colors. This is also intended as a dummy
+    class.
+    """
     def __init__(self,
                  model_path=DEMO_XML,
                  initial_qpos={},

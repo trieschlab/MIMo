@@ -2,8 +2,10 @@ Sample environments
 ===================
 
 This section describes the code used for the experiments and demos from the paper PAPERTITLE, LINK. 
-The :ref:`reach <sec reach>`, :ref:`standup <sec standup>` and self-body experiments each involve an 
-environment and a training script using the RL algorithms from StableBaselines3 LINK.
+The :ref:`reach <sec reach>`, :ref:`standup <sec standup>` and :ref:`self-body <sec selfbody>`
+experiments each involve an environment and a training script using the RL algorithms from
+`Stable Baselines3 <https://github.com/DLR-RM/stable-baselines3>`. The scripts are practically
+identical for all experiments.
 There is a simple :ref:`benchmarking <sec benchmark>` scenario in which MIMo takes random actions.
 Finally there is a :ref:`demo <sec demo>` environment in a simple room with some toys, with all sensory 
 modalities enabled using the default configurations. 
@@ -12,38 +14,23 @@ modalities enabled using the default configurations.
 .. contents::
    :depth: 4
 
-   
+
 .. _sec reach:
 
-Reach Experiment
-----------------
-   
-Environment
-+++++++++++
+Reach Environment
+-----------------
 
 .. automodule:: mimoEnv.envs.reach
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
-   
-   
-Training script
-+++++++++++++++
-
-.. automodule:: mimoEnv.reach
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 
 .. _sec standup:
 
-Standup Experiment
-------------------
-
-Environment
-+++++++++++
+Standup Environment
+-------------------
 
 .. automodule:: mimoEnv.envs.standup
    :members:
@@ -51,11 +38,36 @@ Environment
    :show-inheritance:
    :private-members:
 
-   
-Training script
-+++++++++++++++
 
-.. automodule:: mimoEnv.standup
+.. _sec selfbody:
+
+Self-body Environment
+---------------------
+
+.. automodule:: mimoEnv.envs.selfbody
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
+
+Training scripts
+----------------
+
+Summary
++++++++
+
+.. autosummary::
+   :toctree: _autosummary
+
+   mimoEnv.reach
+   mimoEnv.standup
+   mimoEnv.selfbody
+
+Documentation
++++++++++++++
+
+.. automodule:: mimoEnv.reach
    :members:
    :undoc-members:
    :show-inheritance:
