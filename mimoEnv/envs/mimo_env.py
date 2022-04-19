@@ -241,7 +241,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         self.observation_space = spaces.Dict(spaces_dict)
 
-    def _env_setup(self, initial_qpos):
+    def _env_setup(self, initial_qpos: dict):
         """ This function initializes all the sensory components of the model.
 
         Calls the setup functions for all the sensory components and sets the initial positions of the joints according
@@ -309,7 +309,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.vestibular = SimpleVestibular(self, vestibular_params)
 
-    def step(self, action):
+    def step(self, action: np.ndarray):
         """ The step function for the simulation.
 
         This function takes a simulation step, collects the observations, computes the reward and finally determines if
