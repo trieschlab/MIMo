@@ -79,7 +79,7 @@ class SimpleVestibular(Vestibular):
         """
         data = []
         for sensor in self.sensors:
-            sensor_output = get_data_for_sensor(self.env.sim, sensor)
+            sensor_output = get_data_for_sensor(self.env.sim.model, self.env.sim.data, sensor)
             data.append(sensor_output)
         self.sensor_outputs = data
         return np.concatenate(data)

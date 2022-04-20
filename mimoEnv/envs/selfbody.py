@@ -1,10 +1,30 @@
+""" This module contains a simple experiment where MIMo is tasked with touching parts of his own body.
+
+The scene is empty except for MIMo, who is sitting on the ground. The task is for MIMo to touch a randomized target
+body part with his right arm. MIMo is fixed in the initial sitting position and can only move his right arm.
+Sensory inputs consist of touch and proprioception. Proprioception uses the default settings, but touch excludes
+several body parts and uses a lowered resolution to improve runtime.
+The body part can be any of the geoms constituting MIMo.
+
+MIMos initial position is constant in all episodes. The target body part is randomized. An episode is completed
+successfully if MIMo touches the target body part with his right arm.
+
+The reward structure consists of a large fixed reward for touching the right body part, a shaping reward for touching
+another body part, depending on the distance between the contact and the target body part, and a penalty for each time
+step.
+
+The class with the environment is :class:`~mimoEnv.envs.selfbody.MIMoSelfBodyEnv` while the path to the scene XML is
+defined in :data:`SELFBODY_XML`.
+"""
+
 import os
 import numpy as np
 import mujoco_py
 
-from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS
+from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS, SCENE_DIRECTORY
 import mimoEnv.utils as env_utils
 
+#: List of possible target bodies.
 TOUCH_PARAMS = {
     "scales": {
         "left_foot": 0.05,
@@ -49,15 +69,32 @@ SITTING_POSITION = {
 }
 """ Initial position of MIMo by specifying initial values for all joints.
 We grabbed these values by posing MIMo using the MuJoCo simulate executable and the positional actuator file.
-We need these not just for the initial position but also resetting the position (excluding the right arm) each step. """
+We need these not just for the initial position but also resetting the position (excluding the right arm) each step. 
+"""
 
-MIMO_XML = os.path.abspath(os.path.join(__file__, "..", "..", "assets", "selfbody_scene.xml"))
+#: Path to the scene for this experiment
+SELFBODY_XML = os.path.join(SCENE_DIRECTORY, "selfbody_scene.xml")
 
 
 class MIMoSelfBodyEnv(MIMoEnv):
+    """ MIMo learns about his own body.
+
+    MIMo is tasked with touching a given part of his body using his right arm.
+    Attributes and parameters are mostly identical to the base class, but there are two changes.
+    The constructor takes two arguments less, ``goals_in_observation`` and ``done_active``, which are both permanently
+    set to `True`.
+    Finally there are two extra attributes for handling the goal state. The :attr:`.goal` attribute stores the target
+    geom in a one hot encoding, while :attr:`.target_geom` and :attr:`.target_body` store the geom and its associated
+    body as an index. For more information on geoms and bodies please see the MuJoCo documentation.
+
+    Attributes:
+        target_geom (int): The body part MIMo should try to touch, as a MuJoCo geom.
+        target_body (int): The kinematic body that the target geom is a part of.
+        init_sitting_qpos (numpy.ndarray): The initial position.
+    """
 
     def __init__(self,
-                 model_path=MIMO_XML,
+                 model_path=SELFBODY_XML,
                  initial_qpos=SITTING_POSITION,
                  n_substeps=1,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
@@ -87,6 +124,9 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
         The goal consists of a target geom that we try to touch, returned as a one-hot encoding.
         We also populate :attr:`.target_geom` and :attr:`.target_body`. which are used by other functions.
+
+        Returns:
+            numpy.ndarray: The target geom in a one hot encoding.
         """
         # randomly select geom as target (except for 2 latest geoms that correspong to fingers)
         active_geom_codes = list(self.touch.sensor_outputs.keys())
@@ -98,22 +138,51 @@ class MIMoSelfBodyEnv(MIMoEnv):
         if isinstance(self.target_geom, int):
             target_geom_onehot[self.target_geom] = 1
 
-        for body_id in self.touch.sensor_scales:
-            body_geoms = env_utils.get_geoms_for_body(self.sim.model, body_id)
-            if self.target_geom in body_geoms:
-                self.target_body = self.sim.model.body_id2name(body_id)
+        self.target_body = self.sim.model.geom_bodyid[self.target_geom]
+        #for body_id in self.touch.sensor_scales:
+        #    body_geoms = env_utils.get_geoms_for_body(self.sim.model, body_id)
+        #    if self.target_geom in body_geoms:
+        #        self.target_body = self.sim.model.body_id2name(body_id)
         print('Target body: ', self.target_body)
 
         return target_geom_onehot
 
     def _is_success(self, achieved_goal, desired_goal):
-        """ We have succeeded when we have a touch sensation on the goal body."""
+        """ We have succeeded when we have a touch sensation on the goal body.
+
+        We ignore the :attr:`.goal` attribute in this for performance reasons and determine the the success condition
+        using :attr:`.target_geom` instead. This allows us to save a number of array operations each step.
+
+        Args:
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
+
+        Returns:
+            bool: If MIMo has touched the target geom.
+        """
         # check if contact with target geom:
         target_geom_touch_max = np.max(self.touch.sensor_outputs[self.target_geom])
         contact_with_target_geom = (target_geom_touch_max > 0)
         return contact_with_target_geom
 
     def compute_reward(self, achieved_goal, desired_goal, info):
+        """ Computes the reward each step.
+
+        Three different rewards can be returned:
+
+        - If we touched the target geom, the reward is 500.
+        - If we touched a geom, but not the target, the reward is the negative of the distance between the touch
+          contact and the target body.
+        - Otherwise the reward is -1.
+
+        Args:
+            achieved_goal (dict): This parameter is ignored.
+            desired_goal (dict): This parameter is ignored.
+            info (dict): This parameter is ignored.
+
+        Returns:
+            float: The reward as described above.
+        """
         active_geom_codes = list(self.touch.sensor_outputs.keys())
 
         fingers_touch_max = max(
@@ -147,6 +216,9 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
     def _reset_sim(self):
         """ Reset to the initial sitting position.
+
+        Returns:
+            bool: `True`
         """
         # set qpos as new initial position and velocity as zero
         qpos = self.init_sitting_qpos
@@ -162,9 +234,21 @@ class MIMoSelfBodyEnv(MIMoEnv):
         return True
 
     def _is_failure(self, achieved_goal, desired_goal):
-        """ Dummy function. Always returns False. """
+        """ Dummy function that always returns False.
+
+        Args:
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
+
+        Returns:
+            bool: `False`
+        """
         return False
 
     def _get_achieved_goal(self):
-        """ Dummy function. """
-        return np.zeros(1)
+        """ Dummy function that returns an empty array.
+
+        Returns:
+            numpy.ndarray: An empty array.
+        """
+        return np.zeros((0,))

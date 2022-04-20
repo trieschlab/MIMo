@@ -54,6 +54,9 @@ Self-body Environment
 Training scripts
 ----------------
 
+The training scripts for all the sample environments are functionally identical, so we
+document only one of them in detail.
+
 Summary
 +++++++
 
@@ -79,7 +82,7 @@ Benchmarking
 ------------
 
 This script and the :ref:`demo <sec demo>` script use the same dummy class, but with different 
-scene xmls. For benchmarking the scene consisted of MIMo with all sensory modalities enabled 
+scene XMLs. For benchmarking the scene consisted of MIMo with all sensory modalities enabled
 with varying configurations and a couple of objects lying on the ground. In the benchmarking 
 script we take random actions after each step.
 
@@ -106,9 +109,9 @@ Script
 Demo showroom
 -------------
 
-This scenario uses the same dummy class as the benchmarking script, but replaces the actual 
+This scenario uses the same dummy class as the benchmarking script, but replaces the basic
 scene XML with a more elaborate one consisting of a square room with a number of toys.
-In this script MIMo takes no actions at all.
+In this scenario MIMo takes no actions at all.
    
 Script
 ++++++

@@ -213,10 +213,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.facial_expressions = {}
         for emote in EMOTES:
             tex_name = EMOTES[emote]
-            tex_id = mimo_utils.texture_name2id(self.sim, tex_name)
+            tex_id = mimo_utils.texture_name2id(self.sim.model, tex_name)
             self.facial_expressions[emote] = tex_id
         head_material_name = "head"
-        self._head_material_id = mimo_utils.material_name2id(self.sim, head_material_name)
+        self._head_material_id = mimo_utils.material_name2id(self.sim.model, head_material_name)
 
         self.goal = self._sample_goal()
         n_actions = len([name for name in self.sim.model.actuator_names if name.startswith("act:")])
@@ -505,11 +505,11 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.sim.model.mat_texid[self._head_material_id] = new_tex_id
 
     def _is_success(self, achieved_goal, desired_goal):
-        """Indicates whether or not the achieved goal successfully achieved the desired goal.
+        """ Indicates whether or not the achieved goal successfully achieved the desired goal.
 
         Args:
-            achieved_goal (object): the goal that was achieved during execution
-            desired_goal (object): the desired goal that we asked the agent to attempt to achieve
+            achieved_goal (object): The goal that was achieved during execution.
+            desired_goal (object): The desired goal that we asked the agent to attempt to achieve.
 
         Returns:
             bool: If we successfully reached the desired goal state.
@@ -521,8 +521,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """Indicates that we reached a failure state.
 
         Args:
-            achieved_goal (object): the goal that was achieved during execution
-            desired_goal (object): the desired goal that we asked the agent to attempt to achieve
+            achieved_goal (object): The goal that was achieved during execution.
+            desired_goal (object): The desired goal that we asked the agent to attempt to achieve.
 
         Returns:
             bool: If we reached an unrecoverable failure state.
@@ -538,9 +538,9 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         required.
 
         Args:
-            achieved_goal (object): The goal that was achieved during execution
-            desired_goal (object): The desired goal that we asked the agent to attempt to achieve
-            info (dict): An info dictionary with additional information
+            achieved_goal (object): The goal that was achieved during execution.
+            desired_goal (object): The desired goal that we asked the agent to attempt to achieve.
+            info (dict): An info dictionary with additional information.
 
         Return:
             bool: Whether the current episode is done.

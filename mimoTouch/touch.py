@@ -14,6 +14,7 @@ from typing import Dict, List
 
 import numpy as np
 import mujoco_py
+from mujoco_py.generated import const
 import trimesh
 from trimesh import PointCloud
 
@@ -24,8 +25,6 @@ from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spre
 
 #: A key to identify the geom type ids used by MuJoCo.
 from mimoTouch.sensormeshes import mesh_box, mesh_sphere, mesh_capsule, mesh_cylinder, mesh_ellipsoid
-
-GEOM_TYPES = {"PLANE": 0, "HFIELD": 1, "SPHERE": 2, "CAPSULE": 3, "ELLIPSOID": 4, "CYLINDER": 5, "BOX": 6, "MESH": 7}
 
 
 class Touch:
@@ -263,7 +262,7 @@ class DiscreteTouch(Touch):
         """ Adds sensors to the given geom.
 
         Spreads sensor points over the geom identified either by ID. The distance between sensor points is determined
-        by `scale`. We identify the type of geom using the MuJoCo API and :data:`GEOM_TYPES`. This function populates
+        by `scale`. We identify the type of geom using the MuJoCo API. This function populates
         both :attr:`.sensor_positions` and :attr:`.plotting_limits`.
 
         Args:
@@ -280,25 +279,25 @@ class DiscreteTouch(Touch):
         geom_type = self.m_model.geom_type[geom_id]
         size = self.m_model.geom_size[geom_id]
         limit = 1
-        if geom_type == GEOM_TYPES["BOX"]:
+        if geom_type == const.GEOM_BOX:
             limit = np.max(size)
             points = spread_points_box(scale, size)
-        elif geom_type == GEOM_TYPES["SPHERE"]:
+        elif geom_type == const.GEOM_SPHERE:
             limit = size[0]
             points = spread_points_sphere(scale, size[0])
-        elif geom_type == GEOM_TYPES["CAPSULE"]:
+        elif geom_type == const.GEOM_CAPSULE:
             limit = size[1] + size[0]
             points = spread_points_capsule(scale, 2*size[1], size[0])
-        elif geom_type == GEOM_TYPES["CYLINDER"]:
+        elif geom_type == const.GEOM_CYLINDER:
             # Cylinder size 0 is radius, size 1 is half length
             limit = np.max(size)
             points = spread_points_cylinder(scale, 2*size[1], size[0])
-        elif geom_type == GEOM_TYPES["PLANE"]:
+        elif geom_type == const.GEOM_PLANE:
             RuntimeWarning("Cannot add sensors to plane geoms!")
             return None
-        elif geom_type == GEOM_TYPES["ELLIPSOID"]:
+        elif geom_type == const.GEOM_ELLIPSOID:
             raise NotImplementedError("Ellipsoids currently not implemented")
-        elif geom_type == GEOM_TYPES["MESH"]:
+        elif geom_type == const.GEOM_MESH:
             size = self.m_model.geom_rbound[geom_id]
             limit = size
             points = spread_points_sphere(scale, size)
@@ -774,8 +773,8 @@ class TrimeshTouch(Touch):
         cached, so the sensor positions in :attr:`.sensor_positions` should not be altered as they are tied to the
         underlying sensor mesh. Trimesh is used for the mesh operations. Supported output types are
 
-        - 'force_vector': The contact force vector (normal and frictional forces) reported in the coordinate frame of the
-          sensing geom.
+        - 'force_vector': The contact force vector (normal and frictional forces) reported in the coordinate frame of
+          the sensing geom.
         - 'force_vector_global': Like 'force_vector', but reported in the world coordinate frame instead.
 
         The output can be spread to nearby sensors in two different ways:
@@ -798,7 +797,8 @@ class TrimeshTouch(Touch):
                 geom on the same body. Only active vertices contribute to the output, but inactive ones are still
                 required for mesh operations. If a sensor is active the associated entry in this dictionary will be
                 `True`, otherwise `False`.
-            plotting_limits: A convenience dictionary listing axis limits for plotting forces or sensor points for geoms.
+            plotting_limits: A convenience dictionary listing axis limits for plotting forces or sensor points for
+                geoms.
             _submeshes: A dictionary like :attr:`.meshes`, but storing a list of the individual geom meshes instead.
             _active_subvertices: A dictionary like :attr:`.active_vertices`, but storing a list of masks for each geom
                 mesh instead.
@@ -988,21 +988,21 @@ class TrimeshTouch(Touch):
         geom_type = self.m_model.geom_type[geom_id]
         size = self.m_model.geom_size[geom_id]
 
-        if geom_type == GEOM_TYPES["BOX"]:
+        if geom_type == const.GEOM_BOX:
             mesh = mesh_box(scale, size)
-        elif geom_type == GEOM_TYPES["SPHERE"]:
+        elif geom_type == const.GEOM_SPHERE:
             mesh = mesh_sphere(scale, size[0])
-        elif geom_type == GEOM_TYPES["CAPSULE"]:
+        elif geom_type == const.GEOM_CAPSULE:
             mesh = mesh_capsule(scale, 2 * size[1], size[0])
-        elif geom_type == GEOM_TYPES["CYLINDER"]:
+        elif geom_type == const.GEOM_CYLINDER:
             # Cylinder size 0 is radius, size 1 is half length
             mesh = mesh_cylinder(scale, 2 * size[1], size[0])
-        elif geom_type == GEOM_TYPES["PLANE"]:
+        elif geom_type == const.GEOM_PLANE:
             RuntimeWarning("Cannot add sensors to plane geoms!")
             return None
-        elif geom_type == GEOM_TYPES["ELLIPSOID"]:
+        elif geom_type == const.GEOM_ELLIPSOID:
             mesh = mesh_ellipsoid(scale, size)
-        elif geom_type == GEOM_TYPES["MESH"]:
+        elif geom_type == const.GEOM_MESH:
             # TODO: Use convex hull of mesh as sensor mesh? Would not have remotely consistent spacing
             size = self.m_model.geom_rbound[geom_id]
             mesh = mesh_sphere(scale, size)
@@ -1363,7 +1363,8 @@ class TrimeshTouch(Touch):
 
         """
         global_forces = self.force_vector_global(contact_id, body_id)
-        relative_forces = env_utils.rotate_vector_transpose(global_forces, env_utils.get_body_rotation(self.m_data, body_id))
+        relative_forces = env_utils.rotate_vector_transpose(global_forces, env_utils.get_body_rotation(self.m_data,
+                                                                                                       body_id))
         return relative_forces
 
     # =============== Output related functions ========================================

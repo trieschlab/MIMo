@@ -8,8 +8,7 @@ Sensory input consists of proprioceptive and vestibular inputs, using the defaul
 
 MIMo initial position is determined by slightly randomizing all joint positions from a standing position and then
 letting the simulation settle. This leads to MIMo sagging into a slightly random crouching or sitting position each
-episode. An episode is completed successfully when MIMo moves his head above a certain height. There are no failure
-states.
+episode. All episodes have a fixed length, there are no goal or failure states.
 
 Reward shaping is employed, such that MIMo is penalised for using muscle inputs and large inputs in particular.
 Additionally he is rewarded each step for the current height of his head.
@@ -29,6 +28,11 @@ STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
 
 class MIMoStandupEnv(MIMoEnv):
     """ MIMo stands up using crib railings as an aid.
+
+    Attributes and parameters are the same as in the base class, but the default arguments are adapted for the scenario.
+
+    Even though we define a success condition in :meth:`~mimoEnv.envs.standup.MIMoStandupEnv._is_success`, it is
+    disabled since :attr:`.done_active` is set to `False`. The purpose of this is to enable extra information.
 
     """
     def __init__(self,

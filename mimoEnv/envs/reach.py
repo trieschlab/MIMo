@@ -29,6 +29,8 @@ REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
 class MIMoReachEnv(MIMoEnv):
     """ MIMo reaches for an object.
 
+    Attributes and parameters are the same as in the base class, but the default arguments are adapted for the scenario.
+
     Due to the goal condition we do not use the :attr:`.goal` attribute or the interfaces associated with it. Instead,
     the reward and success conditions are computed directly from the model state, while
     :meth:`~mimoEnv.envs.reach.MIMoReachEnv._sample_goal` and

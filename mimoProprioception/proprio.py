@@ -134,7 +134,7 @@ class SimpleProprioception(Proprioception):
         if "torques" in self.output_components:
             torques = []
             for sensor in self.sensors:
-                sensor_output = get_data_for_sensor(self.env.sim, sensor)
+                sensor_output = get_data_for_sensor(self.env.sim.model, self.env.sim.data, sensor)
                 # Convert from child to parent frame? Report torque in terms of the axis of the relevant joints?
                 torques.append(sensor_output)
             torques = np.concatenate(torques)
