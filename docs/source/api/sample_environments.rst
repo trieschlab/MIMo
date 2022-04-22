@@ -4,7 +4,7 @@ Sample environments
 This section describes the code used for the experiments and demos from the paper PAPERTITLE, LINK. 
 The :ref:`reach <sec reach>`, :ref:`standup <sec standup>` and :ref:`self-body <sec selfbody>`
 experiments each involve an environment and a training script using the RL algorithms from
-`Stable Baselines3 <https://github.com/DLR-RM/stable-baselines3>`. The environments are registered
+`Stable Baselines3 <https://github.com/DLR-RM/stable-baselines3>`_. The environments are registered
 under the names ``MIMoReach-v0``, ``MIMoStandup-v0`` and ``MIMoSelfBody-v0``.
 There is a simple :ref:`benchmarking <sec benchmark>` scenario in which MIMo takes random actions.
 Finally there is a :ref:`demo <sec demo>` environment in a simple room with some toys, with all sensory 
