@@ -17,10 +17,14 @@ from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception
 import mimoEnv.utils as mimo_utils
 
-#: Path to the scene directory
-SCENE_DIRECTORY = os.path.abspath(os.path.join(__file__, "..", "..", "assets"))
 
-#: Valid facial expressions
+SCENE_DIRECTORY = os.path.abspath(os.path.join(__file__, "..", "..", "assets"))
+""" Path to the scene directory.
+
+:meta hide-value:
+"""
+
+
 EMOTES = {
     "default": "tex_head_default",
     "happy": "tex_head_happy",
@@ -30,8 +34,12 @@ EMOTES = {
     "disgusted": "tex_head_disgusted",
     "scared": "tex_head_scared",
 }
+""" Valid facial expressions.
 
-#: Default touch parameters.
+:meta hide-value:
+"""
+
+
 DEFAULT_TOUCH_PARAMS = {
     "scales": {
         "left_toes": 0.010,
@@ -60,23 +68,39 @@ DEFAULT_TOUCH_PARAMS = {
     "touch_function": "force_vector",
     "response_function": "spread_linear",
 }
+""" Default touch parameters.
 
-#: Default vision parameters.
+:meta hide-value:
+"""
+
+
 DEFAULT_VISION_PARAMS = {
     "eye_left": {"width": 256, "height": 256},
     "eye_right": {"width": 256, "height": 256},
 }
+""" Default vision parameters.
 
-#: Default vestibular parameters.
+:meta hide-value:
+"""
+
+
 DEFAULT_VESTIBULAR_PARAMS = {
     "sensors": ["vestibular_acc", "vestibular_gyro"],
 }
+""" Default vestibular parameters.
 
-#: Default parameters for proprioception. Relative joint positions are always included.
+:meta hide-value:
+"""
+
+
 DEFAULT_PROPRIOCEPTION_PARAMS = {
     "components": ["velocity", "torque", "limits"],
     "threshold": .035,
 }
+""" Default parameters for proprioception. Relative joint positions are always included.
+
+:meta hide-value:
+"""
 
 
 class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):

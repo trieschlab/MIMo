@@ -57,19 +57,6 @@ Training scripts
 The training scripts for all the sample environments are functionally identical, so we
 document only one of them in detail.
 
-Summary
-+++++++
-
-.. autosummary::
-   :toctree: _autosummary
-
-   mimoEnv.reach
-   mimoEnv.standup
-   mimoEnv.selfbody
-
-Documentation
-+++++++++++++
-
 .. automodule:: mimoEnv.reach
    :members:
    :undoc-members:

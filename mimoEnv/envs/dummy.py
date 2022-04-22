@@ -14,10 +14,18 @@ from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, \
 from mimoTouch.touch import TrimeshTouch
 import mimoEnv.utils as env_utils
 
-#: Path to the demo scene.
+
 DEMO_XML = os.path.join(SCENE_DIRECTORY, "showroom.xml")
-#: Path to the benchmarking scene.
+""" Path to the demo scene.
+
+:meta hide-value:
+"""
+
 BENCHMARK_XML = os.path.join(SCENE_DIRECTORY, "benchmark_scene.xml")
+""" Path to the benchmarking scene.
+
+:meta hide-value:
+"""
 
 
 class MIMoDummyEnv(MIMoEnv):

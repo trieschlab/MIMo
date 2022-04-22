@@ -11,7 +11,10 @@ MUJOCO_JOINT_SIZES = {
     const.JNT_SLIDE: 1,
     const.JNT_HINGE: 1,
 }
-""" Size of qpos entries for each joint type: free, ball, slide, hinge. """
+""" Size of qpos entries for each joint type; free, ball, slide, hinge. 
+
+:meta hide-value:
+"""
 
 
 def rotate_vector(vector, rot_matrix):

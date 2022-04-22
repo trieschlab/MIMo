@@ -24,6 +24,7 @@ import mujoco_py
 from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS, SCENE_DIRECTORY
 import mimoEnv.utils as env_utils
 
+
 TOUCH_PARAMS = {
     "scales": {
         "left_foot": 0.05,
@@ -48,6 +49,7 @@ TOUCH_PARAMS = {
 :meta hide-value:
 """
 
+
 SITTING_POSITION = {
     "mimo_location": np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]),
     "robot:hip_lean1": np.array([0.039088]), "robot:hip_rot1": np.array([0.113112]),
@@ -70,12 +72,13 @@ SITTING_POSITION = {
     "robot:left_foot1": np.array([-0.63562]), "robot:left_foot2": np.array([0.5411]),
     "robot:left_foot3": np.array([0.366514]), "robot:left_toes": np.array([0.24424]),
 }
-""" Initial position of MIMo by specifying initial values for all joints.
+""" Initial position of MIMo. Specifies initial values for all joints.
 We grabbed these values by posing MIMo using the MuJoCo simulate executable and the positional actuator file.
 We need these not just for the initial position but also resetting the position (excluding the right arm) each step.
 
 :meta hide-value:
 """
+
 
 SELFBODY_XML = os.path.join(SCENE_DIRECTORY, "selfbody_scene.xml")
 """ Path to the scene for this experiment.

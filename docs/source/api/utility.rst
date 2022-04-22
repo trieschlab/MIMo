@@ -77,7 +77,7 @@ Plotting utilities
    mimoEnv.utils.plot_points
    mimoEnv.utils.plot_forces
    
-Function documentation
+Detail documentation
 ----------------------
 
 .. automodule:: mimoEnv.utils

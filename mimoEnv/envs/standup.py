@@ -22,8 +22,12 @@ import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_VESTIBULAR_PARAMS
 
-#: Path to the stand up scene.
+
 STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
+""" Path to the stand up scene.
+
+:meta hide-value:
+"""
 
 
 class MIMoStandupEnv(MIMoEnv):
