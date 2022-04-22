@@ -21,6 +21,7 @@ extensions = [
 ]
 autodoc_mock_imports = ["mujoco_py"]
 autodoc_member_order = 'bysource'
+autodoc_class_signature = 'separated'
 numpydoc_class_members_toctree = False
 automodapi_toctreedirnm = 'generated'
 automodsumm_inherited_members = True
