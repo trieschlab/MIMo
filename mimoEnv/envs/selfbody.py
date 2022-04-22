@@ -44,6 +44,7 @@ TOUCH_PARAMS = {
     "response_function": "spread_linear",
 }
 """ List of possible target bodies.
+
 :meta hide-value:
 """
 
@@ -72,11 +73,13 @@ SITTING_POSITION = {
 """ Initial position of MIMo by specifying initial values for all joints.
 We grabbed these values by posing MIMo using the MuJoCo simulate executable and the positional actuator file.
 We need these not just for the initial position but also resetting the position (excluding the right arm) each step.
+
 :meta hide-value:
 """
 
 SELFBODY_XML = os.path.join(SCENE_DIRECTORY, "selfbody_scene.xml")
 """ Path to the scene for this experiment.
+
 :meta hide-value:
 """
 
