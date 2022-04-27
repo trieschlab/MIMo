@@ -1,5 +1,5 @@
 User Guides
-===================================
+===========
 
 This section contains quick start and usage guides for MIMo and the sensory modalities
 
@@ -8,3 +8,4 @@ This section contains quick start and usage guides for MIMo and the sensory moda
 
    installation
    new_experiment
+   sensors

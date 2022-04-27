@@ -6,6 +6,7 @@ A second implementation using trimesh objects is in :class:`~mimoTouch.touch.Tri
 This second implementation allows for consideration of sensor normals as well as surface distance, avoiding the issue
 of a contact penetrating through to sensors on the opposite side of the sensing body.
 
+Both of the implementations also have functions for visualizing the touch sensations.
 """
 
 import math
@@ -39,9 +40,9 @@ class Touch:
     `env` should be an openAI gym environment using MuJoCo, while `touch_params` is a configuration dictionary. The
     exact form will depend on the specific implementation, but it must contain these three entries:
 
-    - 'scales', which lists the distance between sensor points for each body part.
-    - 'touch_function', which defines the output type and must be in :attr:`.VALID_TOUCH_TYPES`.
-    - 'response_function', which defines how the contact forces are distributed to the sensors. Must be one of
+    - "scales", which lists the distance between sensor points for each body part.
+    - "touch_function", which defines the output type and must be in :attr:`.VALID_TOUCH_TYPES`.
+    - "response_function", which defines how the contact forces are distributed to the sensors. Must be one of
       :attr:`.VALID_RESPONSE_FUNCTIONS`.
 
     The sensor scales determines the density of the sensor points, while `touch_function` and `response_function`
