@@ -89,7 +89,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
     Attributes:
         target_geom (int): The body part MIMo should try to touch, as a MuJoCo geom.
-        target_body (int): The kinematic body that the target geom is a part of.
+        target_body (str): The name of the kinematic body that the target geom is a part of.
         init_sitting_qpos (numpy.ndarray): The initial position.
     """
 
@@ -104,7 +104,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
                  ):
 
         self.target_geom = 0  # The geom on MIMo we are trying to touch
-        self.target_body = 0  # The body that the goal geom belongs to
+        self.target_body = ""  # The body that the goal geom belongs to
         self.goal = np.zeros(37)
 
         super().__init__(model_path=model_path,
@@ -138,7 +138,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
         if isinstance(self.target_geom, int):
             target_geom_onehot[self.target_geom] = 1
 
-        self.target_body = self.sim.model.geom_bodyid[self.target_geom]
+        self.target_body = self.sim.model.body_id2name(self.sim.model.geom_bodyid[self.target_geom])
         #for body_id in self.touch.sensor_scales:
         #    body_geoms = env_utils.get_geoms_for_body(self.sim.model, body_id)
         #    if self.target_geom in body_geoms:
