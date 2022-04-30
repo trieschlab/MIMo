@@ -43,6 +43,7 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
     'mimo': ('https://mimo.readthedocs.io/en/latest/', None),
+    'mujoco': ('https://mujoco.readthedocs.io/en/latest', None),
 }
 intersphinx_disabled_domains = ['std']
 
