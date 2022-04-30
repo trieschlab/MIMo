@@ -8,7 +8,7 @@ In this guide we will create a new experiment using the
 :ref:`standup environment <sec standup>`  as an example.
 This involves creating a new scene XML and environment class.
 Creating a new scene will require working with
-:ref:`MuJoCo XMLs <mujoco:MJCF Reference>`.
+:doc:`MuJoCo XMLs <mujoco:XMLreference>`.
 
 This scenario will have MIMo standing up from a low crouch or sitting position.
 The scene will contain MIMo and a crib like structure, with MIMos feet welded to the ground

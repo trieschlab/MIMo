@@ -41,7 +41,7 @@ The "scales" entry determines the distance between sensor points, while "touch_f
 Note that the config for the touch configuration is specific to the scene, since the bodies
 listed in the config have to exist in the scene.
 
-:ref:`Default dictionaries <Default data fields>` are available for all the sensory modules, but these are designed
+:ref:`Default dictionaries <sec default_data>` are available for all the sensory modules, but these are designed
 with MIMo in mind, and will generally not work in scenes that do not contain MIMo. They can
 still be a useful guide to the structure for their module.
 
