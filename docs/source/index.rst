@@ -7,7 +7,8 @@ Welcome to MIMo's documentation!
    :alt: MIMo with some toys
 
 MIMo is a library for the research of cognitive development and multi-sensory learning. 
-We follow the API of the OpenAI gym environments, using MuJoCo for the physics simulation.
+We follow the :doc:`API of the OpenAI gym <gym:content/api>` environments, using
+:doc:`MuJoCo <mujoco:overview>` for the physics simulation.
 
 
 

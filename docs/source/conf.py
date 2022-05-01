@@ -44,6 +44,7 @@ intersphinx_mapping = {
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
     'mimo': ('https://mimo.readthedocs.io/en/latest/', None),
     'mujoco': ('https://mujoco.readthedocs.io/en/latest', None),
+    'gym': ('https://www.gymlibrary.ml', None),
 }
 intersphinx_disabled_domains = ['std']
 
