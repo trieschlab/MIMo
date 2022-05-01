@@ -29,6 +29,8 @@ The component XMLs are "MIMo_model.xml", which contains the kinematic tree, and
 "MIMo_meta.xml", which contains the definitions of the actuators, MuJoCo sensors, textures
 and so forth. These have to be split due to the XML importing process.
 
+.. highlight:: xml
+
 We start with a stripped down sample XML::
 
     <mujoco model="MIMo">
@@ -107,6 +109,10 @@ removed those actuators.
 The environment class
 ---------------------
 
+.. highlight:: default
+
 Creating the class.
+
+TODO: All of this
 
 Episodes will have a fixed length, with a reward based on the height of MIMos head.
