@@ -22,17 +22,24 @@ import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_VESTIBULAR_PARAMS
 
-#: Path to the stand up scene.
+
 STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
+""" Path to the stand up scene.
+
+:meta hide-value:
+"""
 
 
 class MIMoStandupEnv(MIMoEnv):
     """ MIMo stands up using crib railings as an aid.
 
     Attributes and parameters are the same as in the base class, but the default arguments are adapted for the scenario.
+    Specifically we have :attr:`.done_active` and :attr:`.goals_in_observation` as `False` and touch and vision sensors
+    disabled.
 
     Even though we define a success condition in :meth:`~mimoEnv.envs.standup.MIMoStandupEnv._is_success`, it is
-    disabled since :attr:`.done_active` is set to `False`. The purpose of this is to enable extra information.
+    disabled since :attr:`.done_active` is set to `False`. The purpose of this is to enable extra information for
+    the logging features of stable baselines.
 
     """
     def __init__(self,
@@ -43,8 +50,7 @@ class MIMoStandupEnv(MIMoEnv):
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
-                 goals_in_observation=False,
-                 done_active=False):
+                 ):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
@@ -53,8 +59,8 @@ class MIMoStandupEnv(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
-                         goals_in_observation=goals_in_observation,
-                         done_active=done_active)
+                         goals_in_observation=False,
+                         done_active=False)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
@@ -101,7 +107,7 @@ class MIMoStandupEnv(MIMoEnv):
         qpos = self.sim.data.qpos
 
         # set initial positions stochastically
-        qpos[6:] = qpos[6:] + self.np_random.uniform(low=-0.1, high=0.1, size=len(qpos[6:]))
+        qpos[7:] = qpos[7:] + self.np_random.uniform(low=-0.1, high=0.1, size=len(qpos[6:]))
 
         # set initial velocities to zero
         qvel = np.zeros(self.sim.data.qvel.shape)
@@ -113,8 +119,10 @@ class MIMoStandupEnv(MIMoEnv):
         self.sim.forward()
 
         # perform 100 steps with no actions to stabilize initial position
+        actions = np.zeros(self.action_space.shape)
+        self._set_action(actions)
         for _ in range(100):
-            self.step(np.zeros(self.action_space.shape))
+            self.sim.step()
 
         return True
 

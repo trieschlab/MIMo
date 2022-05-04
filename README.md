@@ -1,10 +1,12 @@
 # MIMo
 
-<img src="https://github.com/Domattee/MIMo/blob/main/docs/imgs/showroom.png" width="400" align="right">
+<img src="https://github.com/Domattee/MIMo/blob/main/docs/source/imgs/showroom.png" width="400" align="right">
 
-MIMo is a platform for the research of the cognitive development of infants. It consists of an OpenAI gym environment using MuJoCo for the physical simulation and  multiple modules that can produce simulated sensory input for vision, touch, proprioception and the vestibular system.
+MIMo is a platform for the research of the cognitive development of infants. It consists of an [OpenAI gym](https://github.com/openai/gym) environment using [MuJoCo](https://mujoco.readthedocs.io) for the physical simulation and multiple modules that can produce simulated sensory input for vision, touch, proprioception and the vestibular system.
 
 [//]: # (See "MIMo: A Multi-Modal Infant Model for Studying Cognitive Development in Humans and AIs".)
+
+[A full API documentation is available on ReadTheDocs.](https://mimo.readthedocs.io)
 
 ## Installation
 

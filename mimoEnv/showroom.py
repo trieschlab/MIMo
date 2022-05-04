@@ -1,3 +1,6 @@
+""" Simple script to view the showroom. We perform no training and MIMo takes no actions.
+"""
+
 import gym
 import time
 import numpy as np
@@ -5,6 +8,9 @@ import mimoEnv
 
 
 def main():
+    """ Creates the environment and takes 200 time steps. MIMo takes no actions.
+    The environment is rendered to an interactive window.
+    """
 
     env = gym.make("MIMoShowroom-v0", show_sensors=False, print_space_sizes=True)
 

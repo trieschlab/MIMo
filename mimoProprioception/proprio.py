@@ -98,7 +98,7 @@ class SimpleProprioception(Proprioception):
                 self.sensors.append(sensor_name)
 
         self.sensor_names = {}
-        self.joint_names = [name for name in self.env.sim.model.joint_names if name.startswith("robot")]
+        self.joint_names = [name for name in self.env.sim.model.joint_names if name.startswith("robot:")]
 
         self.sensor_names["qpos"] = self.joint_names
         if "velocity" in self.output_components:

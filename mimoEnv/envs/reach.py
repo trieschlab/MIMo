@@ -22,8 +22,12 @@ import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
 
-#: Path to the reach scene.
+
 REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
+""" Path to the reach scene.
+
+:meta hide-value:
+"""
 
 
 class MIMoReachEnv(MIMoEnv):

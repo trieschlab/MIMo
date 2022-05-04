@@ -14,10 +14,18 @@ from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, \
 from mimoTouch.touch import TrimeshTouch
 import mimoEnv.utils as env_utils
 
-#: Path to the demo scene.
+
 DEMO_XML = os.path.join(SCENE_DIRECTORY, "showroom.xml")
-#: Path to the benchmarking scene.
+""" Path to the demo scene.
+
+:meta hide-value:
+"""
+
 BENCHMARK_XML = os.path.join(SCENE_DIRECTORY, "benchmark_scene.xml")
+""" Path to the benchmarking scene.
+
+:meta hide-value:
+"""
 
 
 class MIMoDummyEnv(MIMoEnv):
@@ -31,8 +39,13 @@ class MIMoDummyEnv(MIMoEnv):
     - `show_sensors`: If `True`, plot the sensor point distribution for the touch system during initialization.
       Default `False`.
     - `print_space_sizes`: If `True`, the shape of the action space and all entries in the observation dictionary is
-      printed during initialization.
+      printed during initialization. Default `False`.
 
+    Finally there are two extra attributes:
+
+    Attributes:
+        steps: A step counter.
+        show_sensors: If `True`, plot the sensor point distribution for the touch system during initialization.
     """
     def __init__(self,
                  model_path=BENCHMARK_XML,

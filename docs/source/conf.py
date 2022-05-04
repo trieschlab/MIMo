@@ -21,6 +21,7 @@ extensions = [
 ]
 autodoc_mock_imports = ["mujoco_py"]
 autodoc_member_order = 'bysource'
+# autodoc_class_signature = 'separated' # Moves the class signatures into separate init function docu.
 numpydoc_class_members_toctree = False
 automodapi_toctreedirnm = 'generated'
 automodsumm_inherited_members = True
@@ -42,6 +43,8 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
     'mimo': ('https://mimo.readthedocs.io/en/latest/', None),
+    'mujoco': ('https://mujoco.readthedocs.io/en/latest', None),
+    'gym': ('https://www.gymlibrary.ml', None),
 }
 intersphinx_disabled_domains = ['std']
 

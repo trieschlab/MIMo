@@ -1,3 +1,24 @@
+""" Training script for the reach scenario.
+
+This script allows simple training and testing of RL algorithms in the Reach environment with a command line interface.
+A selection of RL algorithms from the Stable Baselines3 library can be selected.
+Interactive rendering is disabled during training to speed up computation, but enabled during testing, so the behaviour
+of the model can be observed directly.
+
+Trained models are saved automatically into the `models` directory and prefixed with `reach`, i.e. if you name your
+model `my_model`, it will be saved as `models/reach_my_model`.
+
+To train a given algorithm for some number of timesteps::
+
+    python reach.py --train_for=200000 --test_for=1000 --algorithm=PPO --save_model=<model_suffix>
+
+To review a trained model::
+
+    python reach.py --test_for=1000 --load_model=<your_model_suffix>
+
+The available algorithms are `PPO`, `SAC`, `TD3`, `DDPG` and `A2C`.
+"""
+
 import gym
 import time
 import mimoEnv
@@ -5,6 +26,15 @@ import argparse
 
 
 def test(env, test_for=1000, model=None):
+    """ Testing function to view the behaviour of a model.
+
+    Args:
+        env (gym.Env): The environment on which the model should be tested. This does not have to be the same training
+            environment, but action and observation spaces must match.
+        test_for (int): The number of timesteps the testing runs in total. This will be broken into multiple episodes
+            if necessary.
+        model:  The stable baselines model object. If ``None`` we take random actions instead.
+    """
     env.seed(42)
     obs = env.reset()
     for idx in range(test_for):
@@ -21,6 +51,21 @@ def test(env, test_for=1000, model=None):
 
 
 def main():
+    """ CLI for this scenario.
+
+    Command line interface that can train and load models for the reach scenario. Possible parameters are:
+
+    - ``--train_for``: The number of time steps to train. No training takes place if this is 0. Default 0.
+    - ``--test_for``: The number of time steps to test. Testing renders the environment to an interactive window, so
+      the trained behaviour can be observed. Default 1000.
+    - ``--save_every``: The number of time steps between model saves. This can be larger than the total training time,
+      in which case we save once when training completes. Default 100000.
+    - ``--algorithm``: The algorithm to train. This argument must be provided if you train. Must be one of
+      ``PPO, SAC, TD3, DDPG, A2C, HER``.
+    - ``--load_model``: The model to load. Note that this only takes suffixes, i.e. an input of `my_model` tries to
+      load `models/reach_my_model`.
+    - ``--save_model``: The name under which we save. Like above this is a suffix.
+    """
 
     env = gym.make('MIMoReach-v0')
     _ = env.reset()
