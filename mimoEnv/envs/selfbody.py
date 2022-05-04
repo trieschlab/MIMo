@@ -262,4 +262,4 @@ class MIMoSelfBodyEnv(MIMoEnv):
         Returns:
             numpy.ndarray: An empty array.
         """
-        return np.zeros((0,))
+        return np.zeros(self.goal.shape)
