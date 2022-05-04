@@ -6,7 +6,6 @@ API
 
    mimoclass
    sample_environments
-   mimoActuation
    mimoProprioception
    mimoTouch
    mimoVestibular
