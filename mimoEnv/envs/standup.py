@@ -104,10 +104,16 @@ class MIMoStandupEnv(MIMoEnv):
 
         self.sim.set_state(self.initial_state)
         default_state = self.sim.get_state()
-        qpos = self.sim.data.qpos
+        qpos = np.array([-0.103287, 0.00444494, 0.0672742, 0.965518, -0.00942109, -0.207444, 0.157016,
+            -0.0134586, -0.259285, 0.407198, -0.0565839, -0.248653, 0.38224, -0.000150182, -8.92769e-05,
+            0.000142948, 1.71655e-08, -1.541e-08, -6.07517e-09, -1.66566e-08, -1.48753e-08, -3.9641e-09,
+            1.59608, 2.57899, 0.259329, -0.188292, -0.429857, -0.99162, -0.0568468, -1.4206, 0.778157,
+            2.9349, 1.16941, -0.547872, -1.54373, -0.98379, 0.225526, -1.27117, -2.26831, -0.295142,
+            -0.313409, -2.53125, -0.109924, -0.0352949, 0.106372, 0.0205777, -2.118, -0.233242, 0.369615,
+            -2.34683, -0.279261, -0.477783, 0.111583, 0.0182025])
 
         # set initial positions stochastically
-        qpos[7:] = qpos[7:] + self.np_random.uniform(low=-0.1, high=0.1, size=len(qpos[6:]))
+        qpos[6:] = qpos[6:] + self.np_random.uniform(low=-0.01, high=0.01, size=len(qpos[6:]))
 
         # set initial velocities to zero
         qvel = np.zeros(self.sim.data.qvel.shape)
