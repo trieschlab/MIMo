@@ -29,6 +29,39 @@ STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
 :meta hide-value:
 """
 
+SITTING_POSITION = {
+    "mimo_location": np.array([-0.103287, 0.00444494, 0.0672742, 0.965518, -0.00942109, -0.207444, 0.157016]),
+    "robot:hip_lean1": np.array([-0.0134586]), "robot:hip_rot1": np.array([-0.259285]),
+    "robot:hip_bend1": np.array([0.407198]), "robot:hip_lean2": np.array([-0.0565839]), "robot:hip_rot2": np.array([-0.248653]),
+    "robot:hip_bend2": np.array([0.38224]),
+    "robot:head_swivel": np.array([0]), "robot:head_tilt": np.array([0]), "robot:head_tilt_side": np.array([0]),
+    "robot:left_eye_horizontal": np.array([0]), "robot:left_eye_vertical": np.array([0]),
+    "robot:left_eye_torsional": np.array([0]), "robot:right_eye_horizontal": np.array([0]),
+    "robot:right_eye_vertical": np.array([0]), "robot:right_eye_torsional": np.array([0]),
+    "robot:right_shoulder_horizontal": np.array([1.59608]), "robot:right_shoulder_ad_ab": np.array([2.57899]),
+    "robot:right_shoulder_rotation": np.array([0.259329]), "robot:right_elbow": np.array([-0.188292]),
+    "robot:right_hand1": np.array([-0.429857]), "robot:right_hand2": np.array([-0.99162]),
+    "robot:right_hand3": np.array([-0.0568468]), "robot:right_fingers": np.array([-1.4206]),
+    "robot:left_shoulder_horizontal": np.array([0.778157]), "robot:left_shoulder_ad_ab": np.array([2.9349]),
+    "robot:left_shoulder_rotation": np.array([1.16941]), "robot:left_elbow": np.array([-0.547872]),
+    "robot:left_hand1": np.array([-1.54373]), "robot:left_hand2": np.array([-0.98379]), "robot:left_hand3": np.array([0.225526]),
+    "robot:left_fingers": np.array([-1.27117]),
+    "robot:right_hip1": np.array([-2.26831]), "robot:right_hip2": np.array([-0.295142]),
+    "robot:right_hip3": np.array([-0.313409]), "robot:right_knee": np.array([-2.53125]),
+    "robot:right_foot1": np.array([-0.109924]), "robot:right_foot2": np.array([-0.0352949]),
+    "robot:right_foot3": np.array([0.106372]), "robot:right_toes": np.array([0.0205777]),
+    "robot:left_hip1": np.array([-2.118]), "robot:left_hip2": np.array([-0.233242]),
+    "robot:left_hip3": np.array([0.369615]), "robot:left_knee": np.array([-2.34683]),
+    "robot:left_foot1": np.array([-0.279261]), "robot:left_foot2": np.array([-0.477783]),
+    "robot:left_foot3": np.array([0.111583]), "robot:left_toes": np.array([0.0182025]),
+}
+""" Initial position of MIMo. Specifies initial values for all joints.
+We grabbed these values by posing MIMo using the MuJoCo simulate executable and the positional actuator file.
+We need these not just for the initial position but also resetting the position each step.
+
+:meta hide-value:
+"""
+
 
 class MIMoStandupEnv(MIMoEnv):
     """ MIMo stands up using crib railings as an aid.
@@ -44,7 +77,7 @@ class MIMoStandupEnv(MIMoEnv):
     """
     def __init__(self,
                  model_path=STANDUP_XML,
-                 initial_qpos={},
+                 initial_qpos=SITTING_POSITION,
                  n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=None,
@@ -61,6 +94,8 @@ class MIMoStandupEnv(MIMoEnv):
                          vestibular_params=vestibular_params,
                          goals_in_observation=False,
                          done_active=False)
+
+        self.init_crouch_position = self.sim.data.qpos.copy()
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
@@ -104,16 +139,10 @@ class MIMoStandupEnv(MIMoEnv):
 
         self.sim.set_state(self.initial_state)
         default_state = self.sim.get_state()
-        qpos = np.array([-0.103287, 0.00444494, 0.0672742, 0.965518, -0.00942109, -0.207444, 0.157016,
-            -0.0134586, -0.259285, 0.407198, -0.0565839, -0.248653, 0.38224, -0.000150182, -8.92769e-05,
-            0.000142948, 1.71655e-08, -1.541e-08, -6.07517e-09, -1.66566e-08, -1.48753e-08, -3.9641e-09,
-            1.59608, 2.57899, 0.259329, -0.188292, -0.429857, -0.99162, -0.0568468, -1.4206, 0.778157,
-            2.9349, 1.16941, -0.547872, -1.54373, -0.98379, 0.225526, -1.27117, -2.26831, -0.295142,
-            -0.313409, -2.53125, -0.109924, -0.0352949, 0.106372, 0.0205777, -2.118, -0.233242, 0.369615,
-            -2.34683, -0.279261, -0.477783, 0.111583, 0.0182025])
+        qpos = self.init_crouch_position
 
         # set initial positions stochastically
-        qpos[6:] = qpos[6:] + self.np_random.uniform(low=-0.01, high=0.01, size=len(qpos[6:]))
+        qpos[7:] = qpos[7:] + self.np_random.uniform(low=-0.01, high=0.01, size=len(qpos[7:]))
 
         # set initial velocities to zero
         qvel = np.zeros(self.sim.data.qvel.shape)
