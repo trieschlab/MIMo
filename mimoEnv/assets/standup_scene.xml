@@ -30,16 +30,13 @@
 
     <asset>
         <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
-
         <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
-
         <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
-
         <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
-
         <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
-		
-		<material name="matmocap" texture="texgeom" texuniform="true" rgba="0.5 0 0.5 0.5"/>
+	
+	    <texture name="crib" type="cube" builtin="flat" width="127" height="1278" rgb1="1 0.9 0.8" rgb2="1 1 1" markrgb="1 1 1"/>
+        <material name="crib" texture="crib" texuniform="true"/>
     </asset>
 	
 	<!-- Import everything except the kinematic tree -->
@@ -59,13 +56,27 @@
         <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
 
         <light directional="false" diffuse=".4 .4 .4" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="false"/>
-        <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
+        <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".5 .5 .5" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
+        <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".5 .5 .5" specular="0.3 0.3 0.3" pos="5.0 0 0.5" dir="-1 0 0"/>
+        <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".3 .3 .3" specular="0.3 0.3 0.3" pos="0 5 0.5" dir="0 -1 0"/>
+        <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".3 .3 .3" specular="0.3 0.3 0.3" pos="0 -5 0.5" dir="0 1 0"/>
 		
 		<!-- The location and orientation of the base model can be set using this body -->
 		<body name="mimo_location" pos="0 0 .33" euler="0 0 0">
-			<freejoint/>
+			<freejoint name="mimo_location"/>
 			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>
+		
+	<body name="crib" pos="0.078 0 0.42">
+            <geom type="cylinder" material="crib" size="0.02 0.4" pos="0 0 0" euler="90 0 0"/>
+            <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0 -0.2" euler="0 0 0"/>
+            <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 -0.2 -0.2" euler="0 0 0"/>
+            <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0.2 -0.2" euler="0 0 0"/>
+            <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 -0.4 -0.2" euler="0 0 0"/>
+            <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0.4 -0.2" euler="0 0 0"/>
+            <geom type="sphere"   material="crib" size="0.022" pos="0 -0.4 0" euler="0 0 0"/>
+            <geom type="sphere"   material="crib" size="0.022" pos="0 0.4 0" euler="0 0 0"/>
+        </body>
 		
     </worldbody>
 </mujoco>
