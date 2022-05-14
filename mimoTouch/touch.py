@@ -186,8 +186,9 @@ class DiscreteTouch(Touch):
         for geom_id in env_utils.get_geoms_for_body(self.m_model, body_id):
             g_body_id = self.m_model.geom_bodyid[geom_id]
             contype = self.m_model.geom_contype[geom_id]
+            conaffinity = self.m_model.geom_conaffinity[geom_id]
             # Add a geom if it belongs to body and has collisions enabled (at least potentially)
-            if g_body_id == body_id and contype > 0:
+            if g_body_id == body_id and (contype > 0 or conaffinity > 0):
                 n_sensors += self.add_geom(geom_id=geom_id, scale=scale)
         return n_sensors
 
@@ -209,7 +210,7 @@ class DiscreteTouch(Touch):
         """
         geom_id = env_utils.get_geom_id(self.m_model, geom_id=geom_id, geom_name=geom_name)
 
-        if self.m_model.geom_contype[geom_id] == 0:
+        if self.m_model.geom_contype[geom_id] == 0 and self.m_model.geom_conaffinity[geom_id] == 0:
             raise RuntimeWarning("Added sensors to geom with collisions disabled!")
         return self._add_sensorpoints(geom_id, scale)
 
@@ -865,6 +866,10 @@ class TrimeshTouch(Touch):
         body_id = env_utils.get_body_id(self.m_model, body_id=body_id, body_name=body_name)
         meshes = []
         for geom_id in env_utils.get_geoms_for_body(self.m_model, body_id):
+            contype = self.m_model.geom_contype[geom_id]
+            conaffinity = self.m_model.geom_conaffinity[geom_id]
+            if contype == 0 and conaffinity == 0:
+                continue
             mesh = self._get_mesh(geom_id, scale)
 
             # Move meshes from geom into body frame
