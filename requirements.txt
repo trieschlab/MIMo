@@ -1,4 +1,4 @@
-numpy
+numpy<=1.22.0
 gym<=0.20
 mujoco_py
 matplotlib
