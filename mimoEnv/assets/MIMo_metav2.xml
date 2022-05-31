@@ -257,7 +257,7 @@
 		<motor name="act:right_thumb_middle" gear=".126" joint="robot:right_th_middle" forcerange="-.345 1"/>
 		<motor name="act:right_thumb_distal" gear=".0945" joint="robot:right_th_distal" forcerange="-.345 1"/>
 		
-		<motor name="act:left_shoulder_horizontal" 	joint="robot:left_shoulder_horizontal" 	gear="1.8" 	forcerange="-1 1"/>
+		<!--<motor name="act:left_shoulder_horizontal" 	joint="robot:left_shoulder_horizontal" 	gear="1.8" 	forcerange="-1 1"/>
 		<motor name="act:left_shoulder_abduction" 	joint="robot:left_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
 		<motor name="act:left_shoulder_internal" 	joint="robot:left_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
 		<motor name="act:left_elbow" 				joint="robot:left_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
@@ -291,7 +291,7 @@
 		<motor name="act:left_thumb_rotation" gear=".1" joint="robot:left_th_rot" forcerange="-1 1"/>
 		<motor name="act:left_thumb_pivot" gear=".1" joint="robot:left_th_pivot" forcerange="-1 1"/>
 		<motor name="act:left_thumb_middle" gear=".126" joint="robot:left_th_middle" forcerange="-.345 1"/>
-		<motor name="act:left_thumb_distal" gear=".0945" joint="robot:left_th_distal" forcerange="-.345 1"/>
+		<motor name="act:left_thumb_distal" gear=".0945" joint="robot:left_th_distal" forcerange="-.345 1"/>-->
 		
 		<motor name="act:right_hip_flex" 			joint="robot:right_hip1" 		gear="8" 	forcerange="-1 1"/>
 		<motor name="act:right_hip_abduction" 		joint="robot:right_hip2" 		gear="6.24" forcerange="-1 1"/>
@@ -300,6 +300,8 @@
 		<motor name="act:right_foot_flexion" 		joint="robot:right_foot1" 		gear="3.78"	forcerange="-1 .5"/>
 		<motor name="act:right_foot_inversion" 		joint="robot:right_foot2" 		gear="1.16"	forcerange="-.91 1"/>
 		<motor name="act:right_foot_rotation" 		joint="robot:right_foot3"	 	gear="1.2"	forcerange="-1 1"/>
+		<motor name="act:right_toes1" 				joint="robot:right_toes1"	 	gear=".08"	forcerange="-1 .3"/>
+		<motor name="act:right_toes2" 				joint="robot:right_toes2"	 	gear=".08"	forcerange="-1 .3"/>
 
 		<motor name="act:left_hip_flex" 			joint="robot:left_hip1" 		gear="8" 	forcerange="-1 1"/>
 		<motor name="act:left_hip_abduction" 		joint="robot:left_hip2" 		gear="6.24" forcerange="-1 1"/>
@@ -308,6 +310,8 @@
 		<motor name="act:left_foot_flexion" 		joint="robot:left_foot1" 		gear="3.78"	forcerange="-1 .5"/>
 		<motor name="act:left_foot_inversion" 		joint="robot:left_foot2" 		gear="1.16"	forcerange="-.91 1"/>
 		<motor name="act:left_foot_rotation" 		joint="robot:left_foot3" 		gear="1.2"	forcerange="-1 1"/>
+		<motor name="act:left_toes1" 				joint="robot:left_toes1"	 	gear=".08"	forcerange="-1 .3"/>
+		<motor name="act:left_toes2" 				joint="robot:left_toes2"	 	gear=".08"	forcerange="-1 .3"/>
 
 	</actuator>
 	
