@@ -58,7 +58,7 @@
 		<body name="test_base" pos="0 0 0.01" >
 			<geom type="box" size=".01 .01 .01"/>
 			<body name="test_object2" pos="0 -.022 .25">
-				<joint name="test_z" type="slide" axis="0 0 1" stiffness="900" range="-1 1" damping="100" armature=".1"/>
+				<joint name="test_z" type="slide" axis="0 0 1" stiffness="150000" range="-1 1" damping="1000" armature=".1"/>
 				<joint type="slide" axis="0 1 0" stiffness="0" range="-1 1" damping="1" armature=".1"/>
 				<geom type="cylinder" pos="0 0 0" size=".002 .03" euler="0 90 0"/>
 				<site name="touch" type="cylinder" pos="0 0 0" size=".0022 .033" euler="0 90 0"/>
@@ -68,7 +68,7 @@
 		
 		<body name="right_palm" pos="0 0 0.1">
 		
-			 <joint name="base_axis" type="hinge" pos="0 0 0" axis="1 0 0" range="-90 90" damping=".2" armature=".01"/>
+			<joint name="base_axis" type="hinge" pos="0 0 0" axis="1 0 0" range="-.1 .1" damping=".2" armature=".01"/>
 		
 			<geom type="box" pos="0 0 0" size=".01712 .00584 .02532" condim="6"/>
 			<geom type="box" pos="-.023 0 -0.0124" size=".00588 .00584 .01292" condim="6"/>
@@ -163,7 +163,7 @@
 			</body>
 
 			<!-- Thumb -->
-			<body name="right_thbase" pos="0.0123 -0.00473 -0.01602" euler="0 80 30">
+			<body name="right_thbase" pos="0.0123 -0.00473 -0.01602" euler="0 90 0">
 				<joint name="robot:right_th_swivel" type="hinge" pos="0 0 0" axis="1 -1 0" range="-10 110" springref="40" stiffness="0.003" damping="0.0001" armature="0.00001"/>
 				<joint name="robot:right_th_adduction" type="hinge" pos="0 0 0" axis="1 2 0" range="-60 0" springref="-35" stiffness="0.004" damping="0.0001" armature="0.00001"/>
 				<joint name="robot:right_th_rot" type="hinge" pos="0 0 0" axis="0 0 1" range="-20 25" springref="0" stiffness="0.001" damping="0.0001" armature="0.00001"/>
@@ -205,7 +205,7 @@
 			<joint joint="robot:right_lf_middle" coef=".9"/>
 			<joint joint="robot:right_lf_distal" coef="-1"/>
 		</fixed>
-		<fixed name="right_th_couple" limited="true" range="-1.5 1.5" stiffness=".04" springlength="0">
+		<fixed name="right_th_couple" limited="true" range="-1.5 1.5" stiffness=".0378" springlength="0">
 			<joint joint="robot:right_th_middle" coef=".9"/>
 			<joint joint="robot:right_th_distal" coef="-1"/>
 		</fixed>
@@ -236,9 +236,9 @@
 		<motor name="act:right_thumb_side" gear=".03" joint="robot:right_th_swivel" forcerange="-1 1"/>
 		<motor name="act:right_thumb_add" gear=".04" joint="robot:right_th_adduction" forcerange="-1 1"/>
 		<motor name="act:right_thumb_rotation" gear=".01" joint="robot:right_th_rot" forcerange="-1 1"/>
-		<motor name="act:right_thumb_pivot" gear=".01" joint="robot:right_th_pivot" forcerange="-1 1"/>
-		<motor name="act:right_thumb_middle" gear=".03" joint="robot:right_th_middle" forcerange="-1 1"/>
-		<motor name="act:right_thumb_distal" gear=".03" joint="robot:right_th_distal" forcerange="-1 1"/>
+		<motor name="act:right_thumb_pivot" gear=".1" joint="robot:right_th_pivot" forcerange="-1 1"/>
+		<motor name="act:right_thumb_middle" gear=".126" joint="robot:right_th_middle" forcerange="-1 1"/>
+		<motor name="act:right_thumb_distal" gear=".0945" joint="robot:right_th_distal" forcerange="-1 1"/>
 		
 		<!-- <position name="base" gear="57.296" kp=".2" joint="base_axis" ctrlrange="-90 90" forcelimited="true" forcerange="-.02 .02"/> -->
 		<!--<motor name="testbar" gear="10" joint="test_z"/>-->
@@ -266,5 +266,9 @@
 		<torque name="proprio:right_th_hub" site="torque_right_th_hub"/>
 		<torque name="proprio:right_th_distal" site="torque_right_th_distal"/>
 	</sensor>
+
+	<!--<equality>
+		<connect body1="right_thhub" body2="test_object2" anchor="0 0 .0085"/>
+	</equality>-->
 
 </mujoco>
