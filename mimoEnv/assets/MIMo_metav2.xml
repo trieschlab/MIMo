@@ -111,7 +111,7 @@
 			<joint joint="robot:left_lf_middle" coef=".9"/>
 			<joint joint="robot:left_lf_distal" coef="-1"/>
 		</fixed>
-		<fixed name="left_th_couple" limited="true" range="-1.5 1.5" stiffness=".04" springlength="0">
+		<fixed name="left_th_couple" limited="true" range="-1.5 1.5" stiffness=".378" springlength="0">
 			<joint joint="robot:left_th_middle" coef=".9"/>
 			<joint joint="robot:left_th_distal" coef="-1"/>
 		</fixed>
@@ -132,7 +132,7 @@
 			<joint joint="robot:right_lf_middle" coef=".9"/>
 			<joint joint="robot:right_lf_distal" coef="-1"/>
 		</fixed>
-		<fixed name="right_th_couple" limited="true" range="-1.5 1.5" stiffness=".04" springlength="0">
+		<fixed name="right_th_couple" limited="true" range="-1.5 1.5" stiffness=".378" springlength="0">
 			<joint joint="robot:right_th_middle" coef=".9"/>
 			<joint joint="robot:right_th_distal" coef="-1"/>
 		</fixed>
@@ -194,12 +194,14 @@
 		<torque name="proprio:right_hip" site="torque_right_hip"/>
 		<torque name="proprio:right_knee" site="torque_right_knee"/>
 		<torque name="proprio:right_ankle" site="torque_right_ankle"/>
-		<torque name="proprio:right_toes" site="torque_right_toes"/>
+		<torque name="proprio:right_toes1" site="torque_right_toes1"/>
+		<torque name="proprio:right_toes2" site="torque_right_toes2"/>
 		
 		<torque name="proprio:left_hip" site="torque_left_hip"/>
 		<torque name="proprio:left_knee" site="torque_left_knee"/>
 		<torque name="proprio:left_ankle" site="torque_left_ankle"/>
-		<torque name="proprio:left_toes" site="torque_left_toes"/>
+		<torque name="proprio:left_toes1" site="torque_left_toes1"/>
+		<torque name="proprio:left_toes2" site="torque_left_toes2"/>
 	</sensor>
 
     <actuator>
@@ -248,12 +250,12 @@
 		<motor name="act:right_lf_middle" gear=".00653" joint="robot:right_lf_middle" forcerange="-.345 1"/>
 		<motor name="act:right_lf_digits" gear=".00490" joint="robot:right_lf_distal" forcerange="-.345 1"/>
 
-		<motor name="act:right_thumb_side" gear=".03" joint="robot:right_th_swivel" forcerange="-1 1"/>
-		<motor name="act:right_thumb_add" gear=".04" joint="robot:right_th_adduction" forcerange="-1 1"/>
-		<motor name="act:right_thumb_rotation" gear=".01" joint="robot:right_th_rot" forcerange="-1 1"/>
-		<motor name="act:right_thumb_pivot" gear=".01" joint="robot:right_th_pivot" forcerange="-1 1"/>
-		<motor name="act:right_thumb_middle" gear=".03" joint="robot:right_th_middle" forcerange="-1 1"/>
-		<motor name="act:right_thumb_distal" gear=".03" joint="robot:right_th_distal" forcerange="-1 1"/>
+		<motor name="act:right_thumb_side" gear=".373" joint="robot:right_th_swivel" forcerange="-.3 1"/>
+		<motor name="act:right_thumb_add" gear=".134" joint="robot:right_th_adduction" forcerange="-1 1"/>
+		<motor name="act:right_thumb_rotation" gear=".1" joint="robot:right_th_rot" forcerange="-1 1"/>
+		<motor name="act:right_thumb_pivot" gear=".1" joint="robot:right_th_pivot" forcerange="-1 1"/>
+		<motor name="act:right_thumb_middle" gear=".126" joint="robot:right_th_middle" forcerange="-.345 1"/>
+		<motor name="act:right_thumb_distal" gear=".0945" joint="robot:right_th_distal" forcerange="-.345 1"/>
 		
 		<motor name="act:left_shoulder_horizontal" 	joint="robot:left_shoulder_horizontal" 	gear="1.8" 	forcerange="-1 1"/>
 		<motor name="act:left_shoulder_abduction" 	joint="robot:left_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
@@ -284,12 +286,12 @@
 		<motor name="act:left_lf_middle" gear=".00653" joint="robot:left_lf_middle" forcerange="-.345 1"/>
 		<motor name="act:left_lf_digits" gear=".00490" joint="robot:left_lf_distal" forcerange="-.345 1"/>
 
-		<motor name="act:left_thumb_side" gear=".03" joint="robot:left_th_swivel" forcerange="-1 1"/>
-		<motor name="act:left_thumb_add" gear=".04" joint="robot:left_th_adduction" forcerange="-1 1"/>
-		<motor name="act:left_thumb_rotation" gear=".01" joint="robot:left_th_rot" forcerange="-1 1"/>
-		<motor name="act:left_thumb_pivot" gear=".01" joint="robot:left_th_pivot" forcerange="-1 1"/>
-		<motor name="act:left_thumb_middle" gear=".03" joint="robot:left_th_middle" forcerange="-1 1"/>
-		<motor name="act:left_thumb_distal" gear=".03" joint="robot:left_th_distal" forcerange="-1 1"/>
+		<motor name="act:left_thumb_side" gear=".373" joint="robot:left_th_swivel" forcerange="-.3 1"/>
+		<motor name="act:left_thumb_add" gear=".134" joint="robot:left_th_adduction" forcerange="-1 1"/>
+		<motor name="act:left_thumb_rotation" gear=".1" joint="robot:left_th_rot" forcerange="-1 1"/>
+		<motor name="act:left_thumb_pivot" gear=".1" joint="robot:left_th_pivot" forcerange="-1 1"/>
+		<motor name="act:left_thumb_middle" gear=".126" joint="robot:left_th_middle" forcerange="-.345 1"/>
+		<motor name="act:left_thumb_distal" gear=".0945" joint="robot:left_th_distal" forcerange="-.345 1"/>
 		
 		<motor name="act:right_hip_flex" 			joint="robot:right_hip1" 		gear="8" 	forcerange="-1 1"/>
 		<motor name="act:right_hip_abduction" 		joint="robot:right_hip2" 		gear="6.24" forcerange="-1 1"/>
