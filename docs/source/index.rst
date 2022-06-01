@@ -29,8 +29,13 @@ modalities including touch, vision, proprioception and a vestibular system.
 
 There are two physical models, which are identical except for the hands and feet. The base version uses
 mitten-like hands with only a single finger. The feet also only have one toe. The v2 version has fully modelled
-five-fingered hands based on the `Adroit hand <https://github.com/vikashplus/Adroit>`_ and feet with two toes. Currently there is only a demo environment
-for the v2 version: :class:`~mimoEnv.envs.dummy.MIMoV2DemoEnv`.
+five-fingered hands based on the `Adroit hand <https://github.com/vikashplus/Adroit>`_ and feet with two toes.
+Currently there is only a demo environment for the v2 version: :class:`~mimoEnv.envs.dummy.MIMoV2DemoEnv`.
 
-Gym environments provide the interfaces to interact with the environments.
+The sensory modules can be configured using parameter dictionaries. Defaults exist for all of them, but note that
+the parameters for the sensor modules are specific to the model used. The touch parameters for example expect that
+relevant MuJoCo bodies exist in the scene and will cause an error otherwise. Since the base and the v2 version of
+MIMo have different bodies they also require different touch parameters.
+
+Gym environments provide the interfaces to interact with the environments. See the gym documentation for examples.
 Sample environments and simple demo scripts can be found in the :doc:`Samples section</api/sample_environments>`.
