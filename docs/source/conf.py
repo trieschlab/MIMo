@@ -26,6 +26,7 @@ autodoc_member_order = 'bysource'
 numpydoc_class_members_toctree = False
 automodapi_toctreedirnm = 'generated'
 automodsumm_inherited_members = True
+autodoc_preserve_defaults = True
 
 templates_path = ['_templates']
 
