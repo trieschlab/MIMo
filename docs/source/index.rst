@@ -29,7 +29,7 @@ modalities including touch, vision, proprioception and a vestibular system.
 
 There are two physical models, which are identical except for the hands and feet. The base version uses
 mitten-like hands with only a single finger. The feet also only have one toe. The v2 version has fully modelled
-five-fingered hands based on the Adroit hand and feet with two toes. Currently there is only a demo environment
+five-fingered hands based on the `Adroit hand <https://github.com/vikashplus/Adroit>`_ and feet with two toes. Currently there is only a demo environment
 for the v2 version: :class:`~mimoEnv.envs.dummy.MIMoV2DemoEnv`.
 
 Gym environments provide the interfaces to interact with the environments.
