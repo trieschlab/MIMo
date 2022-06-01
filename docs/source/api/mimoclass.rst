@@ -36,6 +36,9 @@ Default data fields
 .. autodata:: mimoEnv.envs.mimo_env.DEFAULT_TOUCH_PARAMS
    :no-value:
 
+.. autodata:: mimoEnv.envs.mimo_env.DEFAULT_TOUCH_PARAMS_V2
+   :no-value:
+
 .. autodata:: mimoEnv.envs.mimo_env.DEFAULT_VISION_PARAMS
    :no-value:
 
