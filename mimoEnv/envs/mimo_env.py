@@ -174,10 +174,11 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     This class meets the interface requirements for basic gym classes and adds some additional features. The
     observation space is of dictionary type.
+
     Sensory modules are configured by a parameter dictionary. Default configuration dictionaries are included in the
-    same module as this class. Passing these to the constructor will enable the relevant sensory module.
-    :data:`DEFAULT_PROPRIOCEPTION_PARAMS`, :data:`DEFAULT_TOUCH_PARAMS` :data:`DEFAULT_VISION_PARAMS`,
-    :data:`DEFAULT_VESTIBULAR_PARAMS`.
+    same module as this class, :data:`DEFAULT_PROPRIOCEPTION_PARAMS`, :data:`DEFAULT_TOUCH_PARAMS`
+    :data:`DEFAULT_VISION_PARAMS`, :data:`DEFAULT_VESTIBULAR_PARAMS`. Passing these to the constructor will enable the
+    relevant sensory module.
     Not passing a dictionary disables the relevant module.
     By default all sensory modalities are disabled and the only sensor outputs are the relative joint positions.
 
@@ -189,8 +190,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     - :meth:`._sample_goal`, which should determine the desired end state.
     - :meth:`._get_achieved_goal`, which should return the achieved end state.
 
-    Depending on the requirements of your experiment any of these functions could be replaced with dummy functions
-    returned fixed values.
+    Depending on the requirements of your experiment any of these functions may be implemented as dummy functions
+    returning fixed values.
     Additional functions that may be overridden optionally are:
 
     - :meth:`._is_done`, which determines the `done` return value after each step.
