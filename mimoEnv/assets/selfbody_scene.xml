@@ -62,7 +62,7 @@
 		<!-- The location and orientation of the base model can be set using this body -->
 		<body name="mimo_location" pos="0 0 .35" euler="0 0 0">
 			<freejoint name="mimo_location"/>
-			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
+			<include file="mimo/MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>
 		
     </worldbody>

@@ -74,6 +74,72 @@ DEFAULT_TOUCH_PARAMS = {
 """
 
 
+DEFAULT_TOUCH_PARAMS_V2 = {
+    "scales": {
+        "left_toes1": 0.010,
+        "right_toes1": 0.010,
+        "left_toes2": 0.010,
+        "right_toes2": 0.010,
+        "left_foot": 0.015,
+        "right_foot": 0.015,
+        "left_lower_leg": 0.038,
+        "right_lower_leg": 0.038,
+        "left_upper_leg": 0.027,
+        "right_upper_leg": 0.027,
+        "hip": 0.025,
+        "lower_body": 0.025,
+        "upper_body": 0.030,
+        "head": 0.013,
+        "left_eye": 1.0,
+        "right_eye": 1.0,
+        "left_upper_arm": 0.024,
+        "right_upper_arm": 0.024,
+        "left_lower_arm": 0.024,
+        "right_lower_arm": 0.024,
+        "left_hand": 0.007,
+        "right_hand": 0.007,
+        "left_ffdistal": 0.002,
+        "left_mfdistal": 0.002,
+        "left_rfdistal": 0.002,
+        "left_lfdistal": 0.002,
+        "left_thdistal": 0.002,
+        "left_ffmiddle": 0.004,
+        "left_mfmiddle": 0.004,
+        "left_rfmiddle": 0.004,
+        "left_lfmiddle": 0.004,
+        "left_thhub": 0.004,
+        "left_ffknuckle": 0.004,
+        "left_mfknuckle": 0.004,
+        "left_rfknuckle": 0.004,
+        "left_lfknuckle": 0.004,
+        "left_thbase": 0.004,
+        "left_lfmetacarpal": 0.007,
+        "right_ffdistal": 0.002,
+        "right_mfdistal": 0.002,
+        "right_rfdistal": 0.002,
+        "right_lfdistal": 0.002,
+        "right_thdistal": 0.002,
+        "right_ffmiddle": 0.004,
+        "right_mfmiddle": 0.004,
+        "right_rfmiddle": 0.004,
+        "right_lfmiddle": 0.004,
+        "right_thhub": 0.004,
+        "right_ffknuckle": 0.004,
+        "right_mfknuckle": 0.004,
+        "right_rfknuckle": 0.004,
+        "right_lfknuckle": 0.004,
+        "right_thbase": 0.004,
+        "right_lfmetacarpal": 0.007,
+    },
+    "touch_function": "force_vector",
+    "response_function": "spread_linear",
+}
+""" Default touch parameters for the v2 version of MIMo with five fingers and two toes.
+
+:meta hide-value:
+"""
+
+
 DEFAULT_VISION_PARAMS = {
     "eye_left": {"width": 256, "height": 256},
     "eye_right": {"width": 256, "height": 256},

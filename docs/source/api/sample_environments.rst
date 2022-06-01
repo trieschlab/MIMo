@@ -75,8 +75,8 @@ scene XMLs. For benchmarking the scene consisted of MIMo with all sensory modali
 with varying configurations and a couple of objects lying on the ground. In the benchmarking 
 script we take random actions after each step.
 
-Environment
-+++++++++++
+Environments
+++++++++++++
 
 .. automodule:: mimoEnv.envs.dummy
    :members:
