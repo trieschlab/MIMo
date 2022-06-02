@@ -66,7 +66,7 @@
 	</keyframe>
 
 	<!-- Import everything except the kinematic tree -->
-	<include file="MIMo_meta.xml"></include>
+	<include file="mimo/MIMo_meta.xml"></include>
 
     <worldbody>
         <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
@@ -166,7 +166,7 @@
 		<!-- The location and orientation of the base model can be set using this body -->
 		<body name="mimo_location" pos="0 0 .5" euler="0 0 0">
 			<freejoint/>
-			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
+			<include file="mimo/MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>
 		
     </worldbody>
