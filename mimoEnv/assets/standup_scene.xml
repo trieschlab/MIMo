@@ -64,10 +64,10 @@
 		<!-- The location and orientation of the base model can be set using this body -->
 		<body name="mimo_location" pos="0 0 .33" euler="0 0 0">
 			<freejoint name="mimo_location"/>
-			<include file="MIMo_model.xml"></include> <!-- Import the actual model-->
+			<include file="mimo/MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>
 		
-	<body name="crib" pos="0.078 0 0.42">
+	    <body name="crib" pos="0.078 0 0.42">
             <geom type="cylinder" material="crib" size="0.02 0.4" pos="0 0 0" euler="90 0 0"/>
             <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0 -0.2" euler="0 0 0"/>
             <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 -0.2 -0.2" euler="0 0 0"/>

@@ -24,11 +24,12 @@ The scene XML
 
 MuJoCo allows for a modular structure by importing other XMLs. We make use of this by having
 two component XMLs containing the required elements for MIMo, which are imported by the scene
-XMLs. The scene XMLs are loaded by the code.
+XMLs. The scene XMLs are then loaded by the code.
 
 The component XMLs are "MIMo_model.xml", which contains the kinematic tree, and
 "MIMo_meta.xml", which contains the definitions of the actuators, MuJoCo sensors, textures
-and so forth. These have to be split due to the XML importing process.
+and so forth. These have to be split due to the XML importing process. Both are located in
+``mimoEnv/assets/mimo/``.
 
 .. highlight:: xml
 
@@ -53,6 +54,9 @@ We start with a stripped down sample XML::
             <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
             <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
             <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
+
+            <texture name="crib" type="cube" builtin="flat" width="127" height="1278" rgb1="1 0.9 0.8" rgb2="1 1 1" markrgb="1 1 1"/>
+            <material name="crib" texture="crib" texuniform="true"/>
         </asset>
 
         <worldbody>
@@ -70,7 +74,7 @@ To include MIMo we import the two component XMLs. "MIMo_model.xml" is included i
 ``worldbody`` element and "MIMo_meta.xml" just above::
 
     <!-- Import everything except the kinematic tree -->
-    <include file="MIMo_meta.xml"></include>
+    <include file="mimo/MIMo_meta.xml"></include>
 
     <worldbody>
         <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
@@ -80,7 +84,7 @@ To include MIMo we import the two component XMLs. "MIMo_model.xml" is included i
         <!-- The location and orientation of the base model can be set using this body -->
         <body name="mimo_location" pos="0 0 .33" euler="0 0 0">
             <freejoint/>
-            <include file="MIMo_model.xml"></include> <!-- Import the actual model-->
+            <include file="mimo/MIMo_model.xml"></include> <!-- Import the actual model-->
         </body>
     </worldbody>
 
@@ -100,12 +104,21 @@ Fixing MIMos hands and feet in positions can be done by adding equality contrain
 
 Finally we add the crib to the scene::
 
-    Crib code?
+    <body name="crib" pos="0.078 0 0.42">
+        <geom type="cylinder" material="crib" size="0.02 0.4" pos="0 0 0" euler="90 0 0"/>
+        <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0 -0.2" euler="0 0 0"/>
+        <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 -0.2 -0.2" euler="0 0 0"/>
+        <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0.2 -0.2" euler="0 0 0"/>
+        <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 -0.4 -0.2" euler="0 0 0"/>
+        <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0.4 -0.2" euler="0 0 0"/>
+        <geom type="sphere"   material="crib" size="0.022" pos="0 -0.4 0" euler="0 0 0"/>
+        <geom type="sphere"   material="crib" size="0.022" pos="0 0.4 0" euler="0 0 0"/>
+    </body>
 
 There is still some trimming we can do. Since we do not use vision in this scenario we fixed
 MIMos eyes and head above. However the actuators are still included in the scene and take up
 resources. To disable these we replace "MIMo_meta.xml" in our scene with a copy in which we
-removed those actuators.
+removed those actuators, called "standup_meta.xml".
 
 This leaves us with our finished scene XML::
 
@@ -128,6 +141,9 @@ This leaves us with our finished scene XML::
             <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
             <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
             <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
+
+            <texture name="crib" type="cube" builtin="flat" width="127" height="1278" rgb1="1 0.9 0.8" rgb2="1 1 1" markrgb="1 1 1"/>
+            <material name="crib" texture="crib" texuniform="true"/>
         </asset>
 
         <!-- Import everything except the kinematic tree -->
@@ -151,7 +167,18 @@ This leaves us with our finished scene XML::
             <!-- The location and orientation of the base model can be set using this body -->
             <body name="mimo_location" pos="0 0 .33" euler="0 0 0">
                 <freejoint/>
-                <include file="MIMo_model.xml"></include> <!-- Import the actual model-->
+                <include file="mimo/MIMo_model.xml"></include> <!-- Import the actual model-->
+            </body>
+
+            <body name="crib" pos="0.078 0 0.42">
+                <geom type="cylinder" material="crib" size="0.02 0.4" pos="0 0 0" euler="90 0 0"/>
+                <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0 -0.2" euler="0 0 0"/>
+                <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 -0.2 -0.2" euler="0 0 0"/>
+                <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0.2 -0.2" euler="0 0 0"/>
+                <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 -0.4 -0.2" euler="0 0 0"/>
+                <geom type="cylinder" material="crib" size="0.01 0.2" pos="0 0.4 -0.2" euler="0 0 0"/>
+                <geom type="sphere"   material="crib" size="0.022" pos="0 -0.4 0" euler="0 0 0"/>
+                <geom type="sphere"   material="crib" size="0.022" pos="0 0.4 0" euler="0 0 0"/>
             </body>
         </worldbody>
     </mujoco>

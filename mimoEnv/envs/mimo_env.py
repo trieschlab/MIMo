@@ -74,6 +74,72 @@ DEFAULT_TOUCH_PARAMS = {
 """
 
 
+DEFAULT_TOUCH_PARAMS_V2 = {
+    "scales": {
+        "left_toes1": 0.010,
+        "right_toes1": 0.010,
+        "left_toes2": 0.010,
+        "right_toes2": 0.010,
+        "left_foot": 0.015,
+        "right_foot": 0.015,
+        "left_lower_leg": 0.038,
+        "right_lower_leg": 0.038,
+        "left_upper_leg": 0.027,
+        "right_upper_leg": 0.027,
+        "hip": 0.025,
+        "lower_body": 0.025,
+        "upper_body": 0.030,
+        "head": 0.013,
+        "left_eye": 1.0,
+        "right_eye": 1.0,
+        "left_upper_arm": 0.024,
+        "right_upper_arm": 0.024,
+        "left_lower_arm": 0.024,
+        "right_lower_arm": 0.024,
+        "left_hand": 0.007,
+        "right_hand": 0.007,
+        "left_ffdistal": 0.002,
+        "left_mfdistal": 0.002,
+        "left_rfdistal": 0.002,
+        "left_lfdistal": 0.002,
+        "left_thdistal": 0.002,
+        "left_ffmiddle": 0.004,
+        "left_mfmiddle": 0.004,
+        "left_rfmiddle": 0.004,
+        "left_lfmiddle": 0.004,
+        "left_thhub": 0.004,
+        "left_ffknuckle": 0.004,
+        "left_mfknuckle": 0.004,
+        "left_rfknuckle": 0.004,
+        "left_lfknuckle": 0.004,
+        "left_thbase": 0.004,
+        "left_lfmetacarpal": 0.007,
+        "right_ffdistal": 0.002,
+        "right_mfdistal": 0.002,
+        "right_rfdistal": 0.002,
+        "right_lfdistal": 0.002,
+        "right_thdistal": 0.002,
+        "right_ffmiddle": 0.004,
+        "right_mfmiddle": 0.004,
+        "right_rfmiddle": 0.004,
+        "right_lfmiddle": 0.004,
+        "right_thhub": 0.004,
+        "right_ffknuckle": 0.004,
+        "right_mfknuckle": 0.004,
+        "right_rfknuckle": 0.004,
+        "right_lfknuckle": 0.004,
+        "right_thbase": 0.004,
+        "right_lfmetacarpal": 0.007,
+    },
+    "touch_function": "force_vector",
+    "response_function": "spread_linear",
+}
+""" Default touch parameters for the v2 version of MIMo with five fingers and two toes.
+
+:meta hide-value:
+"""
+
+
 DEFAULT_VISION_PARAMS = {
     "eye_left": {"width": 256, "height": 256},
     "eye_right": {"width": 256, "height": 256},
@@ -108,10 +174,11 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     This class meets the interface requirements for basic gym classes and adds some additional features. The
     observation space is of dictionary type.
+
     Sensory modules are configured by a parameter dictionary. Default configuration dictionaries are included in the
-    same module as this class. Passing these to the constructor will enable the relevant sensory module.
-    :data:`DEFAULT_PROPRIOCEPTION_PARAMS`, :data:`DEFAULT_TOUCH_PARAMS` :data:`DEFAULT_VISION_PARAMS`,
-    :data:`DEFAULT_VESTIBULAR_PARAMS`.
+    same module as this class, :data:`DEFAULT_PROPRIOCEPTION_PARAMS`, :data:`DEFAULT_TOUCH_PARAMS`
+    :data:`DEFAULT_VISION_PARAMS`, :data:`DEFAULT_VESTIBULAR_PARAMS`. Passing these to the constructor will enable the
+    relevant sensory module.
     Not passing a dictionary disables the relevant module.
     By default all sensory modalities are disabled and the only sensor outputs are the relative joint positions.
 
@@ -123,8 +190,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     - :meth:`._sample_goal`, which should determine the desired end state.
     - :meth:`._get_achieved_goal`, which should return the achieved end state.
 
-    Depending on the requirements of your experiment any of these functions could be replaced with dummy functions
-    returned fixed values.
+    Depending on the requirements of your experiment any of these functions may be implemented as dummy functions
+    returning fixed values.
     Additional functions that may be overridden optionally are:
 
     - :meth:`._is_done`, which determines the `done` return value after each step.

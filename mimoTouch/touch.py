@@ -51,6 +51,7 @@ class Touch:
     respectively. Different touch functions should be used to support different types of output, such as normal force,
     frictional forces or contact slip. The purpose of the response function is to loosely simulate surface behaviour.
     How exactly these functions work and interact is left to the implementing class.
+    Note that the bodies listed in "scales" must actually exist in the scene to avoid errors!
 
     Attributes:
         env: The environment to which this module will be attached.

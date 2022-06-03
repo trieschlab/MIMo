@@ -4,13 +4,16 @@ The main class is :class:`~mimoEnv.envs.dummy.MIMoDummyEnv` which implements all
 functions that returned fixed values. This allows for testing the model without the full gym bureaucracy.
 The second class :class:`~mimoEnv.envs.dummy.MIMoShowroomEnv` is identical to the first, but changes the default
 parameters to load the showroom scene instead.
+
+Finally there is a demo class for the v2 version of MIMo using five-fingered hands and feet with two toes each in
+:class:`~mimoEnv.envs.dummy.MIMoV2DemoEnv`.
 """
 
 import numpy as np
 import os
 
-from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, \
-    DEFAULT_VISION_PARAMS, DEFAULT_VESTIBULAR_PARAMS, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS
+from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_VISION_PARAMS, DEFAULT_VESTIBULAR_PARAMS, \
+    DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS, DEFAULT_TOUCH_PARAMS_V2
 from mimoTouch.touch import TrimeshTouch
 import mimoEnv.utils as env_utils
 
@@ -23,6 +26,12 @@ DEMO_XML = os.path.join(SCENE_DIRECTORY, "showroom.xml")
 
 BENCHMARK_XML = os.path.join(SCENE_DIRECTORY, "benchmark_scene.xml")
 """ Path to the benchmarking scene.
+
+:meta hide-value:
+"""
+
+BENCHMARK_XML_V2 = os.path.join(SCENE_DIRECTORY, "benchmarkv2_scene.xml")
+""" Path to the benchmarking scene using MIMo v2.
 
 :meta hide-value:
 """
@@ -177,6 +186,36 @@ class MIMoShowroomEnv(MIMoDummyEnv):
                  n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=DEFAULT_TOUCH_PARAMS,
+                 vision_params=DEFAULT_VISION_PARAMS,
+                 vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
+                 goals_in_observation=False,
+                 done_active=True,
+                 show_sensors=False,
+                 print_space_sizes=False,):
+
+        super().__init__(model_path=model_path,
+                         initial_qpos=initial_qpos,
+                         n_substeps=n_substeps,
+                         proprio_params=proprio_params,
+                         touch_params=touch_params,
+                         vision_params=vision_params,
+                         vestibular_params=vestibular_params,
+                         goals_in_observation=goals_in_observation,
+                         done_active=done_active,
+                         show_sensors=show_sensors,
+                         print_space_sizes=print_space_sizes)
+
+
+class MIMoV2DemoEnv:
+    """ Same as :class:`~mimoEnv.envs.dummy.MIMoDummyEnv`, but using the v2 Version of MIMo which has hands with five
+    fingers and feet with two toes.
+    """
+    def __init__(self,
+                 model_path=BENCHMARK_XML_V2,
+                 initial_qpos={},
+                 n_substeps=2,
+                 proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
+                 touch_params=DEFAULT_TOUCH_PARAMS_V2,
                  vision_params=DEFAULT_VISION_PARAMS,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
                  goals_in_observation=False,

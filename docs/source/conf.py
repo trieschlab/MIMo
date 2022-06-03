@@ -18,6 +18,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
+    'sphinx.ext.autodoc.preserve_defaults',  # Do not resolve the names of default arguments
 ]
 autodoc_mock_imports = ["mujoco_py"]
 autodoc_member_order = 'bysource'
@@ -25,6 +26,7 @@ autodoc_member_order = 'bysource'
 numpydoc_class_members_toctree = False
 automodapi_toctreedirnm = 'generated'
 automodsumm_inherited_members = True
+autodoc_preserve_defaults = True
 
 templates_path = ['_templates']
 
