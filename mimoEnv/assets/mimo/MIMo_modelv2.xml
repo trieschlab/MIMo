@@ -341,22 +341,22 @@
 					<geom type="cylinder" size=".0249 .0101" pos="-0.007 0 0" euler="0 0 0"/>
 					<geom type="box" size=".030  .025 .01" pos="0.023 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 					<geom type="cylinder" size=".0101 .0251" pos=".053 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
-					<body name="right_toes1" pos=".053 .0125 0">
-						<joint name="robot:right_toes1" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".001"/>
-						<site name="torque_right_toes1" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-						<geom type="box" size=".0095 .011 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
-						<geom type="cylinder" size=".01 .0115" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+					<body name="right_big_toe" pos=".053 .0175 0">
+						<joint name="robot:right_big_toe" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".002"/>
+						<site name="torque_right_big_toe" type="sphere" size="0.01" pos="0 0 0" group="4"/>
+						<geom type="box" size=".0095 .007 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+						<geom type="cylinder" size=".01 .0075" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 					</body>
-					<body name="right_toes2" pos=".053 -.0125 0">
-						<joint name="robot:right_toes2" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".001"/>
-						<site name="torque_right_toes2" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-						<geom type="box" size=".0095 .011 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
-						<geom type="cylinder" size=".01 .0115" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+					<body name="right_toes" pos=".053 -.0075 0">
+						<joint name="robot:right_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".002"/>
+						<site name="torque_right_toes" type="sphere" size="0.01" pos="0 0 0" group="4"/>
+						<geom type="box" size=".0095 .016 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+						<geom type="cylinder" size=".01 .0165" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 					</body>
 				</body>
 			</body>
 		</body>
-			
+
 		<body name="left_upper_leg" pos="0.005 .051 -.007">
 			<!-- leg length is 32.9 cm -->
 			<joint name="robot:left_hip1" type="hinge" pos="0 0 0" axis="0 1 0" springref="-10" range="-133 20" stiffness="1.72" damping="1.27" frictionloss=".08"/>
@@ -377,17 +377,17 @@
 					<geom type="cylinder" size=".0249 .0101" pos="-0.007 0 0" euler="0 0 0"/>
 					<geom type="box" size=".030  .025 .01" pos="0.023 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 					<geom type="cylinder" size=".0101 .0251" pos=".053 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
-					<body name="left_toes1" pos=".053 .0125 0">
-						<joint name="robot:left_toes1" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".001"/>
-						<site name="torque_left_toes1" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-						<geom type="box" size=".0095 .011 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
-						<geom type="cylinder" size=".01 .0115" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+					<body name="left_toes" pos=".053 .0075 0">
+						<joint name="robot:left_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".002"/>
+						<site name="torque_left_toes" type="sphere" size="0.01" pos="0 0 0" group="4"/>
+						<geom type="box" size=".0095 .016 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+						<geom type="cylinder" size=".01 .0165" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 					</body>
-					<body name="left_toes2" pos=".053 -.0125 0">
-						<joint name="robot:left_toes2" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".001"/>
-						<site name="torque_left_toes2" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-						<geom type="box" size=".0095 .011 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
-						<geom type="cylinder" size=".01 .0115" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+					<body name="left_big_toe" pos=".053 -.0175 0">
+						<joint name="robot:left_big_toe" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".002"/>
+						<site name="torque_left_big_toe" type="sphere" size="0.01" pos="0 0 0" group="4"/>
+						<geom type="box" size=".0095 .007 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
+						<geom type="cylinder" size=".01 .0075" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 					</body>
 				</body>
 			</body>
