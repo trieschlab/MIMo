@@ -16,10 +16,11 @@
 <mujoco model="MIMo">
 
 	<default>
-        <joint limited="true" damping="1" stiffness="1" armature="0.01" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
-        <geom condim="3" material="skin" density="985" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
-        <motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
-		<camera user="0 0 0"/>
+		<default class="mimo">
+        	<joint limited="true" damping="1" stiffness="1" armature="0.01" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
+        	<geom condim="3" material="skin" density="985" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
+        	<motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
+		</default>
     </default>
 
     <asset>
@@ -50,39 +51,39 @@
 	</contact>
 	
 	<tendon>
-		<fixed name="hip_bend" limited="true" range="-.01 .01">
+		<fixed class="mimo" name="hip_bend" limited="true" range="-.01 .01">
 			<joint joint="robot:hip_bend1" coef="1"/>
 			<joint joint="robot:hip_bend2" coef="-1"/>
 		</fixed>
-		<fixed name="hip_rotation" limited="true" range="-.01 .01">
+		<fixed class="mimo" name="hip_rotation" limited="true" range="-.01 .01">
 			<joint joint="robot:hip_rot1" coef="1"/>
 			<joint joint="robot:hip_rot2" coef="-1"/>
 		</fixed>
-		<fixed name="hip_lean" limited="true" range="-.01 .01">
+		<fixed class="mimo" name="hip_lean" limited="true" range="-.01 .01">
 			<joint joint="robot:hip_lean1" coef="1"/>
 			<joint joint="robot:hip_lean2" coef="-.5"/>
 		</fixed>
-		<fixed name="head_limits1" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits1" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_swivel" coef="1"/>
 			<joint joint="robot:head_tilt_side" coef="1"/>
 		</fixed>
-		<fixed name="head_limits2" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits2" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_tilt" coef="1"/>
 			<joint joint="robot:head_tilt_side" coef="1"/>
 		</fixed>
-		<fixed name="head_limits3" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits3" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_swivel" coef="1"/>
 			<joint joint="robot:head_tilt" coef="1"/>
 		</fixed>
-		<fixed name="head_limits1_sym" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits1_sym" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_swivel" coef="1"/>
 			<joint joint="robot:head_tilt_side" coef="-1"/>
 		</fixed>
-		<fixed name="head_limits2_sym" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits2_sym" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_tilt" coef="1"/>
 			<joint joint="robot:head_tilt_side" coef="-1"/>
 		</fixed>
-		<fixed name="head_limits3_sym" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits3_sym" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_swivel" coef="1"/>
 			<joint joint="robot:head_tilt" coef="-1"/>
 		</fixed>
@@ -122,54 +123,54 @@
 
 	<actuator>
 
-		<position name="act:hip_bend" gear="57.296" kp=".2" joint="robot:hip_bend1" ctrlrange="-34 61" forcelimited="true" forcerange="-.6 .6"/>
-		<position name="act:hip_twist" gear="57.296" kp=".2" joint="robot:hip_rot1" ctrlrange="-36 36" forcelimited="true" forcerange="-.4 .4"/>
-		<position name="act:hip_lean" gear="57.296" kp=".2" joint="robot:hip_lean1" ctrlrange="-14 14" forcelimited="true" forcerange="-.4 .4"/>
+		<position class="mimo" name="act:hip_bend" gear="57.296" kp=".2" joint="robot:hip_bend1" ctrlrange="-34 61" forcelimited="true" forcerange="-.6 .6"/>
+		<position class="mimo" name="act:hip_twist" gear="57.296" kp=".2" joint="robot:hip_rot1" ctrlrange="-36 36" forcelimited="true" forcerange="-.4 .4"/>
+		<position class="mimo" name="act:hip_lean" gear="57.296" kp=".2" joint="robot:hip_lean1" ctrlrange="-14 14" forcelimited="true" forcerange="-.4 .4"/>
 		
-		<position name="act:head_swivel" gear="57.296" kp=".2" joint="robot:head_swivel" ctrlrange="-111 111" forcelimited="true" forcerange="-.1 .1"/>
-		<position name="act:head_tilt" gear="57.296" kp=".2" joint="robot:head_tilt" ctrlrange="-70 81" forcelimited="true" forcerange="-.1 .1"/>
-		<position name="act:head_tilt_side" gear="57.296" kp=".2" joint="robot:head_tilt_side" ctrlrange="-70 70" forcelimited="true" forcerange="-.1 .1"/>
+		<position class="mimo" name="act:head_swivel" gear="57.296" kp=".2" joint="robot:head_swivel" ctrlrange="-111 111" forcelimited="true" forcerange="-.1 .1"/>
+		<position class="mimo" name="act:head_tilt" gear="57.296" kp=".2" joint="robot:head_tilt" ctrlrange="-70 81" forcelimited="true" forcerange="-.1 .1"/>
+		<position class="mimo" name="act:head_tilt_side" gear="57.296" kp=".2" joint="robot:head_tilt_side" ctrlrange="-70 70" forcelimited="true" forcerange="-.1 .1"/>
 
-		<position name="act:left_eye_horizontal" gear="57.296" kp=".2" joint="robot:left_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.05 .05"/>
-		<position name="act:left_eye_vertical" gear="57.296" kp=".2" joint="robot:left_eye_vertical" ctrlrange="-46 32" forcelimited="true" forcerange="-.05 .05"/>
-		<position name="act:left_eye_torsional" gear="57.296" kp=".2" joint="robot:left_eye_torsional" ctrlrange="-16 16" forcelimited="true" forcerange="-.05 .05"/>
-		<position name="act:right_eye_horizontal" gear="57.296" kp=".2" joint="robot:right_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.05 .05"/>
-		<position name="act:right_eye_vertical" gear="57.296" kp=".2" joint="robot:right_eye_vertical" ctrlrange="-46 32" forcelimited="true" forcerange="-.05 .05"/>
-		<position name="act:right_eye_torsional" gear="57.296" kp=".2" joint="robot:right_eye_torsional" ctrlrange="-16 16" forcelimited="true" forcerange="-.05 .05"/>
+		<position class="mimo" name="act:left_eye_horizontal" gear="57.296" kp=".2" joint="robot:left_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.05 .05"/>
+		<position class="mimo" name="act:left_eye_vertical" gear="57.296" kp=".2" joint="robot:left_eye_vertical" ctrlrange="-46 32" forcelimited="true" forcerange="-.05 .05"/>
+		<position class="mimo" name="act:left_eye_torsional" gear="57.296" kp=".2" joint="robot:left_eye_torsional" ctrlrange="-16 16" forcelimited="true" forcerange="-.05 .05"/>
+		<position class="mimo" name="act:right_eye_horizontal" gear="57.296" kp=".2" joint="robot:right_eye_horizontal" ctrlrange="-44 44" forcelimited="true" forcerange="-.05 .05"/>
+		<position class="mimo" name="act:right_eye_vertical" gear="57.296" kp=".2" joint="robot:right_eye_vertical" ctrlrange="-46 32" forcelimited="true" forcerange="-.05 .05"/>
+		<position class="mimo" name="act:right_eye_torsional" gear="57.296" kp=".2" joint="robot:right_eye_torsional" ctrlrange="-16 16" forcelimited="true" forcerange="-.05 .05"/>
 
-		<position name="act:right_shoulder1" gear="57.296" kp=".2" joint="robot:right_shoulder_horizontal" ctrlrange="-28 118" forcelimited="true" forcerange="-.15 .15"/>
-		<position name="act:right_shoulder2" gear="57.296" kp=".2" joint="robot:right_shoulder_ad_ab" ctrlrange="-84 183" forcelimited="true" forcerange="-.15 .15"/>
-		<position name="act:right_shoulder3" gear="57.296" kp=".2" joint="robot:right_shoulder_rotation" ctrlrange="-99 67" forcelimited="true" forcerange="-.125 .125"/>
-		<position name="act:right_elbow" gear="57.296" kp=".2" joint="robot:right_elbow" ctrlrange="-146 5" forcelimited="true" forcerange="-.15 .15"/>
-		<position name="act:right_hand1" gear="57.296" kp=".2" joint="robot:right_hand1" ctrlrange="-90 90" forcelimited="true" forcerange="-.1 .1"/>
-		<position name="act:right_hand2" gear="57.296" kp=".2" joint="robot:right_hand2" ctrlrange="-92 86" forcelimited="true" forcerange="-.1 .1"/>
-		<position name="act:right_hand3" gear="57.296" kp=".2" joint="robot:right_hand3" ctrlrange="-53 48" forcelimited="true" forcerange="-.1 .1"/>
-		<position name="act:right_fingers" gear="57.296" kp=".2" joint="robot:right_fingers" ctrlrange="-160 8" forcelimited="true" forcerange="-.15 .15"/>
+		<position class="mimo" name="act:right_shoulder1" gear="57.296" kp=".2" joint="robot:right_shoulder_horizontal" ctrlrange="-28 118" forcelimited="true" forcerange="-.15 .15"/>
+		<position class="mimo" name="act:right_shoulder2" gear="57.296" kp=".2" joint="robot:right_shoulder_ad_ab" ctrlrange="-84 183" forcelimited="true" forcerange="-.15 .15"/>
+		<position class="mimo" name="act:right_shoulder3" gear="57.296" kp=".2" joint="robot:right_shoulder_rotation" ctrlrange="-99 67" forcelimited="true" forcerange="-.125 .125"/>
+		<position class="mimo" name="act:right_elbow" gear="57.296" kp=".2" joint="robot:right_elbow" ctrlrange="-146 5" forcelimited="true" forcerange="-.15 .15"/>
+		<position class="mimo" name="act:right_hand1" gear="57.296" kp=".2" joint="robot:right_hand1" ctrlrange="-90 90" forcelimited="true" forcerange="-.1 .1"/>
+		<position class="mimo" name="act:right_hand2" gear="57.296" kp=".2" joint="robot:right_hand2" ctrlrange="-92 86" forcelimited="true" forcerange="-.1 .1"/>
+		<position class="mimo" name="act:right_hand3" gear="57.296" kp=".2" joint="robot:right_hand3" ctrlrange="-53 48" forcelimited="true" forcerange="-.1 .1"/>
+		<position class="mimo" name="act:right_fingers" gear="57.296" kp=".2" joint="robot:right_fingers" ctrlrange="-160 8" forcelimited="true" forcerange="-.15 .15"/>
 
-		<position name="act:left_shoulder1" gear="57.296" kp=".2" joint="robot:left_shoulder_horizontal" ctrlrange="-28 118" forcelimited="true" forcerange="-.15 .15"/>
-		<position name="act:left_shoulder2" gear="57.296" kp=".2" joint="robot:left_shoulder_ad_ab" ctrlrange="-84 183" forcelimited="true" forcerange="-.15 .15"/>
-		<position name="act:left_shoulder3" gear="57.296" kp=".2" joint="robot:left_shoulder_rotation" ctrlrange="-99 67" forcelimited="true" forcerange="-.125 .125"/>
-		<position name="act:left_elbow" gear="57.296" kp=".2" joint="robot:left_elbow" ctrlrange="-146 5" forcelimited="true" forcerange="-.15 .15"/>
-		<position name="act:left_hand1" gear="57.296" kp=".2" joint="robot:left_hand1" ctrlrange="-90 90" forcelimited="true" forcerange="-.1 .1"/>
-		<position name="act:left_hand2" gear="57.296" kp=".2" joint="robot:left_hand2" ctrlrange="-92 86" forcelimited="true" forcerange="-.1 .1"/>
-		<position name="act:left_hand3" gear="57.296" kp=".2" joint="robot:left_hand3" ctrlrange="-53 48" forcelimited="true" forcerange="-.1 .1"/>
-		<position name="act:left_fingers" gear="57.296" kp=".2" joint="robot:left_fingers" ctrlrange="-160 8" forcelimited="true" forcerange="-.15 .15"/>
+		<position class="mimo" name="act:left_shoulder1" gear="57.296" kp=".2" joint="robot:left_shoulder_horizontal" ctrlrange="-28 118" forcelimited="true" forcerange="-.15 .15"/>
+		<position class="mimo" name="act:left_shoulder2" gear="57.296" kp=".2" joint="robot:left_shoulder_ad_ab" ctrlrange="-84 183" forcelimited="true" forcerange="-.15 .15"/>
+		<position class="mimo" name="act:left_shoulder3" gear="57.296" kp=".2" joint="robot:left_shoulder_rotation" ctrlrange="-99 67" forcelimited="true" forcerange="-.125 .125"/>
+		<position class="mimo" name="act:left_elbow" gear="57.296" kp=".2" joint="robot:left_elbow" ctrlrange="-146 5" forcelimited="true" forcerange="-.15 .15"/>
+		<position class="mimo" name="act:left_hand1" gear="57.296" kp=".2" joint="robot:left_hand1" ctrlrange="-90 90" forcelimited="true" forcerange="-.1 .1"/>
+		<position class="mimo" name="act:left_hand2" gear="57.296" kp=".2" joint="robot:left_hand2" ctrlrange="-92 86" forcelimited="true" forcerange="-.1 .1"/>
+		<position class="mimo" name="act:left_hand3" gear="57.296" kp=".2" joint="robot:left_hand3" ctrlrange="-53 48" forcelimited="true" forcerange="-.1 .1"/>
+		<position class="mimo" name="act:left_fingers" gear="57.296" kp=".2" joint="robot:left_fingers" ctrlrange="-160 8" forcelimited="true" forcerange="-.15 .15"/>
 
-		<position name="act:right_hip1" gear="57.296" kp=".2" joint="robot:right_hip1" ctrlrange="-133 20" forcelimited="true" forcerange="-.2 .2"/>
-		<position name="act:right_hip2" gear="57.296" kp=".2" joint="robot:right_hip2" ctrlrange="-51 17" forcelimited="true" forcerange="-0.175 0.175"/>
-		<position name="act:right_hip3" gear="57.296" kp=".2" joint="robot:right_hip3" ctrlrange="-32 41" forcelimited="true" forcerange="-0.1 0.1"/>
-		<position name="act:right_knee" gear="57.296" kp=".2" joint="robot:right_knee" ctrlrange="-145 4" forcelimited="true" forcerange="-0.2 0.2"/>
-		<position name="act:right_foot1" gear="57.296" kp=".2" joint="robot:right_foot1" ctrlrange="-63 32" forcelimited="true" forcerange="-0.05 0.05"/>
-		<position name="act:right_foot2" gear="57.296" kp=".2" joint="robot:right_foot2" ctrlrange="-33 31" forcelimited="true" forcerange="-0.05 0.05"/>
-		<position name="act:right_foot3" gear="57.296" kp=".2" joint="robot:right_foot3" ctrlrange="-20 30" forcelimited="true" forcerange="-0.05 0.05"/>
+		<position class="mimo" name="act:right_hip1" gear="57.296" kp=".2" joint="robot:right_hip1" ctrlrange="-133 20" forcelimited="true" forcerange="-.2 .2"/>
+		<position class="mimo" name="act:right_hip2" gear="57.296" kp=".2" joint="robot:right_hip2" ctrlrange="-51 17" forcelimited="true" forcerange="-0.175 0.175"/>
+		<position class="mimo" name="act:right_hip3" gear="57.296" kp=".2" joint="robot:right_hip3" ctrlrange="-32 41" forcelimited="true" forcerange="-0.1 0.1"/>
+		<position class="mimo" name="act:right_knee" gear="57.296" kp=".2" joint="robot:right_knee" ctrlrange="-145 4" forcelimited="true" forcerange="-0.2 0.2"/>
+		<position class="mimo" name="act:right_foot1" gear="57.296" kp=".2" joint="robot:right_foot1" ctrlrange="-63 32" forcelimited="true" forcerange="-0.05 0.05"/>
+		<position class="mimo" name="act:right_foot2" gear="57.296" kp=".2" joint="robot:right_foot2" ctrlrange="-33 31" forcelimited="true" forcerange="-0.05 0.05"/>
+		<position class="mimo" name="act:right_foot3" gear="57.296" kp=".2" joint="robot:right_foot3" ctrlrange="-20 30" forcelimited="true" forcerange="-0.05 0.05"/>
 
-		<position name="act:left_hip1" gear="57.296" kp=".2" joint="robot:left_hip1" ctrlrange="-133 20" forcelimited="true" forcerange="-0.2 0.2"/>
-		<position name="act:left_hip2" gear="57.296" kp=".2" joint="robot:left_hip2" ctrlrange="-51 17" forcelimited="true" forcerange="-0.175 0.175"/>
-		<position name="act:left_hip3" gear="57.296" kp=".2" joint="robot:left_hip3" ctrlrange="-32 41" forcelimited="true" forcerange="-0.1 0.1"/>
-		<position name="act:left_knee" gear="57.296" kp=".2" joint="robot:left_knee" ctrlrange="-145 4" forcelimited="true" forcerange="-0.2 0.2"/>
-		<position name="act:left_foot1" gear="57.296" kp=".2" joint="robot:left_foot1" ctrlrange="-63 32" forcelimited="true" forcerange="-0.05 0.05"/>
-		<position name="act:left_foot2" gear="57.296" kp=".2" joint="robot:left_foot2" ctrlrange="-33 31" forcelimited="true" forcerange="-0.05 0.05"/>
-		<position name="act:left_foot3" gear="57.296" kp=".2" joint="robot:left_foot3" ctrlrange="-20 30" forcelimited="true" forcerange="-0.05 0.05"/>
+		<position class="mimo" name="act:left_hip1" gear="57.296" kp=".2" joint="robot:left_hip1" ctrlrange="-133 20" forcelimited="true" forcerange="-0.2 0.2"/>
+		<position class="mimo" name="act:left_hip2" gear="57.296" kp=".2" joint="robot:left_hip2" ctrlrange="-51 17" forcelimited="true" forcerange="-0.175 0.175"/>
+		<position class="mimo" name="act:left_hip3" gear="57.296" kp=".2" joint="robot:left_hip3" ctrlrange="-32 41" forcelimited="true" forcerange="-0.1 0.1"/>
+		<position class="mimo" name="act:left_knee" gear="57.296" kp=".2" joint="robot:left_knee" ctrlrange="-145 4" forcelimited="true" forcerange="-0.2 0.2"/>
+		<position class="mimo" name="act:left_foot1" gear="57.296" kp=".2" joint="robot:left_foot1" ctrlrange="-63 32" forcelimited="true" forcerange="-0.05 0.05"/>
+		<position class="mimo" name="act:left_foot2" gear="57.296" kp=".2" joint="robot:left_foot2" ctrlrange="-33 31" forcelimited="true" forcerange="-0.05 0.05"/>
+		<position class="mimo" name="act:left_foot3" gear="57.296" kp=".2" joint="robot:left_foot3" ctrlrange="-20 30" forcelimited="true" forcerange="-0.05 0.05"/>
 
 	</actuator>
 	

@@ -16,10 +16,11 @@
 <mujoco model="MIMo">
 
 	<default>
-        <joint limited="true" damping="1" stiffness="1" armature="0.01" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
-        <geom condim="3" material="skin" density="985" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
-        <motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
-		<camera user="0 0 0"/>
+		<default class="mimo">
+        	<joint limited="true" damping="1" stiffness="1" armature="0.01" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
+        	<geom condim="3" material="skin" density="985" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
+        	<motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
+		</default>
     </default>
 
     <asset>
@@ -55,39 +56,39 @@
 	</contact>
 	
 	<tendon>
-		<fixed name="hip_bend" limited="true" range="-.01 .01">
+		<fixed class="mimo" name="hip_bend" limited="true" range="-.01 .01">
 			<joint joint="robot:hip_bend1" coef="1"/>
 			<joint joint="robot:hip_bend2" coef="-1"/>
 		</fixed>
-		<fixed name="hip_rotation" limited="true" range="-.01 .01">
+		<fixed class="mimo" name="hip_rotation" limited="true" range="-.01 .01">
 			<joint joint="robot:hip_rot1" coef="1"/>
 			<joint joint="robot:hip_rot2" coef="-1"/>
 		</fixed>
-		<fixed name="hip_lean" limited="true" range="-.01 .01">
+		<fixed class="mimo" name="hip_lean" limited="true" range="-.01 .01">
 			<joint joint="robot:hip_lean1" coef="1"/>
 			<joint joint="robot:hip_lean2" coef="-.5"/>
 		</fixed>
-		<fixed name="head_limits1" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits1" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_swivel" coef="1"/>
 			<joint joint="robot:head_tilt_side" coef="1"/>
 		</fixed>
-		<fixed name="head_limits2" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits2" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_tilt" coef="1"/>
 			<joint joint="robot:head_tilt_side" coef="1"/>
 		</fixed>
-		<fixed name="head_limits3" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits3" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_swivel" coef="1"/>
 			<joint joint="robot:head_tilt" coef="1"/>
 		</fixed>
-		<fixed name="head_limits1_sym" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits1_sym" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_swivel" coef="1"/>
 			<joint joint="robot:head_tilt_side" coef="-1"/>
 		</fixed>
-		<fixed name="head_limits2_sym" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits2_sym" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_tilt" coef="1"/>
 			<joint joint="robot:head_tilt_side" coef="-1"/>
 		</fixed>
-		<fixed name="head_limits3_sym" limited="true" range="-2.1 2.1">
+		<fixed class="mimo" name="head_limits3_sym" limited="true" range="-2.1 2.1">
 			<joint joint="robot:head_swivel" coef="1"/>
 			<joint joint="robot:head_tilt" coef="-1"/>
 		</fixed>
@@ -126,14 +127,14 @@
 	</sensor>
 
     <actuator>
-		<motor name="act:right_shoulder_horizontal" joint="robot:right_shoulder_horizontal" gear="1.8" 	forcerange="-1 1"/>
-		<motor name="act:right_shoulder_abduction" 	joint="robot:right_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
-		<motor name="act:right_shoulder_internal" 	joint="robot:right_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
-		<motor name="act:right_elbow" 				joint="robot:right_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
-		<motor name="act:right_wrist_rotation" 		joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
-		<motor name="act:right_wrist_flexion" 		joint="robot:right_hand2" 				gear="1.4"	forcerange="-1 .5"/>
-		<motor name="act:right_wrist_ulnar" 		joint="robot:right_hand3" 				gear=".7"	forcerange="-1 1"/>
-		<motor name="act:right_fingers" 			joint="robot:right_fingers" 			gear=".69"	forcerange="-1 .33"/>
+		<motor class="mimo" name="act:right_shoulder_horizontal" 	joint="robot:right_shoulder_horizontal" gear="1.8" 	forcerange="-1 1"/>
+		<motor class="mimo" name="act:right_shoulder_abduction" 	joint="robot:right_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
+		<motor class="mimo" name="act:right_shoulder_internal" 		joint="robot:right_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
+		<motor class="mimo" name="act:right_elbow" 					joint="robot:right_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
+		<motor class="mimo" name="act:right_wrist_rotation" 		joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
+		<motor class="mimo" name="act:right_wrist_flexion" 			joint="robot:right_hand2" 				gear="1.4"	forcerange="-1 .5"/>
+		<motor class="mimo" name="act:right_wrist_ulnar" 			joint="robot:right_hand3" 				gear=".7"	forcerange="-1 1"/>
+		<motor class="mimo" name="act:right_fingers" 				joint="robot:right_fingers" 			gear=".69"	forcerange="-1 .33"/>
 	</actuator>
 	
 </mujoco>

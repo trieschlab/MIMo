@@ -28,6 +28,10 @@
         <global offwidth="800" offheight="800"/>
     </visual>
 
+    <default>
+        <geom material="matgeom" condim="3" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
+    </default>
+
     <asset>
         <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
         <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>

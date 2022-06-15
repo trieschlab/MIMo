@@ -36,6 +36,7 @@
 				<geom solimp="0.99 0.995 0.001 0.5 2" solref="-20000 -20"/>
 			</default>
 		</default>
+        <geom material="matgeom" condim="3" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
 	</default>
 
     <asset>
