@@ -117,11 +117,13 @@ class DiscreteTouch(Touch):
     :attr:`.sensor_positions` are directly used for the output, so altering them will also alter the output. This can
     be used to post-process the positions from the basic uniform distribution. Supported output types are
 
-    - 'normal': The normal force as a scalar in newtons.
-    - 'force_vector': The contact force vector (normal and frictional forces) in newtons reported in the coordinate
+    - 'normal': The normal force as a scalar.
+    - 'force_vector': The contact force vector (normal and frictional forces) reported in the coordinate
       frame of the sensing geom.
     - 'force_vector_global': Like 'force_vector', but reported in the world coordinate frame instead.
 
+    The units are newton by default, but MuJoCo does not explicitly define units. Treating the unit of distance as
+    meters and the unit of mass as kg as we do in our models will lead to newtons as the unit of force.
     The output can be spread to nearby sensors in two different ways:
 
     - 'nearest': Directly add the output to the nearest sensor.
