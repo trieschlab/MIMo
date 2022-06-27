@@ -206,7 +206,7 @@ class MIMoShowroomEnv(MIMoDummyEnv):
                          print_space_sizes=print_space_sizes)
 
 
-class MIMoV2DemoEnv:
+class MIMoV2DemoEnv(MIMoDummyEnv):
     """ Same as :class:`~mimoEnv.envs.dummy.MIMoDummyEnv`, but using the v2 Version of MIMo which has hands with five
     fingers and feet with two toes.
     """
