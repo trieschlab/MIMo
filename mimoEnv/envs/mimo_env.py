@@ -76,10 +76,10 @@ DEFAULT_TOUCH_PARAMS = {
 
 DEFAULT_TOUCH_PARAMS_V2 = {
     "scales": {
-        "left_toes1": 0.010,
-        "right_toes1": 0.010,
-        "left_toes2": 0.010,
-        "right_toes2": 0.010,
+        "left_big_toe": 0.010,
+        "right_big_toe": 0.010,
+        "left_toes": 0.010,
+        "right_toes": 0.010,
         "left_foot": 0.015,
         "right_foot": 0.015,
         "left_lower_leg": 0.038,
