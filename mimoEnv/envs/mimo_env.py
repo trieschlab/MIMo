@@ -417,7 +417,12 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             such as whether we reached a success state specifically.
         """
         action = np.clip(action, self.action_space.low, self.action_space.high)
+
+        # If muscles:
+        #   bla
+        # else:
         self._set_action(action)
+
         self.sim.step()
         self._step_callback()
         obs = self._get_obs()
