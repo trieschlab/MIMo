@@ -1,16 +1,14 @@
-""" This module contains a simple reaching experiment in which MIMo tries to touch a hovering ball.
+""" This module contains a simple reaching experiment in which MIMo tries to catch a falling ball.
 
-The scene consists of MIMo and a hovering ball located within reach of MIMos right arm. The task is for MIMo to
-touch the ball.
-MIMo is fixed in position and can only move his right arm. His head automatically tracks the location of the ball,
-i.e. the visual search for the ball is assumed.
-Sensory input consists of the full proprioceptive inputs. All other modalities are disabled.
+The scene consists of MIMo with his right arm outstretched and his palm open. A ball is located just above MIMos palm.
+The task is for him to catch the falling ball.
+MIMo is fixed in position and can only move his right hand.
+Sensory input consists of the full proprioceptive inputs and touch input.
 
-The ball hovers stationary. An episode is completed successfully if MIMo touches the ball, knocking it out of
-position. There are no failure states. The position of the ball is slightly randomized each trial.
+An episode is completed successfully if MIMo holds onto the ball continously for 1 second. There are no failure states.
 
-Reward shaping is employed, with a negative reward based on the distance between MIMos hand and the ball. A large fixed
-reward is given when he touches the ball.
+There is a small negative reward for each step without touching the ball, a larger positive reward for each step in
+contact with the ball and then a large fixed reward on success.
 
 The class with the environment is :class:`~mimoEnv.envs.reach.MIMoReachEnv` while the path to the scene XML is defined
 in :data:`REACH_XML`.
@@ -51,7 +49,8 @@ class MIMoCatchEnv(MIMoEnv):
                  vision_params=None,
                  vestibular_params=None,
                  goals_in_observation=False,
-                 done_active=False):
+                 done_active=True,
+                 action_penalty=False):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
@@ -69,8 +68,11 @@ class MIMoCatchEnv(MIMoEnv):
         self.target_body = self.sim.model.body_name2id("target")
         self.target_geoms = env_utils.get_geoms_for_body(self.sim.model, self.target_body)
         self.own_geoms = []
-        for body_id in touch_params["scales"]:
+        for body_name in touch_params["scales"]:
+            body_id = self.sim.model.body_name2id(body_name)
             self.own_geoms.extend(env_utils.get_geoms_for_body(self.sim.model, body_id))
+        self.action_penalty = action_penalty
+        print("Action penalty: ", self.action_penalty)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
@@ -86,11 +88,16 @@ class MIMoCatchEnv(MIMoEnv):
         Returns:
             float: The reward as described above.
         """
-        reward = -1
         if self._currently_in_contact():
-            reward += 5
+            reward = 0
+        else:
+            reward = -1
+
+        if self.action_penalty:
+            reward -= 0.5 * np.square(self.sim.data.ctrl).sum() / self.action_space.shape[0]
+
         if self._is_success(achieved_goal, desired_goal):
-            reward += 1000
+            reward = 500
         return reward
 
     def _is_success(self, achieved_goal, desired_goal):
