@@ -68,9 +68,6 @@ def main():
     - ``--save_model``: The name under which we save. Like above this is a suffix.
     """
 
-    env = gym.make('MIMoCatch-v0')
-    _ = env.reset()
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_for', default=0, type=int,
                         help='Total timesteps of training')
@@ -107,6 +104,9 @@ def main():
         from stable_baselines3 import DDPG as RL
     elif algorithm == 'A2C':
         from stable_baselines3 import A2C as RL
+
+    env = gym.make('MIMoCatch-v0', action_penalty=action_penalty)
+    _ = env.reset()
 
     # load pretrained model or create new one
     if algorithm is None:
