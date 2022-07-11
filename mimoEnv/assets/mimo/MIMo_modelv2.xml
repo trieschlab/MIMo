@@ -72,11 +72,11 @@
 					<body name="right_lower_arm" pos="0 0 .1076" euler="0 0 0">
 						<joint name="robot:right_elbow" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-20" range="-146 5" stiffness=".13" damping=".11" frictionloss=".030"/>
 						<site name="torque_right_elbow" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-						<geom name="right_larm" type="capsule" size=".023 0.037" pos="0 0 .037" contype="4" conaffinity="5"/>
-						<body name="right_hand" pos="0.007 -.009 .10732" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
-							<joint name="robot:right_hand1" type="hinge" pos="-0.007 .007 -.02532" axis="0 0 -1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
-							<joint name="robot:right_hand2" type="hinge" pos="-0.007 .007 -.02532" axis="-1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007"/>
-							<joint name="robot:right_hand3" type="hinge" pos="-0.007 .007 -.02532" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007"/>
+						<geom name="right_larm" type="capsule" size=".023 0.037" pos="0 0 .037" contype="8" conaffinity="7"/>
+						<body name="right_hand" pos="0.007 -.009 .11032" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
+							<joint name="robot:right_hand1" type="hinge" pos="-0.007 0 -.01532" axis="0 0 -1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
+							<joint name="robot:right_hand2" type="hinge" pos="-0.007 -0.005 -.02032" axis="-1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007"/>
+							<joint name="robot:right_hand3" type="hinge" pos="-0.007 0 -.02532" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007"/>
 							<site name="torque_right_wrist" type="sphere" size="0.002" pos="0 0 0" group="4"/>
 							<geom type="box" pos="0 0 0" size=".01712 .00584 .02532" condim="6"/>
 							<geom type="box" pos="-.023 0 -0.0124" size=".00588 .00584 .01292" condim="6"/>
@@ -143,8 +143,8 @@
 							<body name="right_lfmetacarpal" pos="-0.01498 0 0.0031">
 								<joint name="robot:right_lf_meta" type="hinge" pos="0 0 0" axis="0.571 0 0.821" range="0 40" stiffness=".01" damping=".001" armature="0.0001"/>
 								<site name="torque_right_lf_meta" type="sphere" size="0.002" pos="0 0 0" group="4"/>
-								<geom type="box" pos="-.00883 0 0.00517" size=".00508 .00584 .01292" condim="6"/>
-								<geom type="cylinder" pos="-.00883 0 .01809" size=".00584 .005" euler="0 90 0" condim="6"/>
+								<geom type="box" pos="-.00883 0 0.00517" size=".00508 .00584 .01292" condim="6" contype="16" conaffinity="7"/>
+								<geom type="cylinder" pos="-.00883 0 .01809" size=".00584 .005" euler="0 90 0" condim="6" contype="16" conaffinity="7"/>
 								<!--Proximal-->
 								<body name="right_lfknuckle" pos="-0.00849 0 0.02273">
 									<joint name="robot:right_lf_side" type="hinge" pos="0 0 0" axis="0 1 0" range="-25 25" stiffness="0.003" damping="0.001" armature="0.0001"/>
@@ -171,7 +171,7 @@
 								<joint name="robot:right_th_adduction" type="hinge" pos="0 0 0" axis="1 2 0" range="-60 0" springref="-35" stiffness="0.004" damping="0.001" armature="0.0001"/>
 								<joint name="robot:right_th_rot" type="hinge" pos="0 0 0" axis="0 0 1" range="-20 25" springref="0" stiffness="0.001" damping="0.001" armature="0.0001"/>
 								<site name="torque_right_th_base" type="sphere" size="0.002" pos="0 0 0" group="4"/>
-								<geom type="capsule" pos="0 0 .01027" size=".00736 .01027" condim="6" contype="2" conaffinity="3"/>
+								<geom type="capsule" pos="0 0 .01027" size=".00736 .01027" condim="6" contype="16" conaffinity="7"/>
 								<!--Hub-->
 								<body name="right_thhub" pos="0 0 0.02125">
 									<joint name="robot:right_th_pivot" type="hinge" pos="0 0 0" axis="1 0 0" range="-15 15" springref="0" stiffness="0.002" damping="0.001" armature="0.0001"/>
@@ -200,12 +200,12 @@
 					<body name="left_lower_arm" pos="0 0 .1076" euler="0 0 0">
 						<joint name="robot:left_elbow" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-20" range="-146 5" stiffness=".13" damping=".11" frictionloss=".030"/>
 						<site name="torque_left_elbow" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-						<geom name="left_larm" type="capsule" size=".023 0.037" pos="0 0 .037" contype="4" conaffinity="5"/>
-						<body name="left_hand" pos="0.007 .009 .10732" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
+						<geom name="left_larm" type="capsule" size=".023 0.037" pos="0 0 .037" contype="2" conaffinity="25"/>
+						<body name="left_hand" pos="0.007 .009 .11032" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
 
-							<joint name="robot:left_hand1" type="hinge" pos="-0.007 -.007 -.02532" axis="0 0 1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
-							<joint name="robot:left_hand2" type="hinge" pos="-0.007 -.007 -.02532" axis="1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007"/>
-							<joint name="robot:left_hand3" type="hinge" pos="-0.007 -.007 -.02532" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007"/>
+							<joint name="robot:left_hand1" type="hinge" pos="-0.007 0 -.01532" axis="0 0 1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
+							<joint name="robot:left_hand2" type="hinge" pos="-0.007 .005 -.02032" axis="1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007"/>
+							<joint name="robot:left_hand3" type="hinge" pos="-0.007 0 -.02532" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007"/>
 							<site name="torque_left_wrist" type="sphere" size="0.002" pos="0 0 0" group="4"/>
 							<geom type="box" pos="0 0 0" size=".01712 .00584 .02532" condim="6"/>
 							<geom type="box" pos="-.023 0 -0.0124" size=".00588 .00584 .01292" condim="6"/>
@@ -272,8 +272,8 @@
 							<body name="left_lfmetacarpal" pos="-0.01498 0 0.0031">
 								<joint name="robot:left_lf_meta" type="hinge" pos="0 0 0" axis="-0.571 0 0.821" range="0 40" stiffness=".01" damping=".001" armature="0.0001"/>
 								<site name="torque_left_lf_meta" type="sphere" size="0.002" pos="0 0 0" group="4"/>
-								<geom type="box" pos="-.00883 0 0.00517" size=".00508 .00584 .01292" condim="6"/>
-								<geom type="cylinder" pos="-.00883 0 .01809" size=".00584 .005" euler="0 90 0" condim="6"/>
+								<geom type="box" pos="-.00883 0 0.00517" size=".00508 .00584 .01292" condim="6" contype="4" conaffinity="25"/>
+								<geom type="cylinder" pos="-.00883 0 .01809" size=".00584 .005" euler="0 90 0" condim="6" contype="4" conaffinity="25"/>
 								<!--Proximal-->
 								<body name="left_lfknuckle" pos="-0.00849 0 0.02273">
 									<joint name="robot:left_lf_side" type="hinge" pos="0 0 0" axis="0 1 0" range="-25 25" stiffness="0.003" damping="0.001" armature="0.0001"/>
@@ -300,7 +300,7 @@
 								<joint name="robot:left_th_adduction" type="hinge" pos="0 0 0" axis="-1 2 0" range="-60 0" springref="-35" stiffness="0.004" damping="0.001" armature="0.0001"/>
 								<joint name="robot:left_th_rot" type="hinge" pos="0 0 0" axis="0 0 -1" range="-20 25" springref="0" stiffness="0.001" damping="0.001" armature="0.0001"/>
 								<site name="torque_left_th_base" type="sphere" size="0.002" pos="0 0 0" group="4"/>
-								<geom type="capsule" pos="0 0 .01027" size=".00736 .01027" condim="6" contype="2" conaffinity="3"/>
+								<geom type="capsule" pos="0 0 .01027" size=".00736 .01027" condim="6" contype="4" conaffinity="25"/>
 								<!--Hub-->
 								<body name="left_thhub" pos="0 0 0.02125">
 									<joint name="robot:left_th_pivot" type="hinge" pos="0 0 0" axis="-1 0 0" range="-15 15" springref="0" stiffness="0.002" damping="0.001" armature="0.0001"/>

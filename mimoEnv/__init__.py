@@ -8,7 +8,7 @@ register(id='MIMoBench-v0',
 
 register(id='MIMoV2Demo-v0',
          entry_point='mimoEnv.envs:MIMoV2DemoEnv',
-         max_episode_steps=500,
+         max_episode_steps=6000,
          )
 
 register(id='MIMoShowroom-v0',
@@ -29,4 +29,9 @@ register(id='MIMoStandup-v0',
 register(id='MIMoSelfBody-v0',
          entry_point='mimoEnv.envs:MIMoSelfBodyEnv',
          max_episode_steps=500, 
+         )
+
+register(id='MIMoCatch-v0',
+         entry_point='mimoEnv.envs:MIMoCatchEnv',
+         max_episode_steps=400,
          )
