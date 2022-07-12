@@ -11,6 +11,7 @@ import time
 # Transform observations such that muscle information gets added correctly to MIMo
 
 
+# MuJoCo internal parameters that are used to compute muscle properties (FL, FV, FP, curves)
 LMAX = 1.6
 LMIN = 0.5
 FVMAX = 1.2
@@ -328,5 +329,6 @@ if __name__== '__main__':
     # Not tuned well, goes crazy
     #ENV = "HumanoidStandup-v2"
     env = gym.make(ENV)
-    run_env(env, render=False)
+    env = MuscleWrapper(env)
+    run_env(env, render=True)
 
