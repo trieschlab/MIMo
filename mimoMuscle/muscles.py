@@ -124,9 +124,9 @@ class MuscleWrapper(gym.Wrapper):
     call if that doesn't work out.
     """
 
-    #def __init__(self, *args, **kwargs):
-    #    super().__init__(*args, **kwargs)
-    #    self._set_muscles()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._set_muscles()
 
     def step(self, action):
         action = self._compute_muscle_action(action)
@@ -134,8 +134,6 @@ class MuscleWrapper(gym.Wrapper):
         return self._add_muscle_state(state), reward, done, info
 
     def reset(self, *args, **kwargs):
-        if not hasattr(self, 'muscle_lengths'):
-            self._set_muscles()
         state = super().reset(*args, **kwargs)
         return self._add_muscle_state(state)
 
@@ -146,12 +144,12 @@ class MuscleWrapper(gym.Wrapper):
         will be replaced by muscles. This also multiplies the action space by 2,
         because we have 2 antagonistic muscles per joint.
         """
-        self._set_action_space()
-        self._set_observation_space()
         self._compute_parametrization()
         self._set_max_forces()
-        self._set_initial_muscle_state()
         self.unwrapped.do_simulation = self.do_simulation
+        self._set_action_space()
+        self._set_initial_muscle_state()
+        self._set_observation_space()
 
     def _set_max_forces(self):
         self.maximum_isometric_forces = self.sim.model.actuator_gear[:, 0].copy()
@@ -294,20 +292,8 @@ class MuscleWrapper(gym.Wrapper):
         )
 
     def _set_observation_space(self):
-        obs = self.env.reset()
+        obs = self.reset()
         self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=obs.shape)
-
-    #@property
-    #def observation_space(self):
-    #    if not hasattr(self, 'muscle_lengths'):
-    #        self._set_muscles()
-    #        obs = self.env.reset()
-    #        self._observation_space = gym.spaces.Box(-np.inf, np.inf, shape=obs.shape)
-    #    return self._observation_space
-
-    #@observation_space.setter
-    #def observation_space(self, val):
-    #    self._observation_space = val
 
     @property
     def muscle_forces(self):
@@ -352,16 +338,20 @@ if __name__== '__main__':
     # Not tuned well, goes crazy
     #ENV = "HumanoidStandup-v2"
     env = gym.make(ENV)
-    print('Before')
+    print('Before wrapper')
+    print('Action space:')
     print(env.action_space.shape)
+    print('Observation space:')
     print(env.observation_space.shape)
     obs = env.reset()
-    print(f'{obs.shape=}')
+    print(f'Real observation shape: {obs.shape=}')
     env = MuscleWrapper(env)
-    print('After')
+    print('After wrapper')
+    print('Action space:')
     print(env.action_space.shape)
+    print('Observation space:')
     print(env.observation_space.shape)
     obs = env.reset()
-    print(f'{obs.shape=}')
+    print(f'Real observation shape: {obs.shape=}')
     run_env(env, render=False)
 
