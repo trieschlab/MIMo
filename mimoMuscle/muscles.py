@@ -124,14 +124,20 @@ class MuscleWrapper(gym.Wrapper):
     call if that doesn't work out.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._set_muscles()
+    #def __init__(self, *args, **kwargs):
+    #    super().__init__(*args, **kwargs)
+    #    self._set_muscles()
 
     def step(self, action):
         action = self._compute_muscle_action(action)
         state, reward, done, info = self.env.step(action)
         return self._add_muscle_state(state), reward, done, info
+
+    def reset(self, *args, **kwargs):
+        if not hasattr(self, 'muscle_lengths'):
+            self._set_muscles()
+        state = super().reset(*args, **kwargs)
+        return self._add_muscle_state(state)
 
     def _set_muscles(self):
         """
@@ -143,8 +149,8 @@ class MuscleWrapper(gym.Wrapper):
         self._set_action_space()
         self._set_observation_space()
         self._compute_parametrization()
-        self._set_initial_muscle_state()
         self._set_max_forces()
+        self._set_initial_muscle_state()
         self.unwrapped.do_simulation = self.do_simulation
 
     def _set_max_forces(self):
@@ -157,6 +163,8 @@ class MuscleWrapper(gym.Wrapper):
         Only works with action space shape if we have adjusted it beforehand.
         """
         self.activity = np.zeros(shape=self.action_space.shape)
+        self.prev_action = np.zeros(self.action_space.shape)
+        self._update_muscle_state()
 
     def do_simulation(self, ctrl, n_frames):
         self.sim.data.ctrl[:] = ctrl
@@ -182,6 +190,12 @@ class MuscleWrapper(gym.Wrapper):
             dtype=np.float32,
         ).copy()
 
+    def _update_muscle_state(self):
+        self._update_activity()
+        self._update_virtual_lengths()
+        self._update_virtual_velocities()
+        self._update_torque()
+
     def _compute_muscle_action(self, action=None, update_action=True):
         """
         Take in the muscle action, compute all virtual quantities and return the correct torques.
@@ -189,10 +203,7 @@ class MuscleWrapper(gym.Wrapper):
         assert not (update_action and action is None)
         if update_action:
             self.prev_action = np.clip(action, 0, 1).copy()
-        self._update_activity()
-        self._update_virtual_lengths()
-        self._update_virtual_velocities()
-        self._update_torque()
+        self._update_muscle_state()
         self._apply_torque()
         return np.ones_like(self.joint_torque)
 
@@ -286,6 +297,18 @@ class MuscleWrapper(gym.Wrapper):
         obs = self.env.reset()
         self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=obs.shape)
 
+    #@property
+    #def observation_space(self):
+    #    if not hasattr(self, 'muscle_lengths'):
+    #        self._set_muscles()
+    #        obs = self.env.reset()
+    #        self._observation_space = gym.spaces.Box(-np.inf, np.inf, shape=obs.shape)
+    #    return self._observation_space
+
+    #@observation_space.setter
+    #def observation_space(self, val):
+    #    self._observation_space = val
+
     @property
     def muscle_forces(self):
         return np.concatenate(
@@ -329,6 +352,16 @@ if __name__== '__main__':
     # Not tuned well, goes crazy
     #ENV = "HumanoidStandup-v2"
     env = gym.make(ENV)
+    print('Before')
+    print(env.action_space.shape)
+    print(env.observation_space.shape)
+    obs = env.reset()
+    print(f'{obs.shape=}')
     env = MuscleWrapper(env)
-    run_env(env, render=True)
+    print('After')
+    print(env.action_space.shape)
+    print(env.observation_space.shape)
+    obs = env.reset()
+    print(f'{obs.shape=}')
+    run_env(env, render=False)
 
