@@ -15,7 +15,6 @@ in :data:`REACH_XML`.
 """
 import os
 import numpy as np
-import copy
 import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS_V2
@@ -94,6 +93,7 @@ class MIMoCatchEnv(MIMoEnv):
             reward = -1
 
         if self.action_penalty:
+            # TODO: Use motor torque instead of just control input
             reward -= 0.5 * np.square(self.sim.data.ctrl).sum() / self.action_space.shape[0]
 
         if self._is_success(achieved_goal, desired_goal):
@@ -196,3 +196,16 @@ class MIMoCatchEnv(MIMoEnv):
 
     def _currently_in_contact(self):
         return self.in_contact_past[self.steps % 100]
+
+    def _viewer_setup(self):
+        """Initial configuration of the viewer. Can be used to set the camera position,
+        for example.
+        """
+        self.viewer.cam.trackbodyid = 0  # id of the body to track
+        self.viewer.cam.distance = .5  # how much you "zoom in", model.stat.extent is the max limits of the arena smaller is closer
+        print(self.viewer.cam.lookat)
+        self.viewer.cam.lookat[0] = 0.15  # x,y,z offset from the object (works if trackbodyid=-1)
+        self.viewer.cam.lookat[1] = -0.04
+        self.viewer.cam.lookat[2] = 0.6  # 0.24 -0.04 .8
+        self.viewer.cam.elevation = -30
+        self.viewer.cam.azimuth = 120

@@ -23,9 +23,10 @@ import gym
 import time
 import mimoEnv
 import argparse
+import cv2
 
 
-def test(env, test_for=1000, model=None):
+def test(env, test_for=1000, model=None, render_video=False):
     """ Testing function to view the behaviour of a model.
 
     Args:
@@ -37,6 +38,9 @@ def test(env, test_for=1000, model=None):
     """
     env.seed(42)
     obs = env.reset()
+    images = []
+    im_counter = 0
+
     for idx in range(test_for):
         if model is None:
             print("No model, taking random actions")
@@ -44,10 +48,24 @@ def test(env, test_for=1000, model=None):
         else:
             action, _ = model.predict(obs)
         obs, _, done, _ = env.step(action)
-        env.render()
+        #env.render()
+        if render_video:
+            img = env.render(mode="rgb_array")
+            images.append(img)
         if done:
             time.sleep(1)
             obs = env.reset()
+            if render_video:
+                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                video = cv2.VideoWriter('catch_{}.avi'.format(im_counter), fourcc, 50, (500, 500))
+                for img in images:
+                    video.write(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+                cv2.destroyAllWindows()
+                video.release()
+
+                images = []
+                im_counter += 1
+
     env.reset()
 
 
@@ -84,6 +102,8 @@ def main():
                         help='Name of model to save')
     parser.add_argument('--action_penalty', action='store_true',
                         help='Adds a penalty for high-control actions if true.')
+    parser.add_argument('--render_video', action='store_true',
+                        help='Adds a penalty for high-control actions if true.')
     
     args = parser.parse_args()
     algorithm = args.algorithm
@@ -93,6 +113,7 @@ def main():
     train_for = args.train_for
     test_for = args.test_for
     action_penalty = args.action_penalty
+    render_video = args.render_video
 
     if algorithm == 'PPO':
         from stable_baselines3 import PPO as RL
@@ -112,7 +133,7 @@ def main():
     if algorithm is None:
         model = None
     elif load_model:
-        model = RL.load("models/catch" + load_model, env)
+        model = RL.load(load_model, env)
     else:
         model = RL("MultiInputPolicy", env, tensorboard_log="models/tensorboard_logs/" + save_model, verbose=1)
 
@@ -123,9 +144,9 @@ def main():
         train_for_iter = min(train_for, save_every)
         train_for = train_for - train_for_iter
         model = model.learn(total_timesteps=train_for_iter, reset_num_timesteps=False)
-        model.save("models/catch" + save_model + "_" + str(counter))
+        model.save("models/catch/" + save_model + "/model_" + str(counter))
     
-    test(env, model=model, test_for=test_for)
+    test(env, model=model, test_for=test_for, render_video=render_video)
 
 
 if __name__ == '__main__':
