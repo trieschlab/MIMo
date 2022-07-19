@@ -6,12 +6,11 @@ import time
 
 
 # TODO Overall: tune parameters (min-max angles and lengths, velocities, forces
-# make sure actuated joints are all sequentially in qpos to call data.qpos[:model.nu] for MIMo
-# Alternatively: Call a mujoco function that gives you actuated joints directly
 # Transform observations such that muscle information gets added correctly to MIMo
 
 
 # MuJoCo internal parameters that are used to compute muscle properties (FL, FV, FP, curves)
+# These would be found in a GENERAL actuator
 LMAX = 1.6
 LMIN = 0.5
 FVMAX = 1.2
@@ -22,6 +21,9 @@ FMAX = 50
 
 
 def vectorized(fn):
+    """
+    Simple vector wrapper for functions that clearly came from C
+    """
     def new_fn(vec):
         if hasattr(vec, "__iter__"):
             ret = []
@@ -39,7 +41,6 @@ def FL(lce):
     """
     Force length
     """
-    # return 1.0
     return bump(lce, LMIN, 1, LMAX) + 0.15 * bump(lce, LMIN, 0.5 * (LMIN + 0.95), 0.95)
 
 
@@ -118,10 +119,7 @@ def force_vel(velocity, c, VMAX, FVMAX):
 
 class MuscleWrapper(gym.Wrapper):
     """
-    Temporary wrapper class that shows how muscles can be activated in an environment.
-    We assume that all actuated joints come first in data.qpos such that we can call
-    data.qpos[:model.nu] to get them. There are more complex mujoco functions we can
-    call if that doesn't work out.
+    Wrapper class that shows how muscles can be activated in an environment.
     """
 
     def __init__(self, *args, **kwargs):
@@ -152,8 +150,10 @@ class MuscleWrapper(gym.Wrapper):
         self._set_observation_space()
 
     def _set_max_forces(self):
+        """
+        Collect maximum isometric forces from mujoco actuator gears.
+        """
         self.maximum_isometric_forces = self.sim.model.actuator_gear[:, 0].copy()
-        self.sim.model.actuator_gear[:, 0] = 1.0
 
     def _set_initial_muscle_state(self):
         """
@@ -165,10 +165,13 @@ class MuscleWrapper(gym.Wrapper):
         self._update_muscle_state()
 
     def do_simulation(self, ctrl, n_frames):
+        """
+        Overwrite do_simulation because we need to be able to call the muscle model
+        at each physical time step, not only when the policy is called.
+        """
         self.sim.data.ctrl[:] = ctrl
         for i in range(n_frames):
             self._compute_muscle_action(update_action=False)
-            # print(self.muscle_activations)
             self.sim.step()
 
     def _add_muscle_state(self, state):
@@ -292,6 +295,9 @@ class MuscleWrapper(gym.Wrapper):
         )
 
     def _set_observation_space(self):
+        """
+        Observation space gets shape from reset function, don't need to set it manually.
+        """
         obs = self.reset()
         self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=obs.shape)
 
