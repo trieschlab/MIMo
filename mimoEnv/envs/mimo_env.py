@@ -286,7 +286,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             raise IOError("File {} does not exist".format(fullpath))
 
         model = mujoco_py.load_model_from_path(fullpath)
-        self.sim = mujoco_py.MjSim(model, nsubsteps=n_substeps)
+        self.n_substeps = n_substeps
+        self.sim = mujoco_py.MjSim(model)
         self.sim.forward()
         self.viewer = None
         self._viewers = {}
@@ -331,6 +332,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
                 -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32")
 
         self.observation_space = spaces.Dict(spaces_dict)
+
+    @property
+    def dt(self):
+        return self.sim.model.opt.timestep * self.n_substeps
 
     def _env_setup(self, initial_qpos):
         """ This function initializes all the sensory components of the model.
@@ -400,6 +405,14 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.vestibular = SimpleVestibular(self, vestibular_params)
 
+    def do_simulation(self, action, n_frames):
+        """ Step simulation forward for n_frames number of steps.
+
+        """
+        self._set_action(action)
+        for _ in range(n_frames):
+            self.sim.step()
+
     def step(self, action):
         """ The step function for the simulation.
 
@@ -418,12 +431,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         action = np.clip(action, self.action_space.low, self.action_space.high)
 
-        # If muscles:
-        #   bla
-        # else:
-        self._set_action(action)
-
-        self.sim.step()
+        self.do_simulation(action, self.n_substeps)
         self._step_callback()
         obs = self._get_obs()
 
