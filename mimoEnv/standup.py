@@ -117,7 +117,7 @@ def main():
         counter += 1
         train_for_iter = min(train_for, save_every)
         train_for = train_for - train_for_iter
-        model.learn(total_timesteps=train_for_iter)
+        model.learn(total_timesteps=train_for_iter, reset_num_timesteps=False)
         model.save("models/standup" + save_model + "_" + str(counter))
 
     test(env, model=model, test_for=test_for)
