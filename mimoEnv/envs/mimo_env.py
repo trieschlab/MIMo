@@ -7,6 +7,8 @@ import os
 import numpy as np
 import mujoco_py
 import copy
+import glfw
+import sys
 
 from gym import spaces, utils
 from gym.envs.robotics import robot_env
@@ -168,6 +170,10 @@ DEFAULT_PROPRIOCEPTION_PARAMS = {
 :meta hide-value:
 """
 
+DEFAULT_SIZE = 500
+""" Default window size for gym rendering functions.
+"""
+
 
 class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     """ This is the abstract base class for all MIMo experiments.
@@ -291,6 +297,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.sim.forward()
         self.viewer = None
         self._viewers = {}
+        self.offscreen_context = None
 
         self.metadata = {
             "render.modes": ["human", "rgb_array"],
@@ -302,17 +309,16 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.initial_state = copy.deepcopy(self.sim.get_state())
 
         # Face emotions:
-        self.facial_expressions = {}
-        for emote in EMOTES:
-            tex_name = EMOTES[emote]
-            tex_id = mimo_utils.texture_name2id(self.sim.model, tex_name)
-            self.facial_expressions[emote] = tex_id
-        head_material_name = "head"
-        self._head_material_id = mimo_utils.material_name2id(self.sim.model, head_material_name)
+        self.facial_expressions = None
+        self._head_material_id = None
+        self._set_facial_expressions(EMOTES)
 
         self.goal = self._sample_goal()
-        n_actions = len([name for name in self.sim.model.actuator_names if name.startswith("act:")])
-        self.action_space = spaces.Box(-1.0, 1.0, shape=(n_actions,), dtype="float32")
+        # Action space
+        self.action_space = None
+        self.mimo_actuators = None
+        self._set_action_space()
+
         obs = self._get_obs()
         # Observation spaces
         spaces_dict = {
@@ -336,6 +342,25 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     @property
     def dt(self):
         return self.sim.model.opt.timestep * self.n_substeps
+
+    def _set_action_space(self):
+        actuators = [i for i, name in enumerate(self.sim.model.actuator_names) if name.startswith("act:")]
+        self.mimo_actuators = np.asarray(actuators)
+        #n_actions = self.mimo_actuators.shape[0]
+        bounds = self.sim.model.actuator_ctrlrange.copy().astype(np.float32)[self.mimo_actuators]
+        low, high = bounds.T
+        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+        print(self.mimo_actuators)
+        print(self.action_space)
+
+    def _set_facial_expressions(self, emotion_textures):
+        self.facial_expressions = {}
+        for emote in emotion_textures:
+            tex_name = emotion_textures[emote]
+            tex_id = mimo_utils.texture_name2id(self.sim.model, tex_name)
+            self.facial_expressions[emote] = tex_id
+        head_material_name = "head"
+        self._head_material_id = mimo_utils.material_name2id(self.sim.model, head_material_name)
 
     def _env_setup(self, initial_qpos):
         """ This function initializes all the sensory components of the model.
@@ -429,8 +454,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             A tuple `(observations, reward, done, info)` as described above, with info containing extra information,
             such as whether we reached a success state specifically.
         """
-        action = np.clip(action, self.action_space.low, self.action_space.high)
-
         self.do_simulation(action, self.n_substeps)
         self._step_callback()
         obs = self._get_obs()
@@ -587,6 +610,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Args:
             action (numpy.ndarray): A numpy array with control values.
         """
+        action = np.clip(action, self.action_space.low, self.action_space.high)
         ctrlrange = self.sim.model.actuator_ctrlrange
         actuation_range = (ctrlrange[:, 1] - ctrlrange[:, 0]) / 2.0
         actuation_center = (ctrlrange[:, 1] + ctrlrange[:, 0]) / 2.0
@@ -688,3 +712,71 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
                 assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
         """
         raise NotImplementedError
+
+    # ====================== gym rendering =======================================================
+
+    def _get_viewer(self, mode: str):
+        """ Handles render contexts.
+
+        Args:
+            mode: One of 'human' or 'rgb_array'. If 'rgb_array' an offscreen render context is used, otherwise we render
+            to an interactive viewer window.
+
+        """
+        self.viewer = self._viewers.get(mode)
+        if self.viewer is None:
+            if mode == "human":
+                self.viewer = mujoco_py.MjViewer(self.sim)
+            elif mode == "rgb_array":
+                self.viewer = mujoco_py.MjRenderContextOffscreen(self.sim, device_id=-1)
+            self._viewer_setup()
+            self._viewers[mode] = self.viewer
+        return self.viewer
+
+    def _swap_context(self, window):
+        """ Swaps the current render context to 'window'
+
+        Args:
+            window: The new render context.
+
+        """
+        glfw.make_context_current(window)
+
+    def close(self):
+        if self.viewer is not None:
+            # self.viewer.finish()
+            self.viewer = None
+            self._viewers = {}
+            self.offscreen_context = None
+
+    def render(self, mode="human", width=DEFAULT_SIZE, height=DEFAULT_SIZE):
+        self._render_callback()
+        if mode == "rgb_array":
+
+            if self.offscreen_context is None:
+                if sys.platform != "darwin":
+                    self.offscreen_context = mujoco_py.GlfwContext(offscreen=True)
+                else:
+                    self.offscreen_context = self._get_viewer('rgb_array').opengl_context
+
+            if self.sim._render_context_window is not None:
+                self._swap_context(self.offscreen_context.window)
+
+            self._get_viewer(mode).render(width, height)
+            # window size used for old mujoco-py:
+            data = self._get_viewer(mode).read_pixels(width, height, depth=False)
+
+            if self.sim._render_context_window is not None:
+                self._swap_context(self.sim._render_context_window.window)
+
+            # original image is upside-down, so flip it
+            return data[::-1, :, :]
+
+        elif mode == "human":
+            self._get_viewer(mode).render()
+
+    def _viewer_setup(self):
+        """Initial configuration of the viewer. Can be used to set the camera position,
+        for example.
+        """
+        pass
