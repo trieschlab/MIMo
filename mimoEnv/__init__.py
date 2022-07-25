@@ -30,3 +30,8 @@ register(id='MIMoSelfBody-v0',
          entry_point='mimoEnv.envs:MIMoSelfBodyEnv',
          max_episode_steps=500, 
          )
+
+register(id='MIMoMuscle-v0',
+         entry_point='mimoEnv.envs:MIMoMuscleDemoEnv',
+         max_episode_steps=500,
+         )

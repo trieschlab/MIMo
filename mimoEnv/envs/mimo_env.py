@@ -305,6 +305,12 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         }
 
         self.seed()
+        # Action space
+        self.action_space = None
+        self.mimo_actuators = None
+        self._get_actuators()
+        self._set_action_space()
+
         self._env_setup(initial_qpos=initial_qpos)
         self.initial_state = copy.deepcopy(self.sim.get_state())
 
@@ -314,10 +320,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self._set_facial_expressions(EMOTES)
 
         self.goal = self._sample_goal()
-        # Action space
-        self.action_space = None
-        self.mimo_actuators = None
-        self._set_action_space()
 
         obs = self._get_obs()
         # Observation spaces
@@ -343,15 +345,18 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def dt(self):
         return self.sim.model.opt.timestep * self.n_substeps
 
-    def _set_action_space(self):
+    @property
+    def n_actuators(self):
+        return self.mimo_actuators.shape[0]
+
+    def _get_actuators(self):
         actuators = [i for i, name in enumerate(self.sim.model.actuator_names) if name.startswith("act:")]
         self.mimo_actuators = np.asarray(actuators)
-        #n_actions = self.mimo_actuators.shape[0]
+
+    def _set_action_space(self):
         bounds = self.sim.model.actuator_ctrlrange.copy().astype(np.float32)[self.mimo_actuators]
         low, high = bounds.T
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
-        print(self.mimo_actuators)
-        print(self.action_space)
 
     def _set_facial_expressions(self, emotion_textures):
         self.facial_expressions = {}
@@ -611,13 +616,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             action (numpy.ndarray): A numpy array with control values.
         """
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        ctrlrange = self.sim.model.actuator_ctrlrange
-        actuation_range = (ctrlrange[:, 1] - ctrlrange[:, 0]) / 2.0
-        actuation_center = (ctrlrange[:, 1] + ctrlrange[:, 0]) / 2.0
-        self.sim.data.ctrl[:] = actuation_center + action * actuation_range
-        self.sim.data.ctrl[:] = np.clip(
-            self.sim.data.ctrl, ctrlrange[:, 0], ctrlrange[:, 1]
-        )
+        self.sim.data.ctrl[self.mimo_actuators] = action
 
     def swap_facial_expression(self, emotion):
         """ Changes MIMos facial texture.

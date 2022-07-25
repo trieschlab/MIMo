@@ -17,6 +17,18 @@ MUJOCO_JOINT_SIZES = {
 """
 
 
+MUJOCO_DOF_SIZES = {
+    const.JNT_FREE: 6,
+    const.JNT_BALL: 3,
+    const.JNT_SLIDE: 1,
+    const.JNT_HINGE: 1,
+}
+""" Size of qvel entries for each joint type; free, ball, slide, hinge. 
+
+:meta hide-value:
+"""
+
+
 def rotate_vector(vector, rot_matrix):
     """ Rotates the vectors with the the rotation matrix.
 
@@ -209,6 +221,20 @@ def get_data_for_sensor(mujoco_model, mujoco_data, sensor_name):
     start = mujoco_model.sensor_adr[sensor_id]
     end = start + mujoco_model.sensor_dim[sensor_id]
     return mujoco_data.sensordata[start:end]
+
+
+def get_joint_qpos_addr(mujoco_model, joint_id):
+    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qpos = MUJOCO_JOINT_SIZES[joint_type]
+    return range(joint_qpos_addr, joint_qpos_addr + n_qpos)
+
+
+def get_joint_qvel_addr(mujoco_model, joint_id):
+    joint_qvel_addr = mujoco_model.jnt_dofadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qvel = MUJOCO_DOF_SIZES[joint_type]
+    return range(joint_qvel_addr, joint_qvel_addr + n_qvel)
 
 
 def _decode_name(mujoco_model, name_adr):
