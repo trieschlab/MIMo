@@ -1,6 +1,6 @@
 # MIMo
 
-<img src="https://github.com/Domattee/MIMo/blob/main/docs/source/imgs/showroom.png" width="400" align="right">
+<img src="/docs/source/imgs/showroom.png" width="400" align="right">
 
 MIMo is a platform for the research of the cognitive development of infants. It consists of an [OpenAI gym](https://github.com/openai/gym) environment using [MuJoCo](https://mujoco.readthedocs.io) for the physical simulation and multiple modules that can produce simulated sensory input for vision, touch, proprioception and the vestibular system.
 
@@ -42,3 +42,7 @@ We provide several sample environments with some simple tasks for demonstration 
   1. `reach` - A stripped down version where MIMo is tasked with reaching for a ball hovering in front of him. By default only the proprioceptive sensors are used. MIMo can only move his right arm and his head is manually fixed to track the ball. The initial position of both the ball and MIMo is slightly randomized.
   2. `standup` - MIMo is tasked with standing up. At the start he is in a low crouch with his hands gripping the bars of a crib. Proprioception and the vestibular sensors are included by default.
   3. `test` - This is a simple dummy environment set up to demonstrate and visualize most of the sensor modalities. MIMo is set to fall from a short height. During this, the visual and haptic outputs are rendered and saved to hard drive.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details

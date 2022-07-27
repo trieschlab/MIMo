@@ -4,6 +4,8 @@ The abstract base class is :class:`~mimoEnv.envs.mimo_env.MIMoEnv`. Default para
 are provided as well.
 """
 import os
+import sys
+import glfw
 import numpy as np
 import mujoco_py
 import copy
@@ -168,6 +170,10 @@ DEFAULT_PROPRIOCEPTION_PARAMS = {
 :meta hide-value:
 """
 
+DEFAULT_SIZE = 500
+""" Default window size for gym rendering functions.
+"""
+
 
 class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     """ This is the abstract base class for all MIMo experiments.
@@ -290,6 +296,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.sim.forward()
         self.viewer = None
         self._viewers = {}
+        self.offscreen_context = None
+        self._current_mode = None
 
         self.metadata = {
             "render.modes": ["human", "rgb_array"],
@@ -675,3 +683,94 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
                 assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
         """
         raise NotImplementedError
+
+    # ====================== gym rendering =======================================================
+
+    def _get_viewer(self, mode: str):
+        """ Handles render contexts.
+
+        Args:
+            mode: One of 'human' or 'rgb_array'. If 'rgb_array' an offscreen render context is used, otherwise we render
+            to an interactive viewer window.
+
+        """
+        self.viewer = self._viewers.get(mode)
+        if self.viewer is None:
+            if mode == "human":
+                self.viewer = mujoco_py.MjViewer(self.sim)
+            elif mode == "rgb_array":
+                if sys.platform != "darwin":
+                    self.offscreen_context = mujoco_py.GlfwContext(offscreen=True)
+                else:
+                    self.offscreen_context = self._get_viewer('rgb_array').opengl_context
+                self.viewer = mujoco_py.MjRenderContextOffscreen(self.sim, device_id=-1)
+            self._viewer_setup()
+            self._viewers[mode] = self.viewer
+        return self.viewer
+
+    def _swap_context(self, window):
+        """ Swaps the current render context to 'window'
+
+        Args:
+            window: The new render context.
+        """
+        glfw.make_context_current(window)
+
+    def close(self):
+        if self.viewer is not None:
+            # self.viewer.finish()
+            self.viewer = None
+            self._viewers = {}
+            self.offscreen_context = None
+
+    def render(self, mode="human", width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name: str = None, camera_id: int = None):
+        """ General rendering function for cameras or interactive environment.
+
+        Two modes: 'human' and 'rgb_array'. human renders an interactive window, while rgb array renders an image to an array
+        Parameters determine the size of the rendered image.
+        With mode 'rgb_array' we can also specify a camera by either name or id and then this camera is rendered to an image.
+
+        RGB mode:
+        The vertical field of view is defined in the scene xml, with the horizontal field of view determined
+        by the rendering resolution.
+
+        Args:
+            width: The width of the output image
+            height: The height of the output image
+            camera_name: The name of the camera that will be used for rendering.
+
+        Returns:
+            A numpy array with the containing the output image.
+        """
+        self._render_callback()
+
+        assert camera_name is None or camera_id is None, "only one of camera_name or camera_id can be supplied"
+        if camera_name is not None:
+            camera_id = self.sim.model.camera_name2id(camera_name)
+
+        # Make sure viewers and contexts are setup before we try to swap to/from nonexisting contexts
+        self._get_viewer(mode)
+
+        if mode == "rgb_array":
+            # Swap to offscreen context if necessary
+            if self._current_mode != "rgb_array":
+                self._swap_context(self.offscreen_context.window)
+            self._current_mode = "rgb_array"
+
+            self._get_viewer(mode).render(width, height, camera_id)
+            data = self._get_viewer(mode).read_pixels(width, height, depth=False)
+            # original image is upside-down, so flip it
+            return data[::-1, :, :]
+
+        elif mode == "human":
+            # Swap to onscreen context if necessary
+            if self._current_mode != "human":
+                self._swap_context(self.sim._render_context_window.window)
+            self._current_mode = "human"
+            self._get_viewer(mode).render()
+
+    def _viewer_setup(self):
+        """Initial configuration of the viewer. Can be used to set the camera position,
+        for example.
+        """
+        pass
