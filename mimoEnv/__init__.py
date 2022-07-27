@@ -11,6 +11,11 @@ register(id='MIMoV2Demo-v0',
          max_episode_steps=6000,
          )
 
+register(id='MIMoV2MulticamDemo-v0',
+         entry_point='mimoEnv.envs:MIMoMultiCamEnv',
+         max_episode_steps=6000,
+         )
+
 register(id='MIMoShowroom-v0',
          entry_point='mimoEnv.envs:MIMoShowroomEnv',
          max_episode_steps=500,
