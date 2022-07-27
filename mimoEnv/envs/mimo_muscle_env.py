@@ -295,7 +295,7 @@ class MIMoMuscleEnv(MIMoEnv):
         # TODO scale appropriately to equal max isometric forces, this FMAX value was taken randomly
         # TODO could basically just divide somewhere by moment again to get FMAX back as maximumisometricforce
         """
-        self.sim.model.actuator_gear[:, 0] = self.joint_torque.copy() * FMAX
+        self.sim.model.actuator_gear[self.mimo_actuators, 0] = self.joint_torque.copy() * FMAX
 
     @property
     def muscle_forces(self):
@@ -325,11 +325,6 @@ class MIMoMuscleEnv(MIMoEnv):
 
     def _set_action(self, action):
         """ Set the control inputs for the next step.
-
-        Control values are clipped to the control range limits defined the MuJoCo xmls and normalized to be even in
-        both directions, i.e. an input of 0 corresponds to the center of the control range, rather than the default or
-        neutral control position. The control ranges for the MIMo xmls are set up to be symmetrical, such that an input
-        of 0 corresponds to no motor torque.
 
         Args:
             action (numpy.ndarray): A numpy array with control values.
