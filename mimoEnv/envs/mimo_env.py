@@ -479,7 +479,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def _reset_sim(self):
         """Resets a simulation and indicates whether or not it was successful.
 
-        Resets the simulation state and returns whether or not the reset was successfull. This is useful if your
+        Resets the simulation state and returns whether or not the reset was successful. This is useful if your
         resetting function has a randomized component that can end up in an illegal state. In this case this function
         will be called again until a valid state is reached.
 
@@ -686,11 +686,11 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     # ====================== gym rendering =======================================================
 
-    def _get_viewer(self, mode: str):
+    def _get_viewer(self, mode):
         """ Handles render contexts.
 
         Args:
-            mode: One of 'human' or 'rgb_array'. If 'rgb_array' an offscreen render context is used, otherwise we render
+            mode (str): One of "human" or "rgb_array". If "rgb_array" an offscreen render context is used, otherwise we render
             to an interactive viewer window.
 
         """
@@ -717,30 +717,32 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         glfw.make_context_current(window)
 
     def close(self):
+        """ Removes all references to render contexts, etc..."""
         if self.viewer is not None:
             # self.viewer.finish()
             self.viewer = None
             self._viewers = {}
             self.offscreen_context = None
 
-    def render(self, mode="human", width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name: str = None, camera_id: int = None):
+    def render(self, mode="human", width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name=None, camera_id=None):
         """ General rendering function for cameras or interactive environment.
 
-        Two modes: 'human' and 'rgb_array'. human renders an interactive window, while rgb array renders an image to an array
-        Parameters determine the size of the rendered image.
-        With mode 'rgb_array' we can also specify a camera by either name or id and then this camera is rendered to an image.
-
-        RGB mode:
-        The vertical field of view is defined in the scene xml, with the horizontal field of view determined
-        by the rendering resolution.
+        There are two modes, "human" and "rgb_array". In "human" we render to an interactive window, ignoring all other
+        parameters. Width and size are determined by the size of the window (which can be resized).
+        In mode "rgb_array" we return the rendered image as a numpy array. The size of the image is determined by the
+        'width' and 'height' parameters. A specific camera can be rendered by providing either its name or its ID. By
+        default the standard Mujoco free cam is used. The vertical field of view for each camera is defined in the
+        scene xml, with the horizontal field of view determined by the rendering resolution.
 
         Args:
-            width: The width of the output image
-            height: The height of the output image
-            camera_name: The name of the camera that will be used for rendering.
+            mode (str): One of either "human" or "rgb_array".
+            width (int): The width of the output image
+            height (int): The height of the output image
+            camera_name (str): The name of the camera that will be rendered. Default None.
+            camera_id (int): The ID of the camera that will be rendered. Default None.
 
         Returns:
-            A numpy array with the containing the output image.
+            A numpy array with the output image or None if mode is 'human'.
         """
         self._render_callback()
 
