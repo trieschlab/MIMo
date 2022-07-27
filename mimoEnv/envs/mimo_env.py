@@ -727,15 +727,15 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def render(self, mode="human", width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name=None, camera_id=None):
         """ General rendering function for cameras or interactive environment.
 
-        There are two modes, "human" and "rgb_array". In "human" we render to an interactive window, ignoring all other
+        There are two modes, 'human' and 'rgb_array'. In 'human' we render to an interactive window, ignoring all other
         parameters. Width and size are determined by the size of the window (which can be resized).
-        In mode "rgb_array" we return the rendered image as a numpy array. The size of the image is determined by the
-        'width' and 'height' parameters. A specific camera can be rendered by providing either its name or its ID. By
+        In mode 'rgb_array' we return the rendered image as a numpy array. The size of the image is determined by the
+        `width` and `height` parameters. A specific camera can be rendered by providing either its name or its ID. By
         default the standard Mujoco free cam is used. The vertical field of view for each camera is defined in the
         scene xml, with the horizontal field of view determined by the rendering resolution.
 
         Args:
-            mode (str): One of either "human" or "rgb_array".
+            mode (str): One of either 'human' or 'rgb_array'.
             width (int): The width of the output image
             height (int): The height of the output image
             camera_name (str): The name of the camera that will be rendered. Default None.
@@ -746,7 +746,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self._render_callback()
 
-        assert camera_name is None or camera_id is None, "only one of camera_name or camera_id can be supplied"
+        assert camera_name is None or camera_id is None, "Only one of camera_name or camera_id can be supplied!"
         if camera_name is not None:
             camera_id = self.sim.model.camera_name2id(camera_name)
 
