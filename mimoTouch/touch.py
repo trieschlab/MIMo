@@ -8,6 +8,7 @@ of a contact penetrating through to sensors on the opposite side of the sensing 
 
 Both of the implementations also have functions for visualizing the touch sensations.
 """
+import glob, os
 
 import math
 from collections import deque
@@ -27,6 +28,8 @@ from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spre
 #: A key to identify the geom type ids used by MuJoCo.
 from mimoTouch.sensormeshes import mesh_box, mesh_sphere, mesh_capsule, mesh_cylinder, mesh_ellipsoid
 
+import pandas as pd
+import os
 
 class Touch:
     """ Abstract base class for the touch system.
@@ -73,13 +76,15 @@ class Touch:
     #: A list of valid surface response functions.
     VALID_RESPONSE_FUNCTIONS = []
 
-    def __init__(self, env, touch_params):
+    def __init__(self, env, touch_params, pain_params):
         self.env = env
 
         self.sensor_scales = {}
+        self.pain_thresholds = {}
         for body_name in touch_params["scales"]:
             body_id = env.sim.model.body_name2id(body_name)
             self.sensor_scales[body_id] = touch_params["scales"][body_name]
+            self.pain_thresholds[body_id] = pain_params["scales"][body_name]
 
         # Get all information for the touch force function: Function name, reference to function, output size
         self.touch_type = touch_params["touch_function"]
@@ -95,6 +100,7 @@ class Touch:
 
         self.sensor_outputs = {}
         self.sensor_positions = {}
+        self.pain_outputs = {}
 
     def get_touch_obs(self):
         """ Produces the current touch output.
@@ -148,9 +154,9 @@ class DiscreteTouch(Touch):
 
     VALID_RESPONSE_FUNCTIONS = ["nearest", "spread_linear"]
 
-    def __init__(self, env, touch_params):
+    def __init__(self, env, touch_params, pain_params):
 
-        super().__init__(env, touch_params)
+        super().__init__(env, touch_params, pain_params)
         self.m_data = env.sim.data
         self.m_model = env.sim.model
 
@@ -162,6 +168,9 @@ class DiscreteTouch(Touch):
 
         # Get touch obs once to ensure all output arrays are initialized
         self.get_touch_obs()
+
+        #maybe do same
+        self.get_pain_obs()
         
     def add_body(self, body_id: int = None, body_name: str = None, scale: float = math.inf):
         """ Adds sensors to all geoms belonging to the given body.
@@ -683,10 +692,91 @@ class DiscreteTouch(Touch):
         for contact_id, geom_id, forces in contact_tuples:
             # At this point we already have the forces for each contact, now we must attach/spread them to sensor
             # points, based on the adjustment function
-            self.response_function(contact_id, geom_id, forces)
+            self.response_function(contact_id, geom_id, forces) # After this the sensor outputs have been filled
 
-        sensor_obs = self.flatten_sensor_dict(self.sensor_outputs)
+        sensor_obs = self.flatten_sensor_dict(self.sensor_outputs) # HIER WERDEN DIE SACHEN CONCATENATED UND INS FINALE ARRAY
         return sensor_obs
+
+    def get_pain_obs(self):
+        """ Produces the current pain sensor outputs.
+
+        The indices of the output dictionary :attr:`~mimoTouch.touch.DiscreteTouch.pain_outputs` and the sensor
+        dictionary :attr:`.sensor_positions` are aligned, such that the ith sensor on `geom` has position
+        ``.sensor_positions[geom][i]`` and pain in ``.pain_outputs[geom][i]``.
+
+        Returns:
+            A numpy array containing all the pain sensations.
+
+        """
+        self.pain_outputs = self.get_empty_pain_dict()  # Initialize output dictionary
+
+        self.pain_outputs = self.get_empty_pain_dict()
+        affected_geoms_intensity_1 = []
+        affected_geoms_intensity_2 = []
+        affected_geoms_intensity_3 = []
+        affected_geoms_intensity_4 = []
+        cwd = os.getcwd()
+        id_sphere = self.m_model.body_name2id("sphere_location")
+        pos_sphere = self.m_data.body_xpos[id_sphere]
+        #TODO: - get last diff before hitting mimo body (delta) and subtract/add delta to start pos
+        # have to obtain different delta for all
+        # also: look at difference between mimo - object for last timestep. Ideally this could be delta. Observe differences
+        print(f"Sphere loc: {pos_sphere}")
+        #df = pd.read_excel("ts_00375.ods", index_col=0, dtype={'Bodypart': str, 'Force': float}, engine="odf")
+        for geom_id, geom_sensor_values in self.sensor_outputs.items():
+            for i, sensor_vector in enumerate(geom_sensor_values):
+                force = self.get_force_from_force_vector(sensor_vector)
+                body_part = self.m_model.geom_bodyid[geom_id]
+                body_name = self.m_model.body_id2name(body_part)
+                if force > self.pain_thresholds[body_part]:
+                    print(f"Body Part: {body_part, body_name}, force: {force}, threshold: "
+                          f"{self.pain_thresholds[body_part]}")
+                    my_dict = {"Bodypart": body_name, "Force": force, }
+                    #df2 = pd.DataFrame.from_records(my_dict, index=[0])
+                    #df = pd.concat([df, df2], axis=0, ignore_index=True)
+                    vas_pain_score = min(force / self.pain_thresholds[body_part], 4)
+                    self.pain_outputs[geom_id][i] = vas_pain_score
+                    if vas_pain_score < 2:
+                        if geom_id not in affected_geoms_intensity_1:
+                            affected_geoms_intensity_1.append(geom_id)
+                    elif vas_pain_score < 3:
+                        if geom_id not in affected_geoms_intensity_2:
+                            affected_geoms_intensity_2.append(geom_id)
+                    elif vas_pain_score < 4:
+                        if geom_id not in affected_geoms_intensity_3:
+                            affected_geoms_intensity_3.append(geom_id)
+                    else:
+                        if geom_id not in affected_geoms_intensity_4:
+                            affected_geoms_intensity_4.append(geom_id)
+        #df.to_excel("ts_00375.ods", engine="odf")
+
+        pain_obs = self.flatten_sensor_dict(self.pain_outputs)
+
+        return pain_obs, affected_geoms_intensity_1, affected_geoms_intensity_2, \
+               affected_geoms_intensity_3, affected_geoms_intensity_4
+
+    def get_force_from_force_vector(self, sensor_vector):
+        """
+
+        Args:
+            sensor_vector:
+
+        Returns:
+
+        """
+        return np.sqrt(np.sum(np.square(sensor_vector)))
+
+    def get_empty_pain_dict(self):
+        """
+
+        Returns:
+
+        """
+        pain_outputs = {}
+        for geom_id in self.sensor_positions:
+            pain_outputs[geom_id] = np.full(self.get_sensor_count(geom_id), 0, dtype=np.float32)
+        return pain_outputs
+
 
     # =============== Force adjustment functions ======================================
     # =================================================================================

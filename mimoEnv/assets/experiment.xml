@@ -1,0 +1,48 @@
+<mujoco model="MIMo">
+
+  <compiler inertiafromgeom="true" angle="degree"/>
+  <option gravity="0 0 -9.81" timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
+  <size nconmax="1000" njmax="5000" nstack="10000000" nuser_cam="3"/>
+
+  <visual>
+    <map force="0.1" zfar="30" znear="0.005"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <quality shadowsize="4096"/>
+    <global offwidth="800" offheight="800"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
+    <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+    <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
+    <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
+
+    <texture name="crib" type="cube" builtin="flat" width="127" height="1278" rgb1="1 0.9 0.8" rgb2="1 1 1" markrgb="1 1 1"/>
+    <material name="crib" texture="crib" texuniform="true"/>
+  </asset>
+  <!-- Import everything except the kinematic tree -->
+  <include file="MIMo_meta.xml"></include>
+  <worldbody>
+    <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
+    <light directional="false" diffuse=".4 .4 .4" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="false"/>
+    <!--body pos="0 0 5">
+      <freejoint/>
+      <geom type="box" size=".1 .1 .1" rgba="0 .9 0 1"/>
+    </body-->
+    <body name="sphere_location" pos="-0.1 0 10">
+      <freejoint/>
+      <geom mass="1" type="sphere" size=".05" rgba="0 0 0 1"/>
+      <!--geom mass="2" type="cylinder" size=".05 .01" rgba="0 0 0 1"/-->
+      <!--geom mass="10" type="box" size=".01 .1 .01" rgba="0 0 .9 1"/-->
+    </body>
+    <!--body pos="-0.5 0 5">
+      <freejoint/>
+      <geom type="box" size=".1 .1 .1" rgba=".9 0 0 1"/>
+    </body-->
+    <body name="mimo_location" pos="0 0 0.05" euler="0 -90 0" >
+      <freejoint/>
+      <include file="MIMo_model.xml"></include> <!-- Import the actual model-->
+    </body>
+  </worldbody>
+</mujoco>

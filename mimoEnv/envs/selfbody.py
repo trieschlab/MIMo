@@ -49,6 +49,24 @@ TOUCH_PARAMS = {
 :meta hide-value:
 """
 
+PAIN_PARAMS = {
+    "scales": {
+        "left_foot": 47.9545185 * 25,
+        "right_foot": 47.9545185 * 25,
+        "left_lower_leg": 52.2694445 * 100,
+        "right_lower_leg": 52.2694445 * 100,
+        "left_upper_leg": 52.2694445 * 100,
+        "right_upper_leg": 52.2694445 * 100,
+        "hip": 49.03325 * 100,
+        "lower_body": 48.052585 * 100,
+        "upper_body": 35.7942725 * 100,
+        "head": 50.406181 * 100,
+        "left_upper_arm": 40,
+        "left_lower_arm": 42.14,
+        "right_fingers": 37.46,
+    }
+}
+
 
 SITTING_POSITION = {
     "mimo_location": np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]),
@@ -110,6 +128,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
                  n_substeps=1,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=TOUCH_PARAMS,
+                 pain_params=PAIN_PARAMS,
                  vision_params=None,
                  vestibular_params=None,
                  ):
@@ -123,6 +142,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
                          n_substeps=n_substeps,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
+                         pain_params=pain_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
                          goals_in_observation=True,

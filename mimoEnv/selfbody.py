@@ -24,8 +24,7 @@ import time
 import mimoEnv
 import argparse
 
-
-def test(env, test_for=1000, model=None):
+def myfun(env, test_for=1000, model=None):
     """ Testing function to view the behaviour of a model.
 
     Args:
@@ -43,6 +42,7 @@ def test(env, test_for=1000, model=None):
         else:
             action, _ = model.predict(obs)
         obs, rew, done, info = env.step(action)
+        print(obs["pain"])
         if done:
             time.sleep(1)
             obs = env.reset()
@@ -72,18 +72,18 @@ def main():
     _ = env.reset()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train_for', default=0, type=int,
+    parser.add_argument('--train_for', default=20000, type=int,
                         help='Total timesteps of training')
     parser.add_argument('--test_for', default=1000, type=int,
                         help='Total timesteps of testing of trained policy')               
     parser.add_argument('--save_every', default=100000, type=int,
                         help='Number of timesteps between model saves')
-    parser.add_argument('--algorithm', default=None, type=str, 
+    parser.add_argument('--algorithm', default='PPO', type=str,
                         choices=['PPO', 'SAC', 'TD3', 'DDPG', 'A2C', 'HER'],
                         help='RL algorithm from Stable Baselines3')
     parser.add_argument('--load_model', default=False, type=str,
                         help='Name of model to load')
-    parser.add_argument('--save_model', default='', type=str,
+    parser.add_argument('--save_model', default='my_model', type=str,
                         help='Name of model to save')
     
     args = parser.parse_args()
@@ -121,8 +121,7 @@ def main():
         train_for = train_for - train_for_iter
         model.learn(total_timesteps=train_for_iter)
         model.save("models/selfbody" + save_model + "_" + str(counter))
-    
-    test(env, model=model, test_for=test_for)
+    myfun(env, model=model, test_for=test_for)
 
 
 if __name__ == '__main__':

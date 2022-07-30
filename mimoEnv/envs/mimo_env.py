@@ -72,6 +72,64 @@ DEFAULT_TOUCH_PARAMS = {
 
 :meta hide-value:
 """
+"""
+DEFAULT_PAIN_PARAMS = {
+    "scales": {
+        "left_toes": 50.99458,
+        "right_toes": 50.99458,
+        "left_foot": 47.9545185 * 2.25,
+        "right_foot": 47.9545185 * 2.25,
+        "left_lower_leg": 52.2694445 * 14.44,
+        "right_lower_leg": 52.2694445 * 14.44,
+        "left_upper_leg": 52.2694445 * 7.29,
+        "right_upper_leg": 52.2694445 * 7.29,
+        "hip": 49.03325 * 6.25,
+        "lower_body": 48.052585 * 6.25,
+        "upper_body": 35.7942725 * 9,
+        "head": 50.406181 * 1.69,
+        "left_eye": 5,
+        "right_eye": 5,
+        "left_upper_arm": 40 * 5.76,
+        "right_upper_arm": 40 * 5.76,
+        "left_lower_arm": 42.14 * 5.76,
+        "right_lower_arm": 42.14 * 5.76,
+        "left_hand": 37.46 * 0.49,
+        "right_hand": 37.46 * 0.49,
+        "left_fingers": 37.46 * 0.49,
+        "right_fingers": 37.46 * 0.49,
+    },
+}"""
+
+DEFAULT_PAIN_PARAMS = {
+    "scales": {
+        "left_toes": 50.99458,
+        "right_toes": 50.99458,
+        "left_foot": 47.9545185,
+        "right_foot": 47.9545185,
+        "left_lower_leg": 52.2694445,
+        "right_lower_leg": 52.2694445,
+        "left_upper_leg": 52.2694445,
+        "right_upper_leg": 52.2694445,
+        "hip": 49.03325,
+        "lower_body": 48.052585,
+        "upper_body": 35.7942725,
+        "head": 50.406181,
+        "left_eye": 5,
+        "right_eye": 5,
+        "left_upper_arm": 40,
+        "right_upper_arm": 40,
+        "left_lower_arm": 42.14,
+        "right_lower_arm": 42.14,
+        "left_hand": 37.46,
+        "right_hand": 37.46,
+        "left_fingers": 37.46,
+        "right_fingers": 37.46,
+    },
+}
+""" Default pain parameters.
+
+:meta hide-value:
+"""
 
 
 DEFAULT_VISION_PARAMS = {
@@ -194,6 +252,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
                  n_substeps=2,
                  proprio_params=None,
                  touch_params=None,
+                 pain_params=None,
                  vision_params=None,
                  vestibular_params=None,
                  goals_in_observation=True,
@@ -203,6 +262,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         self.proprio_params = proprio_params
         self.touch_params = touch_params
+        self.pain_params = pain_params
         self.vision_params = vision_params
         self.vestibular_params = vestibular_params
 
@@ -252,6 +312,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         }
         if self.touch:
             spaces_dict["touch"] = spaces.Box(-np.inf, np.inf, shape=obs["touch"].shape, dtype="float32")
+            spaces_dict["pain"] = spaces.Box(-np.inf, np.inf, shape=obs["pain"].shape, dtype="float32")
         if self.vision:
             for sensor in self.vision_params:
                 spaces_dict[sensor] = spaces.Box(0, 256, shape=obs[sensor].shape, dtype="uint8")
@@ -280,8 +341,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         # Do setups
         self._proprio_setup(self.proprio_params)
-        if self.touch_params is not None:
-            self._touch_setup(self.touch_params)
+        if self.touch_params is not None and self.pain_params is not None:
+            self._touch_setup(self.touch_params, self.pain_params)
         if self.vision_params is not None:
             self._vision_setup(self.vision_params)
         if self.vestibular_params is not None:
@@ -303,7 +364,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.proprioception = SimpleProprioception(self, proprio_params)
 
-    def _touch_setup(self, touch_params):
+    def _touch_setup(self, touch_params, pain_params):
         """ Perform the setup and initialization of the touch system.
 
         This should be overridden if you want to use another implementation!
@@ -311,7 +372,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Args:
             touch_params (dict): The parameter dictionary.
         """
-        self.touch = DiscreteTouch(self, touch_params)
+        self.touch = DiscreteTouch(self, touch_params, pain_params)
 
     def _vision_setup(self, vision_params):
         """ Perform the setup and initialization of the vision system.
@@ -436,6 +497,30 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         touch_obs = self.touch.get_touch_obs()
         return touch_obs
 
+    def _get_pain_obs(self):
+        """ Collects and returns the outputs of the pain system.
+
+        Override this function if you want to make some simple post-processing!
+
+        Returns:
+            numpy.ndarray: A numpy array containing the touch output as boolean values.
+        """
+        pain_obs, affected_geoms_int1, affected_geoms_int2, affected_geoms_int3, affected_geoms_int4 = self.touch.get_pain_obs()
+        intensity_4 = np.array([1., 0.1, 0.1, 1.])
+        intensity_3 = np.array([1., 0.35, 0.2, 1.])
+        intensity_2 = np.array([1., 0.35, 0.35, 1.])
+        intensity_1 = np.array([1., 0.5, 0.5, 1.])
+        colors = self.sim.model.geom_rgba
+        for geom in affected_geoms_int1:
+            colors[geom] = intensity_1
+        for geom in affected_geoms_int2:
+            colors[geom] = intensity_2
+        for geom in affected_geoms_int3:
+            colors[geom] = intensity_3
+        for geom in affected_geoms_int4:
+            colors[geom] = intensity_4
+        return pain_obs
+
     def _get_vision_obs(self):
         """ Collects and returns the outputs of the vision system.
 
@@ -478,7 +563,9 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         # robot touch sensors:
         if self.touch:
             touch_obs = self._get_touch_obs().ravel()
+            pain_obs = self._get_pain_obs().ravel()
             observation_dict["touch"] = touch_obs
+            observation_dict["pain"] = pain_obs
         # robot vision:
         if self.vision:
             vision_obs = self._get_vision_obs()
@@ -493,7 +580,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             achieved_goal = self._get_achieved_goal()
             observation_dict["achieved_goal"] = copy.deepcopy(achieved_goal)
             observation_dict["desired_goal"] = copy.deepcopy(self.goal)
-
         return observation_dict
 
     def _set_action(self, action):

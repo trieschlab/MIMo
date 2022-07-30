@@ -20,8 +20,27 @@ import numpy as np
 import copy
 import mujoco_py
 
-from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
+from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS, DEFAULT_PAIN_PARAMS
 
+TOUCH_PARAMS = {
+    "scales": {
+        "left_foot": 0.05,
+        "right_foot": 0.05,
+        "left_lower_leg": 0.1,
+        "right_lower_leg": 0.1,
+        "left_upper_leg": 0.1,
+        "right_upper_leg": 0.1,
+        "hip": 0.1,
+        "lower_body": 0.1,
+        "upper_body": 0.1,
+        "head": 0.1,
+        "left_upper_arm": 0.01,
+        "left_lower_arm": 0.01,
+        "right_fingers": 0.01
+    },
+    "touch_function": "force_vector",
+    "response_function": "spread_linear",
+}
 
 REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
 """ Path to the reach scene.
@@ -46,7 +65,8 @@ class MIMoReachEnv(MIMoEnv):
                  initial_qpos={},
                  n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
-                 touch_params=None,
+                 touch_params=DEFAULT_TOUCH_PARAMS,
+                 pain_params=DEFAULT_PAIN_PARAMS,
                  vision_params=None,
                  vestibular_params=None,
                  goals_in_observation=False,
@@ -57,6 +77,7 @@ class MIMoReachEnv(MIMoEnv):
                          n_substeps=n_substeps,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
+                         pain_params=pain_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
                          goals_in_observation=goals_in_observation,
@@ -160,9 +181,24 @@ class MIMoReachEnv(MIMoEnv):
         )
 
         self.sim.set_state(new_state)
+        self.reset_colours()
         self.sim.forward()
         self.target_init_pos = copy.deepcopy(self.sim.data.get_body_xpos('target'))
         return True
+
+    def reset_colours(self):
+        original = [[0.5, 0.5, 0.5, 1.], [0.,  0.,  0.9, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.],
+                    [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.],
+                    [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.],
+                    [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.],
+                    [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.],
+                    [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.],
+                    [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.],
+                    [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.], [0.5, 0.5, 0.5, 1.]]
+
+        colors = self.sim.model.geom_rgba
+        for i, original_colour in enumerate(original):
+            colors[i] = original_colour
 
     def _step_callback(self):
         """ Adjusts the head and eye positions to track the target.

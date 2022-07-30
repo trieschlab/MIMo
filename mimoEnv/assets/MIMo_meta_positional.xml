@@ -32,7 +32,7 @@
 
 		<material name="skin" rgba="0.95 0.8 0.5 1" specular=".15" shininess=".7"/>
 		<material name="buttons" rgba=".05 .05 .05 1" specular=".9" shininess=".9"/>
-		<material name="head" texture="tex_head" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="head" texture="tex_head_default" texuniform="true" specular=".0" shininess=".0"/>
 		<material name="top_up" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
 		<material name="top_middle" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
 		<material name="top_down" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
@@ -43,7 +43,6 @@
 		<material name="eye_left" texture="tex_eye_left" texuniform="true" specular=".0" shininess=".0"/>
 		<material name="eye_right" texture="tex_eye_right" texuniform="true" specular=".0" shininess=".0"/>
     </asset>
-	
 	<!-- Internal contacts should not have friction to reduce "getting stuck" on ourselves-->
 	<contact>
 		<pair geom1="lb" geom2="ub1" condim="1"/>
