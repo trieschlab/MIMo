@@ -10,7 +10,7 @@ MIMo is a platform for the research of the cognitive development of infants. It 
 
 ## Installation
 
-First install mujoco and mujoco-py following their instructions.
+First install mujoco 2.10 and mujoco-py 2.1 following their instructions.
 Then clone this repository, install other dependencies with `pip install -r requirements.txt` and finally run `pip install -e .`
 
 ## The MIMo environment
