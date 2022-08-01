@@ -137,7 +137,6 @@ class MIMoMuscleEnv(MIMoEnv):
         # user parameters
         # TODO this is tuned by hand for HalfCheetah, adapt for mimo
         # TODO Implement asymmetric forces for single motor
-        # TODO Ask about qpos and qvel in muscles.py: self.sim.data.qpos[: self.sim.model.nu] does not seem to make sense?
         self.phi_min = -1.5
         self.phi_max = 1.5
         self.lce_min = 0.75
@@ -176,7 +175,7 @@ class MIMoMuscleEnv(MIMoEnv):
     def _env_setup(self, initial_qpos):
         super()._env_setup(initial_qpos)
         # Also perform all the muscle setup
-        self.maximum_isometric_forces = self._set_max_forces()
+        self._set_max_forces()
         self._get_actuated_joints()
         self._set_muscles()
 
@@ -203,8 +202,9 @@ class MIMoMuscleEnv(MIMoEnv):
         """
         Collect maximum isometric forces from mujoco actuator gears.
         """
-        force_ranges = self.sim.model.actuator_forcerange[self.mimo_actuators, :].copy()
-        return self.sim.model.actuator_gear[self.mimo_actuators, 0].copy()
+        force_ranges = np.abs(self.sim.model.actuator_forcerange[self.mimo_actuators, :]).copy()
+        gears = self.sim.model.actuator_gear[self.mimo_actuators, 0].copy()
+        self.maximum_isometric_forces = (force_ranges.T * gears).T
 
     def _compute_parametrization(self):
         """
@@ -272,8 +272,9 @@ class MIMoMuscleEnv(MIMoEnv):
         """
         self.force_muscles_1 = FL(self.lce_1) * FV(self.lce_dot_1) * self.activity[:self.n_actuators] + FP(self.lce_1)
         self.force_muscles_2 = FL(self.lce_2) * FV(self.lce_dot_2) * self.activity[self.n_actuators:] + FP(self.lce_2)
-        torque = self.moment_1 * self.force_muscles_1 + self.moment_2 * self.force_muscles_2
-        self.joint_torque = -torque * self.maximum_isometric_forces
+        torque = self.moment_1 * self.force_muscles_1 * self.maximum_isometric_forces[:, 0] \
+            + self.moment_2 * self.force_muscles_2 * self.maximum_isometric_forces[:, 1]
+        self.joint_torque = -torque
 
     def _compute_muscle_action(self, action=None, update_action=True):
         """

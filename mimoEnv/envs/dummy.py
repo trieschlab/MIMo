@@ -240,16 +240,16 @@ class MIMoV2DemoEnv(MIMoDummyEnv):
 class MIMoMuscleDemoEnv(MIMoMuscleEnv):
 
     def __init__(self,
-                 model_path=BENCHMARK_XML,
+                 model_path=BENCHMARK_XML_V2,
                  initial_qpos={},
                  n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
-                 touch_params=DEFAULT_TOUCH_PARAMS,
-                 vision_params=DEFAULT_VISION_PARAMS,
+                 touch_params=None,
+                 vision_params=None,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
                  goals_in_observation=False,
                  done_active=True,
-                 print_space_sizes=False, ):
+                 print_space_sizes=True, ):
 
         self.steps = 0
 
