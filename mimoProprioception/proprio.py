@@ -6,7 +6,7 @@ A simple implementation directly reading values is in :class:`~mimoProprioceptio
 """
 
 import numpy as np
-from mimoEnv.utils import get_data_for_sensor
+from mimoEnv.utils import get_joint_qpos_addr, get_joint_qvel_addr, get_sensor_addr
 
 
 class Proprioception:
@@ -97,8 +97,14 @@ class SimpleProprioception(Proprioception):
             if sensor_name.startswith("proprio:"):
                 self.sensors.append(sensor_name)
 
-        self.sensor_names = {}
         self.joint_names = [name for name in self.env.sim.model.joint_names if name.startswith("robot:")]
+        self.joint_ids = [self.env.sim.model.joint_name2id(name) for name in self.joint_names]
+        self.joint_qpos = np.asarray([get_joint_qpos_addr(self.env.sim.model, idx) for idx in self.joint_ids])
+        self.joint_qvel = np.asarray([get_joint_qvel_addr(self.env.sim.model, idx) for idx in self.joint_ids])
+        self.joint_limits = self.env.sim.model.jnt_range[self.joint_ids]
+
+        self.sensor_ids = [self.env.sim.model.sensor_name2id(name) for name in self.sensors]
+        self.sensor_addrs = np.asarray([get_sensor_addr(self.env.sim.model, idx) for idx in self.sensor_ids])
 
         self.sensor_names["qpos"] = self.joint_names
         if "velocity" in self.output_components:
@@ -126,34 +132,22 @@ class SimpleProprioception(Proprioception):
 
         """
         self.sensor_outputs = {}
-        robot_qpos = np.array([self.env.sim.data.get_joint_qpos(name) for name in self.joint_names])
+        robot_qpos = self.env.sim.data.qpos[self.joint_qpos].flatten()
         self.sensor_outputs["qpos"] = robot_qpos
         if "velocity" in self.output_components:
-            robot_qvel = np.array([self.env.sim.data.get_joint_qvel(name) for name in self.joint_names])
+            robot_qvel = self.env.sim.data.qvel[self.joint_qvel].flatten()
             self.sensor_outputs["qvel"] = robot_qvel
-        if "torques" in self.output_components:
-            torques = []
-            for sensor in self.sensors:
-                sensor_output = get_data_for_sensor(self.env.sim.model, self.env.sim.data, sensor)
-                # Convert from child to parent frame? Report torque in terms of the axis of the relevant joints?
-                torques.append(sensor_output)
-            torques = np.concatenate(torques)
+        if "torque" in self.output_components:
+            torques = self.env.sim.data.sensordata[self.sensor_addrs].flatten()
             self.sensor_outputs["torques"] = torques
 
         # Limit sensor outputs 0 while the joint position is more than _limit_thresh away from its limits, then scales
         # from 0 to 1 at the limit and then beyond 1 beyond the limit
         if "limits" in self.output_components:
-            limits = []
-            for i, joint_name in enumerate(self.joint_names):
-                joint_id = self.env.sim.model.joint_name2id(joint_name)
-                joint_limits = self.env.sim.model.jnt_range[joint_id]
-                joint_position = robot_qpos[i]
-                l_dif = joint_position - (joint_limits[0] + self.limit_thresh)
-                u_dif = (joint_limits[1] - self.limit_thresh) - joint_position
-                response = min(l_dif, u_dif) / self.limit_thresh  # Outputs negative of difference, scaled by thresh
-                response = - min(response, 0)  # Clamp all positive values (have not reached the threshold) and invert
-                limits.append(response)
-            limit_response = np.asarray(limits)  # np.asarrays
-            self.sensor_outputs["limits"] = limit_response
+            l_dif = robot_qpos - (self.joint_limits[:, 0] + self.limit_thresh)
+            u_dif = (self.joint_limits[:, 1] + self.limit_thresh) - robot_qpos
+            response = np.minimum(l_dif, u_dif) / self.limit_thresh
+            response = - np.minimum(response, 0)
+            self.sensor_outputs["limits"] = response
 
         return np.concatenate([self.sensor_outputs[key] for key in sorted(self.sensor_outputs.keys())])

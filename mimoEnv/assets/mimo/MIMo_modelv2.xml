@@ -212,7 +212,7 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 						</body>
 					</body>
 				</body>
-				
+
 				<body name="left_upper_arm" pos="-.005 0.105 .093" euler="-170 0 0">
 					<!-- Arm length is 31.36cm -->
 					<joint name="robot:left_shoulder_horizontal" type="hinge" pos="0 .024 0" axis="0 1 4" range="-28 118" stiffness=".09" damping=".05" frictionloss=".0009"/>
