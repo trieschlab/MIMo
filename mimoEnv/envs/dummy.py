@@ -37,6 +37,12 @@ BENCHMARK_XML_V2 = os.path.join(SCENE_DIRECTORY, "benchmarkv2_scene.xml")
 :meta hide-value:
 """
 
+TEST_XML = os.path.join(SCENE_DIRECTORY, "test_scene.xml")
+""" Path to the benchmarking scene using MIMo v2.
+
+:meta hide-value:
+"""
+
 
 class MIMoDummyEnv(MIMoEnv):
     """ Dummy implementation for :class:`~mimoEnv.envs.mimo_env.MIMoEnv`.
@@ -244,12 +250,12 @@ class MIMoMuscleDemoEnv(MIMoMuscleEnv):
                  initial_qpos={},
                  n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
-                 touch_params=None,
-                 vision_params=None,
+                 touch_params=DEFAULT_TOUCH_PARAMS_V2,
+                 vision_params=DEFAULT_VISION_PARAMS,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
                  goals_in_observation=False,
                  done_active=True,
-                 print_space_sizes=True, ):
+                 print_space_sizes=False, ):
 
         self.steps = 0
 
@@ -325,3 +331,15 @@ class MIMoMuscleDemoEnv(MIMoMuscleEnv):
             float: 0
         """
         return 0
+
+    def _viewer_setup(self):
+        """Initial configuration of the viewer. Can be used to set the camera position,
+        for example.
+        """
+        self.viewer.cam.trackbodyid = 0  # id of the body to track
+        self.viewer.cam.distance = 1.5  # how much you "zoom in", smaller is closer
+        self.viewer.cam.lookat[0] = 0  # x,y,z offset from the object (works if trackbodyid=-1)
+        self.viewer.cam.lookat[1] = 0
+        self.viewer.cam.lookat[2] = 0.5  # 0.24 -0.04 .8
+        self.viewer.cam.elevation = -20
+        self.viewer.cam.azimuth = 180
