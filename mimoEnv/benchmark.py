@@ -3,10 +3,10 @@
 
 import gym
 import time
-import copy
 import cProfile
 import mimoEnv
-from mimoEnv.envs.mimo_env import DEFAULT_TOUCH_PARAMS
+from mimoEnv.envs.mimo_env import DEFAULT_TOUCH_PARAMS, DEFAULT_TOUCH_PARAMS_V2
+from mimoEnv.envs.dummy import BENCHMARK_XML_V2, BENCHMARK_XML
 
 
 def run(env, max_steps):
@@ -36,34 +36,35 @@ def benchmark():
     """
 
     # 1 hour simulation time, 1 minute episodes before reset. MIMO takes random actions.
-    resolutions = [1]
-    scales = [1.0]
-    environments = ["MIMoBench-v0", "MIMoV2Demo-v0", "MIMoV2MulticamDemo-v0"]
-    max_steps = 360000  # 100 steps per second
+    environments = ["MIMoMuscle-v0"]#["MIMoBench-v0", "MIMoMuscle-v0"]
+    xmls = {BENCHMARK_XML: DEFAULT_TOUCH_PARAMS,
+            BENCHMARK_XML_V2: DEFAULT_TOUCH_PARAMS_V2}
+    max_steps = 6000  # 100 steps per second -> 360000 steps for 1 hour of simulation time with a dt of .01
 
     for environment in environments:
-        for resolution in resolutions:
-            for scale in scales:
+        for xml in xmls:
+            touch_params = xmls[xml]
+            version = 1 if xml == BENCHMARK_XML else 2
+            actuation = "torque" if environment == "MIMoBench-v0" else "muscle"
+            filename = "autobench_{}_ver{}.profile".format(actuation, version)
 
-                filename = "autobench_{}_v{}_t{}.profile".format(environment, resolution, scale)
+            print("\n" + filename)
+            pr = cProfile.Profile()
+            pr.enable()
+            init_start = time.time()
+            env = gym.make(environment, model_path=xml, touch_params=touch_params)
+            _ = env.reset()
 
-                print("\n" + filename)
-                pr = cProfile.Profile()
-                pr.enable()
-                init_start = time.time()
-                env = gym.make(environment)
-                _ = env.reset()
+            start = time.time()
+            run(env, max_steps)
+            env.close()
+            pr.create_stats()
+            pr.dump_stats(filename)
 
-                start = time.time()
-                run(env, max_steps)
-                env.close()
-                pr.create_stats()
-                pr.dump_stats(filename)
-
-                print("Elapsed time: total", time.time() - init_start)
-                print("Init time ", start - init_start)
-                print("Non-init time", time.time() - start)
-                print("Simulation time:", max_steps * env.dt, "\n")
+            print("Elapsed time: total", time.time() - init_start)
+            print("Init time ", start - init_start)
+            print("Non-init time", time.time() - start)
+            print("Simulation time:", max_steps * env.dt, "\n")
 
 
 if __name__ == "__main__":
