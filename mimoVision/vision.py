@@ -14,8 +14,7 @@ class Vision:
 
     This class defines the functions that all implementing classes must provide.
     :meth:`.get_vision_obs` should produce the vision outputs that will be returned to the environment. These outputs
-    should also be stored in :attr:`.sensor_outputs`. :meth:`.render_camera` can be used to render any camera in the
-    scene.
+    should also be stored in :attr:`.sensor_outputs`.
 
     Attributes:
         env: The environment to which this module will be attached
@@ -65,7 +64,6 @@ class SimpleVision(Vision):
         camera_parameters: A dictionary containing the configuration.
         sensor_outputs: A dictionary containing the outputs produced by the sensors. This is populated by
             :meth:`.get_vision_obs`
-        viewer: The currently active render context.
 
     """
     def __init__(self, env, camera_parameters):
@@ -83,7 +81,7 @@ class SimpleVision(Vision):
 
         This function renders each camera with the resolution as defined in :attr:`.camera_parameters` using an
         offscreen render context. The images are stored in :attr:`.sensor_outputs` under the name of the associated
-        camera. Uses :meth:`.render_camera`.
+        camera.
 
         Returns:
             A dictionary of numpy arrays. Keys are camera names and the values are the corresponding images.

@@ -3,10 +3,10 @@
 
 import gym
 import time
-import copy
 import cProfile
 import mimoEnv
-from mimoEnv.envs.mimo_env import DEFAULT_TOUCH_PARAMS
+from mimoEnv.envs.mimo_env import DEFAULT_TOUCH_PARAMS, DEFAULT_TOUCH_PARAMS_V2
+from mimoEnv.envs.dummy import BENCHMARK_XML_V2, BENCHMARK_XML
 
 
 def run(env, max_steps):
@@ -36,30 +36,23 @@ def benchmark():
     """
 
     # 1 hour simulation time, 1 minute episodes before reset. MIMO takes random actions.
-    resolutions = [64, 128, 256, 512]
-    scales = [0.25, 0.5, 1.0, 2.0]
-    max_steps = 360000
-    n_substeps = 2
+    environments = ["MIMoMuscle-v0"]#["MIMoBench-v0", "MIMoMuscle-v0"]
+    xmls = {BENCHMARK_XML: DEFAULT_TOUCH_PARAMS,
+            BENCHMARK_XML_V2: DEFAULT_TOUCH_PARAMS_V2}
+    max_steps = 6000  # 100 steps per second -> 360000 steps for 1 hour of simulation time with a dt of .01
 
-    for resolution in resolutions:
-        for scale in scales:
-
-            VISION_PARAMS = {
-                "eye_left": {"width": resolution, "height": resolution},
-                "eye_right": {"width": resolution, "height": resolution},
-            }
-
-            TOUCH_PARAMS = copy.deepcopy(DEFAULT_TOUCH_PARAMS)
-            for body in TOUCH_PARAMS["scales"]:
-                TOUCH_PARAMS["scales"][body] = DEFAULT_TOUCH_PARAMS["scales"][body] / scale
-
-            filename = "autobench_v{}_t{}.profile".format(resolution, scale)
+    for environment in environments:
+        for xml in xmls:
+            touch_params = xmls[xml]
+            version = 1 if xml == BENCHMARK_XML else 2
+            actuation = "torque" if environment == "MIMoBench-v0" else "muscle"
+            filename = "autobench_{}_ver{}.profile".format(actuation, version)
 
             print("\n" + filename)
             pr = cProfile.Profile()
             pr.enable()
             init_start = time.time()
-            env = gym.make("MIMoBench-v0", touch_params=TOUCH_PARAMS, vision_params=VISION_PARAMS)
+            env = gym.make(environment, model_path=xml, touch_params=touch_params)
             _ = env.reset()
 
             start = time.time()

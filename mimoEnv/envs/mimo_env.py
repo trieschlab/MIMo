@@ -4,11 +4,11 @@ The abstract base class is :class:`~mimoEnv.envs.mimo_env.MIMoEnv`. Default para
 are provided as well.
 """
 import os
-import sys
-import glfw
 import numpy as np
 import mujoco_py
 import copy
+import glfw
+import sys
 
 from gym import spaces, utils
 from gym.envs.robotics import robot_env
@@ -292,7 +292,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             raise IOError("File {} does not exist".format(fullpath))
 
         model = mujoco_py.load_model_from_path(fullpath)
-        self.sim = mujoco_py.MjSim(model, nsubsteps=n_substeps)
+        self.n_substeps = n_substeps
+        self.sim = mujoco_py.MjSim(model)
         self.sim.forward()
         self.viewer = None
         self._viewers = {}
@@ -305,21 +306,22 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         }
 
         self.seed()
+        # Action space
+        self.action_space = None
+        self.mimo_actuators = None
+        self._get_actuators()
+        self._set_action_space()
+
         self._env_setup(initial_qpos=initial_qpos)
         self.initial_state = copy.deepcopy(self.sim.get_state())
 
         # Face emotions:
-        self.facial_expressions = {}
-        for emote in EMOTES:
-            tex_name = EMOTES[emote]
-            tex_id = mimo_utils.texture_name2id(self.sim.model, tex_name)
-            self.facial_expressions[emote] = tex_id
-        head_material_name = "head"
-        self._head_material_id = mimo_utils.material_name2id(self.sim.model, head_material_name)
+        self.facial_expressions = None
+        self._head_material_id = None
+        self._set_facial_expressions(EMOTES)
 
         self.goal = self._sample_goal()
-        n_actions = len([name for name in self.sim.model.actuator_names if name.startswith("act:")])
-        self.action_space = spaces.Box(-1.0, 1.0, shape=(n_actions,), dtype="float32")
+
         obs = self._get_obs()
         # Observation spaces
         spaces_dict = {
@@ -339,6 +341,32 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
                 -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float32")
 
         self.observation_space = spaces.Dict(spaces_dict)
+
+    @property
+    def dt(self):
+        return self.sim.model.opt.timestep * self.n_substeps
+
+    @property
+    def n_actuators(self):
+        return self.mimo_actuators.shape[0]
+
+    def _get_actuators(self):
+        actuators = [i for i, name in enumerate(self.sim.model.actuator_names) if name.startswith("act:")]
+        self.mimo_actuators = np.asarray(actuators)
+
+    def _set_action_space(self):
+        bounds = self.sim.model.actuator_ctrlrange.copy().astype(np.float32)[self.mimo_actuators]
+        low, high = bounds.T
+        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+
+    def _set_facial_expressions(self, emotion_textures):
+        self.facial_expressions = {}
+        for emote in emotion_textures:
+            tex_name = emotion_textures[emote]
+            tex_id = mimo_utils.texture_name2id(self.sim.model, tex_name)
+            self.facial_expressions[emote] = tex_id
+        head_material_name = "head"
+        self._head_material_id = mimo_utils.material_name2id(self.sim.model, head_material_name)
 
     def _env_setup(self, initial_qpos):
         """ This function initializes all the sensory components of the model.
@@ -408,6 +436,14 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.vestibular = SimpleVestibular(self, vestibular_params)
 
+    def do_simulation(self, action, n_frames):
+        """ Step simulation forward for n_frames number of steps.
+
+        """
+        self._set_action(action)
+        for _ in range(n_frames):
+            self.sim.step()
+
     def step(self, action):
         """ The step function for the simulation.
 
@@ -424,9 +460,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             A tuple `(observations, reward, done, info)` as described above, with info containing extra information,
             such as whether we reached a success state specifically.
         """
-        action = np.clip(action, self.action_space.low, self.action_space.high)
-        self._set_action(action)
-        self.sim.step()
+        self.do_simulation(action, self.n_substeps)
         self._step_callback()
         obs = self._get_obs()
 
@@ -479,7 +513,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def _reset_sim(self):
         """Resets a simulation and indicates whether or not it was successful.
 
-        Resets the simulation state and returns whether or not the reset was successfull. This is useful if your
+        Resets the simulation state and returns whether or not the reset was successful. This is useful if your
         resetting function has a randomized component that can end up in an illegal state. In this case this function
         will be called again until a valid state is reached.
 
@@ -582,13 +616,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Args:
             action (numpy.ndarray): A numpy array with control values.
         """
-        ctrlrange = self.sim.model.actuator_ctrlrange
-        actuation_range = (ctrlrange[:, 1] - ctrlrange[:, 0]) / 2.0
-        actuation_center = (ctrlrange[:, 1] + ctrlrange[:, 0]) / 2.0
-        self.sim.data.ctrl[:] = actuation_center + action * actuation_range
-        self.sim.data.ctrl[:] = np.clip(
-            self.sim.data.ctrl, ctrlrange[:, 0], ctrlrange[:, 1]
-        )
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+        self.sim.data.ctrl[self.mimo_actuators] = action
 
     def swap_facial_expression(self, emotion):
         """ Changes MIMos facial texture.
@@ -686,11 +715,11 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     # ====================== gym rendering =======================================================
 
-    def _get_viewer(self, mode: str):
+    def _get_viewer(self, mode):
         """ Handles render contexts.
 
         Args:
-            mode: One of 'human' or 'rgb_array'. If 'rgb_array' an offscreen render context is used, otherwise we render
+            mode (str): One of "human" or "rgb_array". If "rgb_array" an offscreen render context is used, otherwise we render
             to an interactive viewer window.
 
         """
@@ -717,34 +746,36 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         glfw.make_context_current(window)
 
     def close(self):
+        """ Removes all references to render contexts, etc..."""
         if self.viewer is not None:
             # self.viewer.finish()
             self.viewer = None
             self._viewers = {}
             self.offscreen_context = None
 
-    def render(self, mode="human", width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name: str = None, camera_id: int = None):
+    def render(self, mode="human", width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name=None, camera_id=None):
         """ General rendering function for cameras or interactive environment.
 
-        Two modes: 'human' and 'rgb_array'. human renders an interactive window, while rgb array renders an image to an array
-        Parameters determine the size of the rendered image.
-        With mode 'rgb_array' we can also specify a camera by either name or id and then this camera is rendered to an image.
-
-        RGB mode:
-        The vertical field of view is defined in the scene xml, with the horizontal field of view determined
-        by the rendering resolution.
+        There are two modes, 'human' and 'rgb_array'. In 'human' we render to an interactive window, ignoring all other
+        parameters. Width and size are determined by the size of the window (which can be resized).
+        In mode 'rgb_array' we return the rendered image as a numpy array. The size of the image is determined by the
+        `width` and `height` parameters. A specific camera can be rendered by providing either its name or its ID. By
+        default the standard Mujoco free cam is used. The vertical field of view for each camera is defined in the
+        scene xml, with the horizontal field of view determined by the rendering resolution.
 
         Args:
-            width: The width of the output image
-            height: The height of the output image
-            camera_name: The name of the camera that will be used for rendering.
+            mode (str): One of either 'human' or 'rgb_array'.
+            width (int): The width of the output image
+            height (int): The height of the output image
+            camera_name (str): The name of the camera that will be rendered. Default None.
+            camera_id (int): The ID of the camera that will be rendered. Default None.
 
         Returns:
-            A numpy array with the containing the output image.
+            A numpy array with the output image or None if mode is 'human'.
         """
         self._render_callback()
 
-        assert camera_name is None or camera_id is None, "only one of camera_name or camera_id can be supplied"
+        assert camera_name is None or camera_id is None, "Only one of camera_name or camera_id can be supplied!"
         if camera_name is not None:
             camera_id = self.sim.model.camera_name2id(camera_name)
 

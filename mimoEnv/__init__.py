@@ -40,3 +40,8 @@ register(id='MIMoCatch-v0',
          entry_point='mimoEnv.envs:MIMoCatchEnv',
          max_episode_steps=400,
          )
+
+register(id='MIMoMuscle-v0',
+         entry_point='mimoEnv.envs:MIMoMuscleDemoEnv',
+         max_episode_steps=500,
+         )

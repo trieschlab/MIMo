@@ -24,6 +24,10 @@ MUJOCO_DOF_SIZES = {
     const.JNT_HINGE: 1,
 }
 """ Size of qvel entries for each joint type; free, ball, slide, hinge. 
+<<<<<<< HEAD
+
+=======
+>>>>>>> main
 :meta hide-value:
 """
 

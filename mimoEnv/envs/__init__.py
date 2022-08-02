@@ -6,3 +6,4 @@ from mimoEnv.envs.standup import MIMoStandupEnv
 from mimoEnv.envs.selfbody import MIMoSelfBodyEnv
 from mimoEnv.envs.multicam import MIMoMultiCamEnv
 from mimoEnv.envs.catch import MIMoCatchEnv
+from mimoEnv.envs.dummy import MIMoMuscleDemoEnv
