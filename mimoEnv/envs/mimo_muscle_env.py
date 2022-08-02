@@ -22,101 +22,77 @@ FPMAX = 1.3
 FMAX = 50
 
 
-def vectorized(fn):
-    """
-    Simple vector wrapper for functions that clearly came from C
-    """
-    def new_fn(vec):
-        if hasattr(vec, "__iter__"):
-            ret = []
-            for x in vec:
-                ret.append(fn(x))
-            return np.array(ret, dtype=np.float32)
-        else:
-            return fn(vec)
-
-    return new_fn
-
-
-@vectorized
 def FL(lce):
     """
     Force length
     """
-    return bump(lce, LMIN, 1, LMAX) + 0.15 * bump(lce, LMIN, 0.5 * (LMIN + 0.95), 0.95)
+    return bump_v(lce, LMIN, 1, LMAX) + 0.15 * bump_v(lce, LMIN, 0.5 * (LMIN + 0.95), 0.95)
 
 
-@vectorized
 def FV(lce_dot):
     """
     Force velocity
     """
     c = FVMAX - 1
-    return force_vel(lce_dot, c, VMAX, FVMAX)
+    return force_vel_v(lce_dot, c, VMAX, FVMAX)
 
 
-@vectorized
 def FP(lce):
     """
     Force passive
     """
     b = 0.5 * (LMAX + 1)
-    return passive_force(lce, b)
+    return passive_force_v(lce, b)
 
 
-def bump(length, A, mid, B):
+def bump_v(length, A, mid, B):
     """
     Force length relationship as implemented by MuJoCo.
     """
     left = 0.5 * (A + mid)
     right = 0.5 * (mid + B)
-    temp = 0
 
-    if (length <= A) or (length >= B):
-        return 0
-    elif length < left:
-        temp = (length - A) / (left - A)
-        return 0.5 * temp * temp
-    elif length < mid:
-        temp = (mid - length) / (mid - left)
-        return 1 - 0.5 * temp * temp
-    elif length < right:
-        temp = (length - mid) / (right - mid)
-        return 1 - 0.5 * temp * temp
-    else:
-        temp = (B - length) / (B - right)
-        return 0.5 * temp * temp
+    a_dif = np.square(length - A) * 0.5
+    b_dif = np.square(length - B) * 0.5
+    mid_dif = np.square(length - mid) * 0.5
+
+    output = b_dif / ((B-right) * (B-right))
+
+    output[length < right] = 1 - mid_dif[length < right] / ((right - mid) * (right - mid))
+    output[length < mid] = 1 - mid_dif[length < mid] / ((mid - left) * (mid - left))
+    output[length < left] = a_dif[length < left] / ((left - A) * (left - A))
+    output[(length <= A) | (length >= B)] = 0
+
+    return output
 
 
-def passive_force(length, b):
+def passive_force_v(length, b):
     """Parallel elasticity (passive muscle force) as implemented
     by MuJoCo.
     """
-    temp = 0
+    tmp = (length[length <= b] - 1) / (b - 1)
 
-    if length <= 1:
-        return 0
-    elif length <= b:
-        temp = (length - 1) / (b - 1)
-        return 0.25 * FPMAX * temp * temp * temp
-    else:
-        temp = (length - b) / (b - 1)
-        return 0.25 * FPMAX * (1 + 3 * temp)
+    output = 0.25 * FPMAX * (1 + 3 * (length - b) / (b - 1))
+    output[length <= b] = 0.25 * FPMAX * tmp * tmp * tmp
+    output[length <= 1] = 0
+
+    return output
 
 
-def force_vel(velocity, c, VMAX, FVMAX):
+def force_vel_v(velocity, c, vmax, fvmax):
     """
     Force velocity relationship as implemented by MuJoCo.
     """
-    eff_vel = velocity / VMAX
-    if eff_vel < -1:
-        return 0
-    elif eff_vel <= 0:
-        return (eff_vel + 1) * (eff_vel + 1)
-    elif eff_vel <= c:
-        return FVMAX - (c - eff_vel) * (c - eff_vel) / c
-    else:
-        return FVMAX
+    eff_vel = velocity / vmax
+    eff_vel_con1 = eff_vel[eff_vel <= c]
+    eff_vel_con2 = eff_vel[eff_vel <= 0]
+
+    output = np.full(velocity.shape, fvmax)
+    output[eff_vel <= c] = fvmax - (c - eff_vel_con1) * (c - eff_vel_con1) / c
+    output[eff_vel <= 0] = (eff_vel_con2 + 1) * (eff_vel_con2 + 1)
+    output[eff_vel < -1] = 0
+
+    return output
 
 
 class MIMoMuscleEnv(MIMoEnv):
@@ -155,6 +131,7 @@ class MIMoMuscleEnv(MIMoEnv):
         self.prev_action = None
         self.force_muscles_1 = None
         self.force_muscles_2 = None
+        self.joint_torque = None
 
         self.maximum_isometric_forces = None
 
