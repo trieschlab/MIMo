@@ -300,6 +300,7 @@ class MIMoMuscleEnv(MIMoEnv):
         for i in range(n_frames):
             self._compute_muscle_action(update_action=False)
             self.sim.step()
+            self._substep_callback()
 
     def _set_action(self, action):
         """ Set the control inputs for the next step.
@@ -325,4 +326,9 @@ class MIMoMuscleEnv(MIMoEnv):
             dtype=np.float32,
         )
 
+        return obs
+
+    def reset(self):
+        obs = super().reset()
+        self._set_initial_muscle_state()
         return obs

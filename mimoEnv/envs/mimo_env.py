@@ -443,6 +443,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self._set_action(action)
         for _ in range(n_frames):
             self.sim.step()
+            self._substep_callback()
 
     def step(self, action):
         """ The step function for the simulation.
@@ -488,6 +489,13 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """A custom callback that is called after stepping the simulation.
 
         Can be used to enforce additional constraints on the simulation state.
+        """
+        pass
+
+    def _substep_callback(self):
+        """ A custom callback that is called after each simulation substep.
+
+
         """
         pass
 
