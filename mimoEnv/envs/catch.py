@@ -17,7 +17,8 @@ import os
 import numpy as np
 import mujoco_py
 
-from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS_V2
+from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
+from mimoEnv.envs.mimo_muscle_env import MIMoMuscleEnv
 import mimoEnv.utils as env_utils
 
 
@@ -28,7 +29,34 @@ CATCH_XML = os.path.join(SCENE_DIRECTORY, "catch_scene.xml")
 """
 
 
-class MIMoCatchEnv(MIMoEnv):
+TOUCH_PARAMS = {
+    "scales": {
+        "right_upper_arm": 0.024,
+        "right_lower_arm": 0.024,
+        "right_hand": 0.007,
+        "right_ffdistal": 0.002,
+        "right_mfdistal": 0.002,
+        "right_rfdistal": 0.002,
+        "right_lfdistal": 0.002,
+        "right_thdistal": 0.002,
+        "right_ffmiddle": 0.004,
+        "right_mfmiddle": 0.004,
+        "right_rfmiddle": 0.004,
+        "right_lfmiddle": 0.004,
+        "right_thhub": 0.004,
+        "right_ffknuckle": 0.004,
+        "right_mfknuckle": 0.004,
+        "right_rfknuckle": 0.004,
+        "right_lfknuckle": 0.004,
+        "right_thbase": 0.004,
+        "right_lfmetacarpal": 0.007,
+    },
+    "touch_function": "force_vector",
+    "response_function": "spread_linear",
+}
+
+
+class MIMoCatchEnv(MIMoMuscleEnv):
     """ MIMo reaches for an object.
 
     Attributes and parameters are the same as in the base class, but the default arguments are adapted for the scenario.
@@ -44,7 +72,7 @@ class MIMoCatchEnv(MIMoEnv):
                  initial_qpos={},
                  n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
-                 touch_params=DEFAULT_TOUCH_PARAMS_V2,
+                 touch_params=TOUCH_PARAMS,
                  vision_params=None,
                  vestibular_params=None,
                  goals_in_observation=False,
