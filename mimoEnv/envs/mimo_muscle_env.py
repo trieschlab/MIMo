@@ -180,6 +180,8 @@ class MIMoMuscleEnv(MIMoEnv):
         Collect maximum isometric forces from mujoco actuator gears.
         """
         force_ranges = np.abs(self.sim.model.actuator_forcerange[self.mimo_actuators, :]).copy()
+        # Have to disable force limits afterwards
+        self.sim.model.actuator_forcelimited[self.mimo_actuators] = np.zeros_like(self.sim.model.actuator_forcelimited[self.mimo_actuators])
         gears = self.sim.model.actuator_gear[self.mimo_actuators, 0].copy()
         self.maximum_isometric_forces = (force_ranges.T * gears).T
 
