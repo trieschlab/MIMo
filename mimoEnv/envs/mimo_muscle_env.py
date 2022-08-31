@@ -17,9 +17,11 @@ LMAX = 1.6
 LMIN = 0.5
 FVMAX = 1.2
 # TODO atm VMAX was just measured from random movements, will be adapted for mimo
-VMAX = 0.5
+#VMAX = 0.1
 FPMAX = 1.3
+#FMAX = 50
 FMAX = 50
+
 
 
 def FL(lce):
@@ -29,12 +31,12 @@ def FL(lce):
     return bump_v(lce, LMIN, 1, LMAX) + 0.15 * bump_v(lce, LMIN, 0.5 * (LMIN + 0.95), 0.95)
 
 
-def FV(lce_dot):
+def FV(lce_dot, vmax):
     """
     Force velocity
     """
     c = FVMAX - 1
-    return force_vel_v(lce_dot, c, VMAX, FVMAX)
+    return force_vel_v(lce_dot, c, vmax, FVMAX)
 
 
 def FP(lce):
@@ -112,6 +114,8 @@ class MIMoMuscleEnv(MIMoEnv):
         # user parameters ------------------------------
         self.lce_min = 0.75
         self.lce_max = 1.05
+        self.vmax = np.load('../mimoMuscle/vmax.npy')
+        print(self.vmax)
 
         # Placeholder that gets overwritten later
         self.phi_min = -1
@@ -254,9 +258,9 @@ class MIMoMuscleEnv(MIMoEnv):
         The minus sign at the end is a MuJoCo convention. A positive force multiplied by a positive moment results then in a NEGATIVE torque,
         (as muscles pull, they dont push) and the joint velocity gives us the correct muscle fiber velocities.
         """
-        self.force_muscles_1 = (FL(self.lce_1) * FV(self.lce_dot_1) * self.activity[:self.n_actuators] + FP(self.lce_1)) \
+        self.force_muscles_1 = (FL(self.lce_1) * FV(self.lce_dot_1, self.vmax) * self.activity[:self.n_actuators] + FP(self.lce_1)) \
                                * self.maximum_isometric_forces[:, 0]
-        self.force_muscles_2 = FL(self.lce_2) * FV(self.lce_dot_2) * self.activity[self.n_actuators:] + FP(self.lce_2) \
+        self.force_muscles_2 = FL(self.lce_2) * FV(self.lce_dot_2, self.vmax) * self.activity[self.n_actuators:] + FP(self.lce_2) \
                                * self.maximum_isometric_forces[:, 1]
         torque = self.moment_1 * self.force_muscles_1 + self.moment_2 * self.force_muscles_2
         self.joint_torque = -torque
