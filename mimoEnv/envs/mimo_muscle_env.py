@@ -17,7 +17,7 @@ LMAX = 1.6
 LMIN = 0.5
 FVMAX = 1.2
 # TODO atm VMAX was just measured from random movements, will be adapted for mimo
-VMAX = 5.0
+VMAX = 0.5
 FPMAX = 1.3
 FMAX = 50
 
@@ -109,14 +109,15 @@ class MIMoMuscleEnv(MIMoEnv):
                  vestibular_params=None,
                  goals_in_observation=True,
                  done_active=False):
-
-        # user parameters
-        # TODO this is tuned by hand for HalfCheetah, adapt for mimo
-        # TODO Implement asymmetric forces for single motor
-        self.phi_min = -1.5
-        self.phi_max = 1.5
+        # user parameters ------------------------------
         self.lce_min = 0.75
         self.lce_max = 1.05
+
+        # Placeholder that gets overwritten later
+        self.phi_min = -1
+        self.phi_max = 1
+
+
 
         self.lce_1_ref = None
         self.lce_2_ref = None
@@ -148,6 +149,10 @@ class MIMoMuscleEnv(MIMoEnv):
                          vestibular_params=vestibular_params,
                          goals_in_observation=goals_in_observation,
                          done_active=done_active)
+
+        self.phi_min = self.sim.model.jnt_range[self.mimo_actuated_joints, 0]
+        self.phi_max = self.sim.model.jnt_range[self.mimo_actuated_joints, 1]
+        self._set_muscles()
 
     def _env_setup(self, initial_qpos):
         super()._env_setup(initial_qpos)
@@ -249,10 +254,11 @@ class MIMoMuscleEnv(MIMoEnv):
         The minus sign at the end is a MuJoCo convention. A positive force multiplied by a positive moment results then in a NEGATIVE torque,
         (as muscles pull, they dont push) and the joint velocity gives us the correct muscle fiber velocities.
         """
-        self.force_muscles_1 = FL(self.lce_1) * FV(self.lce_dot_1) * self.activity[:self.n_actuators] + FP(self.lce_1)
-        self.force_muscles_2 = FL(self.lce_2) * FV(self.lce_dot_2) * self.activity[self.n_actuators:] + FP(self.lce_2)
-        torque = self.moment_1 * self.force_muscles_1 * self.maximum_isometric_forces[:, 0] \
-            + self.moment_2 * self.force_muscles_2 * self.maximum_isometric_forces[:, 1]
+        self.force_muscles_1 = (FL(self.lce_1) * FV(self.lce_dot_1) * self.activity[:self.n_actuators] + FP(self.lce_1)) \
+                               * self.maximum_isometric_forces[:, 0]
+        self.force_muscles_2 = FL(self.lce_2) * FV(self.lce_dot_2) * self.activity[self.n_actuators:] + FP(self.lce_2) \
+                               * self.maximum_isometric_forces[:, 1]
+        torque = self.moment_1 * self.force_muscles_1 + self.moment_2 * self.force_muscles_2
         self.joint_torque = -torque
 
     def _compute_muscle_action(self, action=None, update_action=True):
@@ -273,7 +279,7 @@ class MIMoMuscleEnv(MIMoEnv):
         then we output an action-vector that is 1 everywhere. With this, we don't have to change anything
         inside the environment.step(action) function.
         # TODO scale appropriately to equal max isometric forces, this FMAX value was taken randomly
-        # TODO could basically just divide somewhere by moment again to get FMAX back as maximumisometricforce
+        # maximum isometric force is not enough because we have to appropriately scale the moment arms.
         """
         self.sim.model.actuator_gear[self.mimo_actuators, 0] = self.joint_torque.copy() * FMAX
 
