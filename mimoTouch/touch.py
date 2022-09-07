@@ -381,6 +381,9 @@ class DiscreteTouch(Touch):
     def get_contact_position_world(self, contact_id):
         """ Get the position of a contact in the world frame.
 
+        Note that this is halfway between the touching geoms. Since geoms can intersect this point will likely be
+        located inside both.
+
         Args:
             contact_id: The ID of the contact.
 
@@ -401,7 +404,14 @@ class DiscreteTouch(Touch):
             A numpy array with the position of the contact.
 
         """
-        return env_utils.world_pos_to_geom(self.m_data, self.get_contact_position_world(contact_id), geom_id)
+        body_pos = env_utils.world_pos_to_geom(self.m_data, self.get_contact_position_world(contact_id), geom_id)
+        contact = self.m_data.contact[contact_id]
+        if contact.dist < 0:
+            # Have to correct contact position towards surface of our body.
+            # Note that distance is negative for intersecting geoms and the normal vector points into the sensing geom.
+            normal = self.get_contact_normal(contact_id, geom_id)
+            body_pos = body_pos + normal * contact.dis / 2
+        return body_pos
 
     # =============== Visualizations ==================================================
     # =================================================================================
@@ -1259,6 +1269,9 @@ class TrimeshTouch(Touch):
     def get_contact_position_world(self, contact_id):
         """ Get the position of a contact in the world frame.
 
+        Note that this is halfway between the touching geoms. Since geoms can intersect this point will likely be
+        located inside both.
+
         Args:
             contact_id: The ID of the contact.
 
@@ -1279,7 +1292,14 @@ class TrimeshTouch(Touch):
             A numpy array with the position of the contact.
 
         """
-        return env_utils.world_pos_to_body(self.m_data, self.get_contact_position_world(contact_id), body_id)
+        body_pos = env_utils.world_pos_to_body(self.m_data, self.get_contact_position_world(contact_id), body_id)
+        contact = self.m_data.contact[contact_id]
+        if contact.dist < 0:
+            # Have to correct contact position towards surface of our body.
+            # Note that distance is negative for intersecting geoms and the normal vector points into the sensing geom.
+            normal = self.get_contact_normal(contact_id, body_id)
+            body_pos = body_pos + normal * contact.dis / 2
+        return body_pos
 
     # =============== Raw force and contact normal ====================================
     # =================================================================================
