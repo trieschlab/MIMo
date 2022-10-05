@@ -819,8 +819,10 @@ class TrimeshTouch(Touch):
                 mesh instead.
             _vertex_to_sensor_idx: A dictionary that maps the indices for each active vertex. Calculations happen on
                 submeshes, so the indices have to mapped onto the output array. This dictionary stores that mapping.
+            _neighbour_cache_k: A dictionary with (body_id, submesh_id, sensor_id) tuples as key, storing the nearest
+                k neighbours on the submesh for the given sensor as a list. Used by :meth:`.get_k_nearest_sensors`
             _neighbour_cache: A dictionary with (body_id, sensor_id) tuples as key, storing the nearest neighbours for
-                the given sensor as a list.
+                the given sensor as a list. :meth:`.get_sensors_within_distance`
 
         """
 
@@ -851,6 +853,7 @@ class TrimeshTouch(Touch):
         self.active_vertices = {}
         self.sensor_positions = {}
 
+        self._neighbour_cache_k = {}
         self._neighbour_cache = {}
 
         self.plotting_limits = {}
@@ -1125,12 +1128,12 @@ class TrimeshTouch(Touch):
     def get_k_nearest_sensors(self, contact_pos, body_id, k):
         """ Given a position and a body, find the k sensors on the body closest to the position.
 
-        TODO: Uses a cache to speed up the simulation. For a given contact we determine the closest sensor point on a
-            given body. If this point is located in the cache, the nearest neighbour search is skipped and instead
-            pulled from the cache. If the point is not located in the cache we store it there. Currently there is no
-            pruning or limiting of the cache.
-            The cache also stores the "k" factor used during the previous search, so changing k mid simulation will
-            reduce performance but not affect accuracy.
+        Uses a cache to speed up the simulation. For a given contact we determine the closest sensor point on a
+        given body. If this point is located in the cache, the nearest neighbour search is skipped and instead
+        pulled from the cache. If the point is not located in the cache we store it there. Currently there is no
+        pruning or limiting of the size of the cache.
+        The cache also stores the "k" factor used during the previous search, so changing k mid simulation will
+        reduce performance but not affect accuracy.
 
         Args:
             contact_pos: The position. Should be a numpy array of shape `(3,)`
@@ -1145,59 +1148,74 @@ class TrimeshTouch(Touch):
         # then get the k closest from the candidates of all submeshes
         candidate_sensors_idx = []
         candidate_sensor_distances = []
+
+        # Cache operates on closest vertex overall (even inactive), so have to find that first to determine if cache
+        # applies
+        distances = []
+        closest_id = (-1, -1)
+        closest_distance = math.inf
         for i, mesh in enumerate(self._submeshes[body_id]):
             mesh_distances = self._sensor_distances(contact_pos, mesh)
             sub_idx = np.argmin(mesh_distances)
             distance = mesh_distances[sub_idx]
-            active_vertices_on_submesh = self._active_subvertices[body_id][i]
+            if distance < closest_distance:
+                closest_id = (i, sub_idx)
+                closest_distance = distance
+            distances.append(mesh_distances)
 
-            # If the mesh only has a single vertex and it is an active vertex, take it and go to next mesh
-            if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
-                candidate_sensors_idx.append(self._convert_active_sensor_idx(body_id, i, sub_idx))
-                candidate_sensor_distances.append(distance)
-                continue
+        submesh_idx, vertex_idx = closest_id
 
-            # If the search for this sensor was already performed with the same k: grab from cache and go to next mesh
-            if (body_id, i, sub_idx) in self._neighbour_cache:
-                cached_candidate_sensor_idxs, cached_candidate_sensor_distances, cached_k = self._neighbour_cache[(body_id, i, sub_idx)]
-                if cached_k == k:
-                    candidate_sensors_idx.extend(cached_candidate_sensor_idxs)
-                    candidate_sensor_distances.extend(cached_candidate_sensor_distances)
+        get_from_cache = False
+        if (body_id, submesh_idx, vertex_idx) in self._neighbour_cache_k:
+            cached_candidate_sensor_idxs, cached_candidate_sensor_distances, cached_k = self._neighbour_cache_k[
+                (body_id, submesh_idx, vertex_idx)]
+            if cached_k == k:
+                get_from_cache = True
+                candidate_sensors_idx = cached_candidate_sensor_idxs
+                candidate_sensor_distances = cached_candidate_sensor_distances
+
+        if not get_from_cache:
+            # Perform the actual search
+            for i, mesh in enumerate(self._submeshes[body_id]):
+                mesh_distances = distances[i]
+                sub_idx = np.argmin(mesh_distances)
+                distance = mesh_distances[sub_idx]
+                active_vertices_on_submesh = self._active_subvertices[body_id][i]
+
+                # If the mesh only has a single vertex and it is an active vertex, take it and go to next mesh
+                if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
+                    candidate_sensors_idx.append(self._convert_active_sensor_idx(body_id, i, sub_idx))
+                    candidate_sensor_distances.append(distance)
                     continue
 
-            # If neither of the two above apply, perform nearest k search, caching results.
-            graph = mesh.vertex_adjacency_graph
-            nodes_to_check = deque()
-            nodes_to_check.append(sub_idx)
-            nodes_to_check.extend(graph[sub_idx])
-            candidate_sensor_idxs_submesh = []
-            candidate_sensor_distances_submesh = []
-            largest_distance_so_far = 0
-            checked = set()
-            while len(nodes_to_check) > 0:
-                candidate = nodes_to_check.pop()
-                if candidate in checked:
-                    continue
-                checked.add(candidate)
-                distance = mesh_distances[candidate]
-                # If we have enough candidates and the current node is further away than the furthest, skip this node
-                # Otherwise add it to found candidates and put neighbours into queue to check
-                if len(candidate_sensor_idxs_submesh) >= k and distance > largest_distance_so_far:
-                    continue
-                else:
-                    if active_vertices_on_submesh[candidate]:
-                        candidate_sensor_idxs_submesh.append(self._convert_active_sensor_idx(body_id, i, candidate))
-                        candidate_sensor_distances_submesh.append(distance)
-                        if len(candidate_sensors_idx) < k:
-                            largest_distance_so_far = distance
-                    nodes_to_check.extend(set(graph[candidate]) - checked)
-            # Cache results
-            self._neighbour_cache[(body_id, i, sub_idx)] = \
-                (candidate_sensor_idxs_submesh, candidate_sensor_distances_submesh, k)
+                # Perform nearest k search, caching results.
+                graph = mesh.vertex_adjacency_graph
+                nodes_to_check = deque()
+                nodes_to_check.append(sub_idx)
+                nodes_to_check.extend(graph[sub_idx])
+                largest_distance_so_far = 0
+                checked = set()
+                while len(nodes_to_check) > 0:
+                    candidate = nodes_to_check.pop()
+                    if candidate in checked:
+                        continue
+                    checked.add(candidate)
+                    distance = mesh_distances[candidate]
+                    # If we have enough candidates and the current node is further away than the furthest, skip this
+                    # node. Otherwise add it to found candidates and put neighbours into queue to check
+                    if len(candidate_sensors_idx) >= k and distance > largest_distance_so_far:
+                        continue
+                    else:
+                        if active_vertices_on_submesh[candidate]:
+                            candidate_sensor_distances.append(self._convert_active_sensor_idx(body_id, i, candidate))
+                            candidate_sensors_idx.append(distance)
+                            if len(candidate_sensors_idx) < k:
+                                largest_distance_so_far = distance
+                        nodes_to_check.extend(set(graph[candidate]) - checked)
 
-            # Add results to current search
-            candidate_sensor_distances.extend(candidate_sensor_distances_submesh)
-            candidate_sensors_idx.extend(candidate_sensor_idxs_submesh)
+            # Perform caching
+            self._neighbour_cache_k[(body_id, submesh_idx, vertex_idx)] = \
+                (candidate_sensors_idx, candidate_sensor_distances, k)
 
         sensor_idx = np.asarray(candidate_sensors_idx)
         distances = np.asanyarray(candidate_sensor_distances)
@@ -1227,12 +1245,12 @@ class TrimeshTouch(Touch):
         - There is a path from the sensor to the vertex closest to the position such that all vertices on that path are
           also within the distance limit.
 
-        TODO: Uses a cache to speed up the simulation. For a given contact we determine the closest sensor point on a
-            given body. If this point is located in the cache, the nearest neighbour search is skipped and instead
-            pulled from the cache. If the point is not located in the cache we store it there. Currently there is no
-            pruning or limiting of the cache.
-            To facilitate accurate searches even as the contact point moves about, we search a slightly larger area on
-            the first occurrence, which is then pruned on subsequent occurrences using the distance measure.
+        Uses a cache to speed up the simulation. For a given contact we determine the closest sensor point on a
+        given body. If this point is located in the cache, the nearest neighbour search is skipped and instead
+        pulled from the cache. If the point is not located in the cache we store it there. Currently there is no
+        pruning or limiting of the size of the cache.
+        To facilitate accurate searches even as the contact point moves about, we search a slightly larger area on
+        the first occurrence, which is then pruned on subsequent occurrences using the distance measure.
 
         Args:
             contact_pos: The position. Should be a numpy array of shape `(3,)`
@@ -1248,40 +1266,78 @@ class TrimeshTouch(Touch):
         # submeshes since we dont have edges between submeshes
         candidate_sensors_idx = []
         candidate_sensor_distances = []
+
+        # Cache operates on closest vertex overall (even inactive), so have to find that first to determine if cache
+        # applies
+        distances = []
+        closest_id = (-1, -1)
+        closest_distance = math.inf
         for i, mesh in enumerate(self._submeshes[body_id]):
             mesh_distances = self._sensor_distances(contact_pos, mesh)
             sub_idx = np.argmin(mesh_distances)
             distance = mesh_distances[sub_idx]
-            if distance > distance_limit:
-                continue
-            active_vertices_on_submesh = self._active_subvertices[body_id][i]
-            index_map = self._vertex_to_sensor_idx[body_id][i]
-            if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
-                candidate_sensors_idx.append(index_map[sub_idx])
-                candidate_sensor_distances.append(distance)
-                continue
-            graph = self._get_mesh_adjacency_graph(mesh)
-            candidates = deque()
-            candidates.append(sub_idx)
-            candidates.extend(graph[sub_idx])
+            if distance < closest_distance:
+                closest_id = (i, sub_idx)
+                closest_distance = distance
+            distances.append(mesh_distances)
 
-            within_distance = mesh_distances < distance_limit
-            checked = np.invert(within_distance)
+        submesh_idx, vertex_idx = closest_id
 
-            while len(candidates) > 0:
-                candidate = candidates.pop()
-                if checked[candidate]:
+        # Having found closest vertex we try to grab from cache. We still have to filter by the actual distance here
+        # since the distance used for the cache is slightly larger.
+        if (body_id, submesh_idx, vertex_idx) in self._neighbour_cache:
+            cached_candidate_sensor_idxs, cached_candidate_sensor_distances = self._neighbour_cache[
+                (body_id, submesh_idx, vertex_idx)]
+            within_distance_mask = cached_candidate_sensor_distances < distance_limit
+            candidate_sensors_idx = cached_candidate_sensor_idxs[within_distance_mask]
+            candidate_sensor_distances = cached_candidate_sensor_distances[within_distance_mask]
+
+        # If we do not have the vertex in the cache, we perform nearest search with the range extended by half the
+        # distance between sensor points to ensure the cache still captures all relevant neighbours even if the actual
+        # contact point moves.
+        else:
+            for i, mesh in enumerate(self._submeshes[body_id]):
+                mesh_distances = distances[i]
+                sub_idx = np.argmin(mesh_distances)
+                distance = mesh_distances[sub_idx]
+                # If even the closest point is too far away we can skip submesh
+                if distance > distance_limit:
                     continue
-                checked[candidate] = 1
-                # If the sensor is an output sensor, we still need more candidates, or it is closer than another:
-                #   Grab this sensor as a candidate
-                if not within_distance[candidate]:
+                active_vertices_on_submesh = self._active_subvertices[body_id][i]
+                index_map = self._vertex_to_sensor_idx[body_id][i]
+                # If we only have a single sensor point and it is active we add it to the candidates and go to next
+                # submesh
+                if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
+                    candidate_sensors_idx.append(index_map[sub_idx])
+                    candidate_sensor_distances.append(distance)
                     continue
-                else:
-                    if active_vertices_on_submesh[candidate]:
-                        candidate_sensors_idx.append(index_map[candidate])
-                        candidate_sensor_distances.append(mesh_distances[candidate])
-                    candidates.extend([node for node in graph[candidate] if not checked[candidate]])
+
+                # The actual search happens here now simply using BFS
+                graph = self._get_mesh_adjacency_graph(mesh)
+                nodes_to_check = deque()
+                nodes_to_check.append(sub_idx)
+                nodes_to_check.extend(graph[sub_idx])
+                within_distance = mesh_distances < (distance_limit * 1.25)
+                checked = np.invert(within_distance)
+
+                while len(nodes_to_check) > 0:
+                    candidate = nodes_to_check.pop()
+                    if checked[candidate]:
+                        continue
+                    checked[candidate] = 1
+                    # If the point is beyond the distance we skip it, otherwise we add the neighbours into the queue to
+                    # check. If the point is also an active sensor point we add it to the candidates.
+                    if not within_distance[candidate]:
+                        continue
+                    else:
+                        if active_vertices_on_submesh[candidate]:
+                            candidate_sensors_idx.append(index_map[candidate])
+                            candidate_sensor_distances.append(mesh_distances[candidate])
+                        nodes_to_check.extend([node for node in graph[candidate] if not checked[candidate]])
+
+            # Cache results from search
+            self._neighbour_cache[(body_id, submesh_idx, vertex_idx)] = \
+                (candidate_sensors_idx, candidate_sensor_distances)
 
         sensor_idx = np.asarray(candidate_sensors_idx)
         distances = np.asanyarray(candidate_sensor_distances)
