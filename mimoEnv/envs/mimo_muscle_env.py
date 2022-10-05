@@ -112,7 +112,6 @@ class MIMoMuscleEnv(MIMoEnv):
 
         # user parameters
         # TODO this is tuned by hand for HalfCheetah, adapt for mimo
-        # TODO Implement asymmetric forces for single motor
         self.phi_min = -1.5
         self.phi_max = 1.5
         self.lce_min = 0.75

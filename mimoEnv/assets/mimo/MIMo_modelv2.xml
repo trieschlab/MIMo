@@ -97,7 +97,7 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 						<site name="torque_right_elbow" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<geom name="right_larm" type="capsule" size=".023 0.037" pos="0 0 .037" contype="8" conaffinity="7"/>
 						<body name="right_hand" pos="0.007 -.009 .11032" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
-							<joint name="robot:right_hand1" type="hinge" pos="-0.007 0 -.01532" axis="0 0 -1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
+							<joint name="robot:right_hand1" type="hinge" pos="-0.007 0.009 -.01532" axis="0 0 -1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
 							<joint name="robot:right_hand2" type="hinge" pos="-0.007 -0.005 -.02032" axis="-1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007"/>
 							<joint name="robot:right_hand3" type="hinge" pos="-0.007 0 -.02532" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007"/>
 							<site name="torque_right_wrist" type="sphere" size="0.002" pos="0 0 0" group="4"/>
@@ -226,7 +226,7 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 						<geom name="left_larm" type="capsule" size=".023 0.037" pos="0 0 .037" contype="2" conaffinity="25"/>
 						<body name="left_hand" pos="0.007 .009 .11032" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
 
-							<joint name="robot:left_hand1" type="hinge" pos="-0.007 0 -.01532" axis="0 0 1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
+							<joint name="robot:left_hand1" type="hinge" pos="-0.007 -.009 -.01532" axis="0 0 1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007"/>
 							<joint name="robot:left_hand2" type="hinge" pos="-0.007 .005 -.02032" axis="1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007"/>
 							<joint name="robot:left_hand3" type="hinge" pos="-0.007 0 -.02532" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007"/>
 							<site name="torque_left_wrist" type="sphere" size="0.002" pos="0 0 0" group="4"/>
