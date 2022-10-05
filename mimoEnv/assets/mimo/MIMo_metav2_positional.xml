@@ -256,26 +256,26 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 
 		<position class="mimo"	name="act:right_ff_side" 	gear="57.296" kp=".2" 	joint="robot:right_ff_side" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 		<position class="mimo"	name="act:right_ff_knuckle" gear="57.296" kp=".2" 	joint="robot:right_ff_knuckle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
-<!--		<position class="mimo"	name="act:right_ff_middle" 	gear="57.296" kp=".2"	joint="robot:right_ff_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>-->
+		<position class="mimo"	name="act:right_ff_middle" 	gear="57.296" kp=".2"	joint="robot:right_ff_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 
 		<position class="mimo"	name="act:right_mf_side" 	gear="57.296" kp=".2" 	joint="robot:right_mf_side" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 		<position class="mimo"	name="act:right_mf_knuckle" gear="57.296" kp=".2" 	joint="robot:right_mf_knuckle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
-<!--		<position class="mimo"	name="act:right_mf_middle" 	gear="57.296" kp=".2"	joint="robot:right_mf_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>-->
+		<position class="mimo"	name="act:right_mf_middle" 	gear="57.296" kp=".2"	joint="robot:right_mf_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 
 		<position class="mimo"	name="act:right_rf_side" 	gear="57.296" kp=".2"	joint="robot:right_rf_side" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 		<position class="mimo"	name="act:right_rf_knuckle" gear="57.296" kp=".2" 	joint="robot:right_rf_knuckle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
-<!--		<position class="mimo"	name="act:right_rf_middle" 	gear="57.296" kp=".2" 	joint="robot:right_rf_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>-->
+		<position class="mimo"	name="act:right_rf_middle" 	gear="57.296" kp=".2" 	joint="robot:right_rf_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 
 		<position class="mimo"	name="act:right_lf_side" 	gear="57.296" kp=".2"	joint="robot:right_lf_side" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 		<position class="mimo"	name="act:right_lf_meta" 	gear="57.296" kp=".2" 	joint="robot:right_lf_meta" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 		<position class="mimo"	name="act:right_lf_knuckle" gear="57.296" kp=".2" 	joint="robot:right_lf_knuckle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
-<!--		<position class="mimo"	name="act:right_lf_middle" 	gear="57.296" kp=".2" 	joint="robot:right_lf_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>-->
+		<position class="mimo"	name="act:right_lf_middle" 	gear="57.296" kp=".2" 	joint="robot:right_lf_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 
 		<position class="mimo"	name="act:right_thumb_side" 	gear="57.296" kp=".2" 	joint="robot:right_th_swivel" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 		<position class="mimo"	name="act:right_thumb_add" 		gear="57.296" kp=".2" 	joint="robot:right_th_adduction" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 		<position class="mimo"	name="act:right_thumb_rotation" gear="57.296" kp=".2" 	joint="robot:right_th_rot" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 		<position class="mimo"	name="act:right_thumb_pivot" 	gear="57.296" kp=".2" 	joint="robot:right_th_pivot" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
-<!--		<position class="mimo"	name="act:right_thumb_middle" 	gear="57.296" kp=".2" 	joint="robot:right_th_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>-->
+		<position class="mimo"	name="act:right_thumb_middle" 	gear="57.296" kp=".2" 	joint="robot:right_th_middle" ctrlrange="-100 100" forcelimited="true" forcerange="-.00005 .00005"/>
 
 		<position class="mimo" name="act:left_shoulder1" gear="57.296" kp=".2" joint="robot:left_shoulder_horizontal" ctrlrange="-28 118" forcelimited="true" forcerange="-.15 .15"/>
 		<position class="mimo" name="act:left_shoulder2" gear="57.296" kp=".2" joint="robot:left_shoulder_ad_ab" ctrlrange="-84 183" forcelimited="true" forcerange="-.15 .15"/>
