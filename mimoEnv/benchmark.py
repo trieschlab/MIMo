@@ -86,17 +86,20 @@ def run(env, max_steps):
 def benchmark(configurations, output_file):
     """ Benchmarks multiple configurations for MIMo.
 
-    We use cProfile as the profiler. Multiple runs with different configurations are performed and their profiles saved
-    to sequentially numbered files. Runtime measurements for all factors are also saved to a separate file.
+    We use cProfile as the profiler. Multiple runs with different configurations are performed and the runtime
+    measurements saved to the specified output file. The profile for each run is also saved to a file named after the
+    configuration.
     Configurations consist of an environment name and initialization parameters for that environment.
-    Each configuration is run for 1 hour simulation time and the real time required for that hour is measured.
+    Each configuration is run for the specified simulation time and the real time required for that is measured.
     MIMo takes random actions throughout.
 
     Args:
-        configurations: A list of tuples storing configurations to be benchmarked. Each tuple has three entries:
-            An arbitrary name for the entry, the name of the gym environment that will be run, and a dictionary with
-            parameters for the environment.
-        output_file: Results are written to this file
+        configurations: A list of tuples storing configurations to be benchmarked. Each tuple has four entries:
+            An arbitrary name for the entry, the name of the gym environment that will be run, a dictionary with
+            parameters for the environment, and finally the duration of the run in simulation seconds.
+            Note that the parameter dictionary can be empty if you wish to use the default parameters for the
+            environment.
+        output_file: Runtime results are written to this file.
 
     """
     results_file = os.path.abspath(output_file)
@@ -107,7 +110,7 @@ def benchmark(configurations, output_file):
 
     for configuration in configurations:
         # 1 hour simulation time
-        config_name, env_name, config_dict = configuration
+        config_name, env_name, config_dict, sim_time = configuration
 
         print("Running configuration:", config_name)
 
@@ -120,7 +123,7 @@ def benchmark(configurations, output_file):
         env = gym.make(env_name, **config_dict)
         _ = env.reset()
 
-        max_steps = math.floor(360 / env.dt)
+        max_steps = math.floor(sim_time / env.dt)
 
         start = time.time()
         run(env, max_steps)
@@ -187,6 +190,6 @@ def run_paper_benchmarks():
 
 if __name__ == "__main__":
     configurations = []
-    configurations.append(("MIMoV1", "MIMoBench-v0", {}))
-    configurations.append(("MIMoV2", "MIMoBenchV2-v0", {}))
+    configurations.append(("MIMoV1", "MIMoBench-v0", {}, 3600))
+    configurations.append(("MIMoV2", "MIMoBenchV2-v0", {}, 3600))
     benchmark(configurations, "optimized_results")
