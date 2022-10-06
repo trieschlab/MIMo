@@ -21,6 +21,7 @@ import trimesh
 from trimesh import PointCloud
 from cachetools import cachedmethod, LRUCache
 import CacheToolsUtils as ctu
+from matplotlib import pyplot as plt
 
 import mimoEnv.utils as env_utils
 from mimoEnv.utils import rotate_vector_transpose, rotate_vector, EPS
@@ -820,6 +821,8 @@ class TrimeshTouch(Touch):
                 `True`, otherwise `False`.
             plotting_limits: A convenience dictionary listing axis limits for plotting forces or sensor points for
                 geoms.
+            contact_tuples: A list of tuples listing the contact index, the relevant sensing body and the raw contact
+                forces for that contact. Note that a contact may appear twice if both involved bodies have sensors.
             _submeshes: A dictionary like :attr:`.meshes`, but storing a list of the individual geom meshes instead.
             _active_subvertices: A dictionary like :attr:`.active_vertices`, but storing a list of masks for each geom
                 mesh instead.
@@ -856,7 +859,7 @@ class TrimeshTouch(Touch):
 
         self.meshes: Dict[int, trimesh.Trimesh] = {}
         self.active_vertices = {}
-        self.sensor_positions = {}
+        self.contact_tuples = []
 
         self._neighbour_cache = ctu.StatsCache(LRUCache(maxsize=200))
         self.plotting_limits = {}
@@ -1416,14 +1419,14 @@ class TrimeshTouch(Touch):
             A numpy array with the position of the contact.
 
         """
-        body_pos = env_utils.world_pos_to_body(self.m_data, self.get_contact_position_world(contact_id), body_id)
+        contact_pos = env_utils.world_pos_to_body(self.m_data, self.get_contact_position_world(contact_id), body_id)
         contact = self.m_data.contact[contact_id]
         if contact.dist < 0:
             # Have to correct contact position towards surface of our body.
             # Note that distance is negative for intersecting geoms and the normal vector points into the sensing geom.
             normal = self.get_contact_normal(contact_id, body_id)
-            body_pos = body_pos + normal * contact.dist / 2
-        return body_pos
+            contact_pos = contact_pos + normal * contact.dist / 2
+        return contact_pos
 
     # =============== Raw force and contact normal ====================================
     # =================================================================================
@@ -1555,6 +1558,7 @@ class TrimeshTouch(Touch):
                     forces = self.touch_function(i, rel_body)
                     contact_tuples.append((i, rel_body, forces))
 
+        self.contact_tuples = contact_tuples
         return contact_tuples
 
     def get_empty_sensor_dict(self, size):
@@ -1706,7 +1710,7 @@ class TrimeshTouch(Touch):
 
     # Plot forces for list of bodies.
     def plot_force_bodies(self, body_ids: List[int] = [], body_names: List[str] = [],
-                          title: str = "", focus: str = "world"):
+                          title: str = "", focus: str = "world", show_contact_points: bool = True):
         """ Plot the sensor output for a list of bodies.
 
         Given a list of bodies, either by ID or by name, plot the positions and outputs of all sensors on the bodies.
@@ -1722,6 +1726,8 @@ class TrimeshTouch(Touch):
             title: The title of the plot.
             focus: Coordinates are moved into a consistent reference frame. This parameter determines that reference
                 frame. Must be one of ``["world", "first"]``.
+            show_contact_points: If ``True`` the actual contact points are also plotted. Note that these are corrected
+                for intersecting bodies. Default True.
         """
         assert len(body_ids) > 0 or len(body_names) > 0
         assert focus in ["world", "first"]
@@ -1750,7 +1756,25 @@ class TrimeshTouch(Touch):
         points = np.concatenate(points)
         forces = np.concatenate(forces)
         limit = np.amax(np.abs(points))*1.2
-        env_utils.plot_forces(points=points, vectors=forces, limit=limit, title=title)
+        fig, ax = env_utils.plot_forces(points=points, vectors=forces, limit=limit, title=title, show=False)
+
+        if show_contact_points:
+            for body_id in body_ids:
+                for contact_id, contact_body_id, forces in self.contact_tuples:
+                    if body_id == contact_body_id:
+                        contact_position = self.get_contact_position_relative(contact_id, body_id)
+                        if focus == "world":
+                            contact_position = env_utils.body_pos_to_world(self.m_data,
+                                                                           position=contact_position,
+                                                                           body_id=body_id)
+                        else:
+                            contact_position = env_utils.body_pos_to_body(self.m_data,
+                                                                          position=contact_position,
+                                                                          body_id_source=body_id,
+                                                                          body_id_target=body_ids[0])
+                        ax.scatter(contact_position[0], contact_position[1], contact_position[2],
+                                   color="y", s=15, depthshade=True, alpha=0.8)
+        plt.show()
 
     def plot_force_body_subtree(self, body_id: int = None, body_name: str = None, title=""):
         """ Plot the sensor output for the kinematic subtree with the given body at its root.
