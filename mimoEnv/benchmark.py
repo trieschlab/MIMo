@@ -106,7 +106,8 @@ def benchmark(configurations, output_file):
     profile_dir = os.path.dirname(results_file)
 
     runtime_measurements = []
-    runtime_measurements.append(["Init.", "Physics", "Touch", "Vision", "Proprioception", "Vestibular", "Other"])
+    runtime_measurements.append(["Config", "Init.", "Physics", "Touch",
+                                 "Vision", "Proprioception", "Vestibular", "Other"])
 
     for configuration in configurations:
         # 1 hour simulation time
@@ -147,7 +148,8 @@ def benchmark(configurations, output_file):
         vesti_time = stats_object.func_profiles["get_vestibular_obs"].cumtime
         other_time = runtime - physics_time - touch_time - vision_time - proprio_time - vesti_time
 
-        runtime_measurements.append(["{:.2f}".format(init_time),
+        runtime_measurements.append([config_name,
+                                     "{:.2f}".format(init_time),
                                      "{:.2f}".format(physics_time),
                                      "{:.2f}".format(touch_time),
                                      "{:.2f}".format(vision_time),
