@@ -412,7 +412,7 @@ class DiscreteTouch(Touch):
             # Have to correct contact position towards surface of our body.
             # Note that distance is negative for intersecting geoms and the normal vector points into the sensing geom.
             normal = self.get_contact_normal(contact_id, geom_id)
-            body_pos = body_pos + normal * contact.dis / 2
+            body_pos = body_pos + normal * contact.dist / 2
         return body_pos
 
     # =============== Visualizations ==================================================
@@ -1417,7 +1417,7 @@ class TrimeshTouch(Touch):
             # Have to correct contact position towards surface of our body.
             # Note that distance is negative for intersecting geoms and the normal vector points into the sensing geom.
             normal = self.get_contact_normal(contact_id, body_id)
-            body_pos = body_pos + normal * contact.dis / 2
+            body_pos = body_pos + normal * contact.dist / 2
         return body_pos
 
     # =============== Raw force and contact normal ====================================
