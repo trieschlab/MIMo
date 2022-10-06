@@ -20,6 +20,7 @@ from mujoco_py.generated import const
 import trimesh
 from trimesh import PointCloud
 from cachetools import cachedmethod, LRUCache
+import CacheToolsUtils as ctu
 
 import mimoEnv.utils as env_utils
 from mimoEnv.utils import rotate_vector_transpose, rotate_vector, EPS
@@ -804,6 +805,9 @@ class TrimeshTouch(Touch):
         Touch functions return their output, while response functions do not return anything and instead write their
         adjusted forces directly into the output dictionary.
 
+        An LRU cache is used to speed up performance of nearest sensor point searches. This cache persists through
+        calls to :meth:`.reset`.
+
         The following attributes are provided in addition to those of :class:`~mimoTouch.touch.Touch`.
 
         Attributes:
@@ -821,7 +825,9 @@ class TrimeshTouch(Touch):
                 mesh instead.
             _vertex_to_sensor_idx: A dictionary that maps the indices for each active vertex. Calculations happen on
                 submeshes, so the indices have to mapped onto the output array. This dictionary stores that mapping.
-            _neighbour_cache: An LRU cache storing the results for the nearest neighbour searches.
+            _neighbour_cache: An LRU cache storing the results for the nearest neighbour searches. Hit rate and current
+                size can be determined with ``._neighbour_cache.hits()`` and ``._neighbour_cache._cache.currsize``
+                respectively.
 
         """
 
@@ -852,8 +858,7 @@ class TrimeshTouch(Touch):
         self.active_vertices = {}
         self.sensor_positions = {}
 
-        self._neighbour_cache = LRUCache(maxsize=1000)
-
+        self._neighbour_cache = ctu.StatsCache(LRUCache(maxsize=200))
         self.plotting_limits = {}
 
         # Add sensors to bodies
@@ -1123,7 +1128,7 @@ class TrimeshTouch(Touch):
                 closest_distance = distance
         return self._convert_active_sensor_idx(body_id, closest[0], closest[1]), closest_distance
 
-    @cachedmethod(operator.attrgetter("_neighbour_cache"), key=lambda distances, body_id, submesh_id, vertex_id, k:
+    @cachedmethod(operator.attrgetter("_neighbour_cache"), key=lambda inst, distances, body_id, submesh_id, vertex_id, k:
                   hash(("nearest_k", body_id, submesh_id, vertex_id, k)))
     def _nearest_k_search(self, distances, body_id, submesh_id, vertex_id, k):
         """ Finds the k nearest sensor points using BFS.
@@ -1244,8 +1249,8 @@ class TrimeshTouch(Touch):
         """
         return mesh.vertex_adjacency_graph
 
-    @cachedmethod(operator.attrgetter("_neighbour_cache"), key=lambda distances, body_id, submesh_id, vertex_id, k:
-                  hash(("within_distance", body_id, submesh_id, vertex_id, k)))
+    @cachedmethod(operator.attrgetter("_neighbour_cache"), key=lambda inst, distances, body_id, submesh_id, vertex_id, distance_limit:
+                  hash(("within_distance", body_id, submesh_id, vertex_id, distance_limit)))
     def _nearest_within_distance_search(self, distances, body_id, submesh_id, vertex_id, distance_limit):
         """ Finds all sensor points within a distance limit using BFS on the sensor mesh.
 

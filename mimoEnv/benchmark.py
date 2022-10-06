@@ -100,16 +100,19 @@ def benchmark(configurations, output_file):
 
     """
     results_file = os.path.abspath(output_file)
-    profile_base_filename = os.path.splitext(results_file)
+    profile_dir = os.path.dirname(results_file)
 
     runtime_measurements = []
     runtime_measurements.append(["Init.", "Physics", "Touch", "Vision", "Proprioception", "Vestibular", "Other"])
 
-    for i, configuration in enumerate(configurations):
-        # 1 hour simulation time, 1 minute episodes before reset. MIMO takes random actions.
-        profile_file = profile_base_filename + "_{}.profile".format(i)
+    for configuration in configurations:
+        # 1 hour simulation time
+        config_name, env_name, config_dict = configuration
 
-        env_name, config_dict = configuration
+        print("Running configuration:", config_name)
+
+        profile_file_name = config_name + ".profile"
+        profile_file = os.path.join(profile_dir, profile_file_name)
 
         pr = cProfile.Profile()
         pr.enable()
@@ -117,7 +120,7 @@ def benchmark(configurations, output_file):
         env = gym.make(env_name, **config_dict)
         _ = env.reset()
 
-        max_steps = math.floor(3600 / env.dt)
+        max_steps = math.floor(360 / env.dt)
 
         start = time.time()
         run(env, max_steps)
@@ -141,13 +144,13 @@ def benchmark(configurations, output_file):
         vesti_time = stats_object.func_profiles["get_vestibular_obs"].cumtime
         other_time = runtime - physics_time - touch_time - vision_time - proprio_time - vesti_time
 
-        runtime_measurements.append([init_time,
-                                     physics_time,
-                                     touch_time,
-                                     vision_time,
-                                     proprio_time,
-                                     vesti_time,
-                                     other_time])
+        runtime_measurements.append(["{:.2f}".format(init_time),
+                                     "{:.2f}".format(physics_time),
+                                     "{:.2f}".format(touch_time),
+                                     "{:.2f}".format(vision_time),
+                                     "{:.2f}".format(proprio_time),
+                                     "{:.2f}".format(vesti_time),
+                                     "{:.2f}".format(other_time)])
 
         print("Elapsed time: total", total_time)
         print("Init time ", init_time)
@@ -159,7 +162,7 @@ def benchmark(configurations, output_file):
             f.write("\t".join(measurement) + "\n")
 
 
-if __name__ == "__main__":
+def run_paper_benchmarks():
     configurations = []
     resolutions = [64, 128, 256, 512]
     scales = [0.25, 0.5, 1.0, 2.0]
@@ -175,6 +178,15 @@ if __name__ == "__main__":
             for body in TOUCH_PARAMS["scales"]:
                 TOUCH_PARAMS["scales"][body] = DEFAULT_TOUCH_PARAMS["scales"][body] / scale
 
-            config_name = "V: T: "
-            configurations.append(("MIMoBench-v0", {"vision_params": VISION_PARAMS, "touch_params": TOUCH_PARAMS}))
+            config_name = "V: {}² T: {}".format(resolution, scale)
+            configurations.append((config_name,
+                                   "MIMoBench-v0",
+                                   {"vision_params": VISION_PARAMS, "touch_params": TOUCH_PARAMS}))
     benchmark(configurations, "paper_results.txt")
+
+
+if __name__ == "__main__":
+    configurations = []
+    configurations.append(("MIMoV1", "MIMoBench-v0", {}))
+    configurations.append(("MIMoV2", "MIMoBenchV2-v0", {}))
+    benchmark(configurations, "optimized_results")
