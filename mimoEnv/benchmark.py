@@ -95,6 +95,9 @@ def benchmark(configurations, output_file):
     Configurations consist of an environment name and initialization parameters for that environment.
     Each configuration is run for the specified simulation time and the real time required for that is measured.
     MIMo takes random actions throughout.
+    Measurements include the total runtime, the simulation time, the number of simulation steps, the time spent in
+    environment initialization, the time spent on the physics simulation, and the time spent in each of the sensor
+    modalities: touch, vision, proprioception and vestibular.
 
     Args:
         configurations: A list of tuples storing configurations to be benchmarked. Each tuple has four entries:
@@ -109,7 +112,7 @@ def benchmark(configurations, output_file):
     profile_dir = os.path.dirname(results_file)
 
     runtime_measurements = []
-    runtime_measurements.append(["Config", "Runtime", "n_steps", "Init.", "Physics", "Touch",
+    runtime_measurements.append(["Config", "Runtime", "Simtime", "n_steps", "Init.", "Physics", "Touch",
                                  "Vision", "Proprioception", "Vestibular", "Other"])
 
     for configuration in configurations:
@@ -145,14 +148,15 @@ def benchmark(configurations, output_file):
         stats_object = get_stats_profile(pstats.Stats(pr))
 
         physics_time = stats_object.func_profiles["do_simulation"].cumtime
-        touch_time = stats_object.func_profiles["get_touch_obs"].cumtime
-        vision_time = stats_object.func_profiles["get_vision_obs"].cumtime
-        proprio_time = stats_object.func_profiles["get_proprioception_obs"].cumtime
-        vesti_time = stats_object.func_profiles["get_vestibular_obs"].cumtime
+        touch_time = stats_object.func_profiles["get_touch_obs"].cumtime if "get_touch_obs" in stats_object.func_profiles else 0
+        vision_time = stats_object.func_profiles["get_vision_obs"].cumtime if "get_vision_obs" in stats_object.func_profiles else 0
+        proprio_time = stats_object.func_profiles["get_proprioception_obs"].cumtime if "get_proprioception_obs" in stats_object.func_profiles else 0
+        vesti_time = stats_object.func_profiles["get_vestibular_obs"].cumtime if "get_vestibular_obs" in stats_object.func_profiles else 0
         other_time = runtime - physics_time - touch_time - vision_time - proprio_time - vesti_time
 
         runtime_measurements.append([config_name,
                                      "{:.2f}".format(total_time),
+                                     "{:.2f}".format(max_steps * env.dt),
                                      "{}".format(max_steps),
                                      "{:.2f}".format(init_time),
                                      "{:.2f}".format(physics_time),
@@ -200,6 +204,6 @@ def run_paper_benchmarks():
 
 if __name__ == "__main__":
     configurations = []
-    configurations.append(("MIMoV1", "MIMoBench-v0", {}, 3600))
-    configurations.append(("MIMoV2", "MIMoBenchV2-v0", {}, 3600))
+    configurations.append(("MIMoV1", "MIMoBench-v0", {}, 360))
+    configurations.append(("MIMoV2", "MIMoBenchV2-v0", {}, 360))
     benchmark(configurations, "optimized_results")
