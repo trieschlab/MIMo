@@ -1,4 +1,7 @@
 """ This module contains some functions to benchmark the performance of the simulation.
+
+Classes and functions :cls:`FunctionProfile`, :cls:`StatsProfile` and :func:`get_stats_profile`  from
+NAME HERE @ LINK
 """
 
 import os
@@ -106,7 +109,7 @@ def benchmark(configurations, output_file):
     profile_dir = os.path.dirname(results_file)
 
     runtime_measurements = []
-    runtime_measurements.append(["Config", "Init.", "Physics", "Touch",
+    runtime_measurements.append(["Config", "Runtime", "n_steps", "Init.", "Physics", "Touch",
                                  "Vision", "Proprioception", "Vestibular", "Other"])
 
     for configuration in configurations:
@@ -149,6 +152,8 @@ def benchmark(configurations, output_file):
         other_time = runtime - physics_time - touch_time - vision_time - proprio_time - vesti_time
 
         runtime_measurements.append([config_name,
+                                     "{:.2f}".format(total_time),
+                                     "{}".format(max_steps),
                                      "{:.2f}".format(init_time),
                                      "{:.2f}".format(physics_time),
                                      "{:.2f}".format(touch_time),
@@ -160,7 +165,8 @@ def benchmark(configurations, output_file):
         print("Elapsed time: total", total_time)
         print("Init time ", init_time)
         print("Non-init time", runtime)
-        print("Simulation time:", max_steps * env.dt, "\n")
+        print("Simulation time:", max_steps * env.dt)
+        print("Simulation steps:", max_steps, "\n")
 
     with open(results_file, "wt", encoding="utf8") as f:
         for measurement in runtime_measurements:
@@ -168,25 +174,27 @@ def benchmark(configurations, output_file):
 
 
 def run_paper_benchmarks():
+    """ Performs the same benchmarks as used in the paper."""
     configurations = []
     resolutions = [64, 128, 256, 512]
     scales = [0.25, 0.5, 1.0, 2.0]
     for resolution in resolutions:
         for scale in scales:
 
-            VISION_PARAMS = {
+            vision_params = {
                 "eye_left": {"width": resolution, "height": resolution},
                 "eye_right": {"width": resolution, "height": resolution},
             }
 
-            TOUCH_PARAMS = copy.deepcopy(DEFAULT_TOUCH_PARAMS)
-            for body in TOUCH_PARAMS["scales"]:
-                TOUCH_PARAMS["scales"][body] = DEFAULT_TOUCH_PARAMS["scales"][body] / scale
+            touch_params = copy.deepcopy(DEFAULT_TOUCH_PARAMS)
+            for body in touch_params["scales"]:
+                touch_params["scales"][body] = DEFAULT_TOUCH_PARAMS["scales"][body] / scale
 
             config_name = "V: {}² T: {}".format(resolution, scale)
             configurations.append((config_name,
                                    "MIMoBench-v0",
-                                   {"vision_params": VISION_PARAMS, "touch_params": TOUCH_PARAMS}))
+                                   {"vision_params": vision_params, "touch_params": touch_params},
+                                   3600))
     benchmark(configurations, "paper_results.txt")
 
 
