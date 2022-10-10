@@ -53,14 +53,11 @@
 		</body>
 
 		<!-- The location and orientation of the base model can be set using this body -->
-		<body name="mimo_location" pos="0 0 .33" euler="0 0 0">
-			<joint name="mimo_orientation" type="free" stiffness="1000" limited="false"/>
+		<body name="mimo_location" pos="0 0 .4" euler="0 0 0">
+			<freejoint name="mimo_orientation"/>
 			<include file="mimo/MIMo_modelv2.xml"></include> <!-- Import the actual model-->
 		</body>
 		
     </worldbody>
-	
-	<equality>
-		<weld body1="head"/>
-	</equality>
+
 </mujoco>
