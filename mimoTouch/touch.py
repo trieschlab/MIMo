@@ -354,8 +354,8 @@ class DiscreteTouch(Touch):
         relative_position = self.get_contact_position_relative(contact_id, geom_id)
         sensor_points = self.sensor_positions[geom_id]
         distances = np.linalg.norm(sensor_points - relative_position, axis=1)
-        if sensor_points.shape[0] <= k:
-            return np.arange(sensor_points.shape[0]), distances
+        if distances.shape[0] <= k:
+            return np.arange(distances.shape[0]), distances
         else:
             sorted_idxs = np.argpartition(distances, k)
             return sorted_idxs[:k], distances[sorted_idxs[:k]]
