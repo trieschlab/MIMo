@@ -13,7 +13,7 @@ import copy
 from gym import spaces, utils
 from gym.envs.robotics import robot_env
 
-from mimoTouch.touch import DiscreteTouch
+from mimoTouch.touch import TrimeshTouch
 from mimoVision.vision import SimpleVision
 from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception
@@ -415,7 +415,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Args:
             touch_params (dict): The parameter dictionary.
         """
-        self.touch = DiscreteTouch(self, touch_params)
+        self.touch = TrimeshTouch(self, touch_params)
 
     def _vision_setup(self, vision_params):
         """ Perform the setup and initialization of the vision system.

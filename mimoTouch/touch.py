@@ -354,8 +354,11 @@ class DiscreteTouch(Touch):
         relative_position = self.get_contact_position_relative(contact_id, geom_id)
         sensor_points = self.sensor_positions[geom_id]
         distances = np.linalg.norm(sensor_points - relative_position, axis=1)
-        sorted_idxs = np.argpartition(distances, k)
-        return sorted_idxs[:k], distances[sorted_idxs[:k]]
+        if sensor_points.shape[0] <= k:
+            return np.arange(sensor_points.shape[0]), distances
+        else:
+            sorted_idxs = np.argpartition(distances, k)
+            return sorted_idxs[:k], distances[sorted_idxs[:k]]
 
     def get_sensors_within_distance(self, contact_id, geom_id, distance):
         """ Finds all sensors on a geom that are within a given distance to a contact.
@@ -1167,7 +1170,7 @@ class TrimeshTouch(Touch):
             k: How many closest neighbours we return.
 
         Returns:
-            The indices of the k-nearest sensors and their distances.
+            The indices of the k-nearest sensors in submesh format.
 
         """
         # Use trimesh meshes to get nearest vertex on all submeshes, then get up to k extra candidates for each submesh,
@@ -1206,10 +1209,7 @@ class TrimeshTouch(Touch):
                         candidate_sensor_idxs.append((i, candidate))
                         if len(candidate_sensor_idxs) < k and distance > largest_distance_so_far:
                             largest_distance_so_far = distance
-
-        sensor_idx = np.asarray(candidate_sensor_idxs)
-
-        return sensor_idx
+        return candidate_sensor_idxs
 
     def get_k_nearest_sensors(self, contact_pos, body_id, k, k_margin=1.4):
         """ Given a position and a body, find the k sensors on the body closest to the position.
@@ -1250,11 +1250,16 @@ class TrimeshTouch(Touch):
         candidate_sensors_idx = \
             self._nearest_k_search(distances, body_id, submesh_idx, vertex_idx, k_search)
 
+        sensors_idx = np.asarray([self._convert_active_sensor_idx(body_id, i, vert_idx)
+                                  for i, vert_idx in candidate_sensors_idx])
         candidate_sensor_distances = np.asarray([distances[i][vert_idx] for i, vert_idx in candidate_sensors_idx])
 
         # Get k closest from all of these candidates
-        sorted_idxs = np.argpartition(candidate_sensor_distances, k)
-        return candidate_sensors_idx[sorted_idxs[:k]], candidate_sensor_distances[sorted_idxs[:k]]
+        if sensors_idx.shape[0] <= k:
+            return sensors_idx, candidate_sensor_distances
+        else:
+            sorted_idxs = np.argpartition(candidate_sensor_distances, k)
+            return sensors_idx[sorted_idxs[:k]], candidate_sensor_distances[sorted_idxs[:k]]
 
     def _get_mesh_adjacency_graph(self, mesh):
         """ Grab the adjacency graph for the mesh.

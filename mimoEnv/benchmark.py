@@ -204,6 +204,6 @@ def run_paper_benchmarks():
 
 if __name__ == "__main__":
     configurations = []
-    configurations.append(("MIMoV1", "MIMoBench-v0", {}, 360))
-    configurations.append(("MIMoV2", "MIMoBenchV2-v0", {}, 360))
+    configurations.append(("MIMoV1", "MIMoBench-v0", {}, 3600))
+    configurations.append(("MIMoV2", "MIMoBenchV2-v0", {}, 3600))
     benchmark(configurations, "optimized_results")
