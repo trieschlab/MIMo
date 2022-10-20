@@ -101,6 +101,13 @@ class MIMoCatchEnv(MIMoMuscleEnv):
         self.action_penalty = action_penalty
         print("Action penalty: ", self.action_penalty)
 
+        # Info required to randomize ball position
+        self.random_limits = np.array([0.01, 0.01, 0.08, 0, 0, 0, 0])
+        target_joint = "target_joint"
+        self.target_joint_id = self.sim.model.joint_name2id(target_joint)
+        self.target_joint_qpos = env_utils.get_joint_qpos_addr(self.sim.model, self.target_joint_id)
+        self.target_joint_qvel = env_utils.get_joint_qvel_addr(self.sim.model, self.target_joint_id)
+
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
 
@@ -180,6 +187,12 @@ class MIMoCatchEnv(MIMoMuscleEnv):
         """
 
         self.sim.set_state(self.initial_state)
+
+        # Randomize ball position
+        random_shift = np.random.uniform(low=-self.random_limits, high=self.random_limits)
+        self.sim.data.qpos[self.target_joint_qpos] += random_shift
+        self.sim.data.qvel[self.target_joint_qvel] = np.zeros(self.sim.data.qvel[self.target_joint_qvel].shape)
+
         self.sim.forward()
 
         # perform 50 steps (.5 secs) with gravity off to settle arm
@@ -231,7 +244,6 @@ class MIMoCatchEnv(MIMoMuscleEnv):
         """
         self.viewer.cam.trackbodyid = 0  # id of the body to track
         self.viewer.cam.distance = .5  # how much you "zoom in", model.stat.extent is the max limits of the arena smaller is closer
-        print(self.viewer.cam.lookat)
         self.viewer.cam.lookat[0] = 0.15  # x,y,z offset from the object (works if trackbodyid=-1)
         self.viewer.cam.lookat[1] = -0.04
         self.viewer.cam.lookat[2] = 0.6  # 0.24 -0.04 .8
