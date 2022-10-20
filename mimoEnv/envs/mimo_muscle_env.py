@@ -115,13 +115,11 @@ class MIMoMuscleEnv(MIMoEnv):
         self.lce_min = 0.75
         self.lce_max = 1.05
         self.vmax = np.load('../mimoMuscle/vmax.npy')
-        print(self.vmax)
+        #print(self.vmax)
 
-        # Placeholder that gets overwritten later
+        # Placeholders that gets overwritten later
         self.phi_min = -1
         self.phi_max = 1
-
-
 
         self.lce_1_ref = None
         self.lce_2_ref = None
@@ -180,7 +178,6 @@ class MIMoMuscleEnv(MIMoEnv):
         because we have 2 antagonistic muscles per joint.
         """
         self._compute_parametrization()
-        #self.unwrapped.do_simulation = self.do_simulation
         self._set_action_space()
         self._set_initial_muscle_state()
 
@@ -344,3 +341,32 @@ class MIMoMuscleEnv(MIMoEnv):
         obs = super().reset()
         self._set_initial_muscle_state()
         return obs
+
+    def collect_data_for_joint(self, joint_name):
+        joint_id = self.sim.model.joint_name2id(joint_name)
+        actuator_index = np.nonzero(self.mimo_actuators == joint_id)
+
+        actuator_qpos = self.mimo_actuated_qpos[actuator_index]
+        actuator_qvel = self.mimo_actuated_qvel[actuator_index]
+
+        activity_neg = self.activity[actuator_index]
+        activity_pos = self.activity[self.n_actuators + actuator_index]
+
+        lce_neg = self.lce_1[actuator_index]
+        lce_pos = self.lce_2[actuator_index]
+
+        lce_neg_dot = self.lce_dot_1[actuator_index]
+        lce_pos_dot = self.lce_dot_2[actuator_index]
+
+        force_neg = self.force_muscles_1[actuator_index]
+        force_pos = self.force_muscles_2[actuator_index]
+
+        fl_neg = FL(self.lce_1)[actuator_index]
+        fv_neg = FV(self.lce_dot_1, self.vmax)[actuator_index]
+        fp_neg = FP(self.lce_1)[actuator_index]
+        fl_pos = FL(self.lce_2)[actuator_index]
+        fv_pos = FV(self.lce_dot_2, self.vmax)[actuator_index]
+        fp_pos = FP(self.lce_2)[actuator_index]
+
+        torque = self.joint_torque[actuator_index]
+        actuator_gear = self.sim.model.actuator_gear[actuator_index, 0]

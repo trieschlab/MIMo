@@ -41,26 +41,24 @@
 
         <light directional="false" diffuse=".4 .4 .4" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="false"/>
         <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
-		
-		<body name="test_object1" pos="1 0.3 0.7">
-			<freejoint/>
-			<geom type="box" material="matgeom" size="0.1 0.1 0.1" pos="0 0 0" condim="6"/>
-		</body>
-		
-		<body name="test_object2" pos="1 -0.3 0.7">
-			<freejoint/>
-			<geom type="sphere" material="matgeom" size="0.1" pos="0 0 0" condim="6" solimp="0.99 0.995 0.001 0.5 2" solref="-20000 -20"/>
-		</body>
 
 		<!-- The location and orientation of the base model can be set using this body -->
 		<body name="mimo_location" pos="0 0 .4" euler="0 0 0">
-			<joint name="mimo_orientation" type="free" stiffness="1000" limited="false"/>
+			<freejoint/>
 			<include file="mimo/MIMo_modelv2.xml"></include> <!-- Import the actual model-->
 		</body>
-		
+
+        <body name="right_elbow_test" pos="1 -0.3 0.7">
+			<joint name="right_elbow_test" type="free" stiffness="0" limited="false"/>
+			<geom type="box" material="matgeom" size="0.01 0.01 0.1" pos="0 0 0" condim="6"/>
+		</body>
     </worldbody>
 	
 	<equality>
+        <joint joint1="robot:right_shoulder_ad_ab" polycoef="0 1 0 0 0"/>
+        <joint joint1="robot:right_shoulder_rotation" polycoef="0 1 0 0 0"/>
 		<weld body1="head"/>
+        <weld body1="upper_body"/>
+        <weld body1="right_lower_arm" body2="right_elbow_test"/>
 	</equality>
 </mujoco>

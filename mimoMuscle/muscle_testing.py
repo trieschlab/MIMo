@@ -26,21 +26,6 @@ def vectorized(fn):
 
     return new_fn
 
-def vectorized(fn):
-    """
-    Simple vector wrapper for functions that clearly came from C
-    """
-    def new_fn(vec):
-        if hasattr(vec, "__iter__"):
-            ret = []
-            for x in vec:
-                ret.append(fn(x))
-            return np.array(ret, dtype=np.float32)
-        else:
-            return fn(vec)
-
-    return new_fn
-
 
 @vectorized
 def FL(lce):
@@ -164,7 +149,6 @@ for ep in range(N_episodes):
     while True:
         if not ep_steps % 50:
             action[:] = np.random.randint(0, 2, size=action.shape)
-            print(f'{ep_steps=}')
             #action[:] = 0.5
             #action[0] = 1
         state, rew, done, info = env.step(action)
