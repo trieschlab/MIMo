@@ -5,5 +5,7 @@ matplotlib
 glfw
 scipy
 trimesh
+cachetools
+CacheToolsUtils
 networkx
 rtree

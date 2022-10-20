@@ -32,8 +32,8 @@ def mesh_box(resolution: float, sizes: np.array):
 
     """
     assert len(sizes) == 3, "Size parameter does not fit box!"
-    # If distance between points is greater than size of box, have only one point in center of box
-    if resolution > sizes.max():
+    # If distance between points is a good bit greater than size of box, have only one point in center of box
+    if 0.75*resolution > sizes.max():
         return trimesh.points.PointCloud(np.zeros((1, 3), dtype=np.float64))
 
     # Otherwise subdivide box into smaller boxes
