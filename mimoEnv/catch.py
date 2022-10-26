@@ -103,7 +103,7 @@ def main():
     parser.add_argument('--action_penalty', action='store_true',
                         help='Adds a penalty for high-control actions if true.')
     parser.add_argument('--render_video', action='store_true',
-                        help='Adds a penalty for high-control actions if true.')
+                        help='Renders a video for each episode during the test run.')
     
     args = parser.parse_args()
     algorithm = args.algorithm
