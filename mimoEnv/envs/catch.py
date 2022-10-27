@@ -56,7 +56,7 @@ TOUCH_PARAMS = {
 }
 
 
-class MIMoCatchEnv(MIMoMuscleEnv):
+class MIMoCatchEnv(MIMoEnv):
     """ MIMo reaches for an object.
 
     Attributes and parameters are the same as in the base class, but the default arguments are adapted for the scenario.

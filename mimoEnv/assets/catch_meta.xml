@@ -173,31 +173,26 @@
 
 		<motor class="mimo"	name="act:right_ff_side" gear=".005" 		joint="robot:right_ff_side" forcerange="-1 1"/>
 		<motor class="mimo"	name="act:right_ff_knuckle" gear=".0619" 	joint="robot:right_ff_knuckle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_ff_middle" gear=".02063" 	joint="robot:right_ff_middle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_ff_distal" gear=".01548" 	joint="robot:right_ff_distal" forcerange="-.345 1"/>
+		<motor class="mimo"	name="act:right_ff_middle" gear=".03611" 	joint="robot:right_ff_middle" forcerange="-.345 1"/>
 
 		<motor class="mimo"	name="act:right_mf_side" gear=".005" 		joint="robot:right_mf_side" forcerange="-1 1"/>
 		<motor class="mimo"	name="act:right_mf_knuckle" gear=".117" 	joint="robot:right_mf_knuckle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_mf_middle" gear=".039" 		joint="robot:right_mf_middle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_mf_distal" gear=".02925" 	joint="robot:right_mf_distal" forcerange="-.345 1"/>
+		<motor class="mimo"	name="act:right_mf_middle" gear=".06825" 	joint="robot:right_mf_middle" forcerange="-.345 1"/>
 
 		<motor class="mimo"	name="act:right_rf_side" gear=".005" 		joint="robot:right_rf_side" forcerange="-1 1"/>
 		<motor class="mimo"	name="act:right_rf_knuckle" gear=".078" 	joint="robot:right_rf_knuckle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_rf_middle" gear=".026" 		joint="robot:right_rf_middle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_rf_distal" gear=".0195" 	joint="robot:right_rf_distal" forcerange="-.345 1"/>
+		<motor class="mimo"	name="act:right_rf_middle" gear=".0455" 	joint="robot:right_rf_middle" forcerange="-.345 1"/>
 
 		<motor class="mimo"	name="act:right_lf_side" gear=".005" 		joint="robot:right_lf_side" forcerange="-1 1"/>
 		<motor class="mimo"	name="act:right_lf_meta" gear=".064" 		joint="robot:right_lf_meta" forcerange="-.345 1"/>
 		<motor class="mimo"	name="act:right_lf_knuckle" gear=".0196" 	joint="robot:right_lf_knuckle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_lf_middle" gear=".00653" 	joint="robot:right_lf_middle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_lf_distal" gear=".00490" 	joint="robot:right_lf_distal" forcerange="-.345 1"/>
+		<motor class="mimo"	name="act:right_lf_middle" gear=".01143" 	joint="robot:right_lf_middle" forcerange="-.345 1"/>
 
 		<motor class="mimo"	name="act:right_thumb_side" gear=".373" 	joint="robot:right_th_swivel" forcerange="-.3 1"/>
 		<motor class="mimo"	name="act:right_thumb_add" gear=".134" 		joint="robot:right_th_adduction" forcerange="-1 1"/>
 		<motor class="mimo"	name="act:right_thumb_rotation" gear=".1" 	joint="robot:right_th_rot" forcerange="-1 1"/>
 		<motor class="mimo"	name="act:right_thumb_pivot" gear=".1" 		joint="robot:right_th_pivot" forcerange="-1 1"/>
-		<motor class="mimo"	name="act:right_thumb_middle" gear=".126" 	joint="robot:right_th_middle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_thumb_distal" gear=".0945" 	joint="robot:right_th_distal" forcerange="-.345 1"/>
+		<motor class="mimo"	name="act:right_thumb_middle" gear=".2205" 	joint="robot:right_th_middle" forcerange="-.345 1"/>
 
 	</actuator>
 	
