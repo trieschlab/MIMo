@@ -5,6 +5,7 @@ are provided as well.
 """
 import os
 import numpy as np
+import glfw
 import mujoco
 import copy
 
@@ -304,6 +305,8 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         # Rendering setup
         self._viewers = {}
         self.viewer = None
+        self._current_mode = None
+        self.offscreen_context = None
 
         fps = int(np.round(1 / self.dt))
         self.metadata = {
@@ -769,6 +772,9 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
             "depth_array",
         }:
             viewer = self._get_viewer(render_mode)
+            if self._current_mode != "offscreen":
+                self.offscreen_context.make_current()
+            self._current_mode = "offscreen"
             viewer.offwidth = width
             viewer.offheight = height
             viewer.render(camera_id=camera_id)
@@ -778,10 +784,39 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
             # original image is upside-down, so flip it
             return data[::-1, :, :]
         elif render_mode == "depth_array":
-            self._get_viewer(render_mode).render()
             # Extract depth part of the read_pixels() tuple
             data = self._get_viewer(render_mode).read_pixels(depth=True)[1]
             # original image is upside-down, so flip it
             return data[::-1, :]
         elif render_mode == "human":
-            self._get_viewer(render_mode).render()
+            viewer = self._get_viewer(render_mode)
+            if self._current_mode != "human":
+                glfw.make_context_current(viewer.window)
+            self._current_mode = "human"
+            viewer.render()
+
+    def close(self):
+        if self.viewer is not None:
+            self.viewer.close()
+            self._viewers = {}
+            self.offscreen_context = None
+        super().close()
+
+    def _get_viewer(self, mode):
+        self.viewer = self._viewers.get(mode)
+        if self.viewer is None:
+            if mode == "human":
+                from gym.envs.mujoco.mujoco_rendering import Viewer
+                self.viewer = Viewer(self.model, self.data)
+            elif mode in {"rgb_array", "depth_array"}:
+                from gym.envs.mujoco.mujoco_rendering import RenderContextOffscreen
+                self.viewer = RenderContextOffscreen(self.model, self.data)
+                self.offscreen_context = self.viewer.opengl_context
+            else:
+                raise AttributeError(
+                    f"Unexpected mode: {mode}, expected modes: {self.metadata['render_modes']}"
+                )
+
+            self.viewer_setup()
+            self._viewers[mode] = self.viewer
+        return self.viewer
