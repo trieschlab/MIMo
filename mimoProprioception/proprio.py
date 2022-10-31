@@ -91,20 +91,28 @@ class SimpleProprioception(Proprioception):
         super().__init__(env, proprio_parameters)
 
         self.sensors = []
+        self.sensor_ids = []
         self.sensor_names = {}
 
-        for sensor_name in self.env.sim.model.sensor_names:
+        for i in range(self.env.model.nsensor):
+            sensor_name = self.env.model.sensor(i).name
             if sensor_name.startswith("proprio:"):
                 self.sensors.append(sensor_name)
+                self.sensor_ids.append(i)
 
-        self.joint_names = [name for name in self.env.sim.model.joint_names if name.startswith("robot:")]
-        self.joint_ids = [self.env.sim.model.joint_name2id(name) for name in self.joint_names]
-        self.joint_qpos = np.asarray([get_joint_qpos_addr(self.env.sim.model, idx) for idx in self.joint_ids])
-        self.joint_qvel = np.asarray([get_joint_qvel_addr(self.env.sim.model, idx) for idx in self.joint_ids])
-        self.joint_limits = self.env.sim.model.jnt_range[self.joint_ids]
+        self.joint_names = []
+        for i in range(self.env.model.njnt):
+            joint_name = self.env.model.joint(i).name
+            if joint_name.startswith("robot:"):
+                self.joint_names.append(joint_name)
+        #self.joint_names = [name for name in self.env.sim.model.joint_names if name.startswith("robot:")]
+        self.joint_ids = [self.env.model.joint(name).id for name in self.joint_names]
+        self.joint_qpos = np.asarray([get_joint_qpos_addr(self.env.model, idx) for idx in self.joint_ids])
+        self.joint_qvel = np.asarray([get_joint_qvel_addr(self.env.model, idx) for idx in self.joint_ids])
+        self.joint_limits = self.env.model.jnt_range[self.joint_ids]
 
-        self.sensor_ids = [self.env.sim.model.sensor_name2id(name) for name in self.sensors]
-        self.sensor_addrs = np.asarray([get_sensor_addr(self.env.sim.model, idx) for idx in self.sensor_ids])
+        #self.sensor_ids = [self.env.model.sensor(name).id for name in self.sensors]
+        self.sensor_addrs = np.asarray([get_sensor_addr(self.env.model, idx) for idx in self.sensor_ids])
 
         self.sensor_names["qpos"] = self.joint_names
         if "velocity" in self.output_components:
@@ -132,13 +140,13 @@ class SimpleProprioception(Proprioception):
 
         """
         self.sensor_outputs = {}
-        robot_qpos = self.env.sim.data.qpos[self.joint_qpos].flatten()
+        robot_qpos = self.env.data.qpos[self.joint_qpos].flatten()
         self.sensor_outputs["qpos"] = robot_qpos
         if "velocity" in self.output_components:
-            robot_qvel = self.env.sim.data.qvel[self.joint_qvel].flatten()
+            robot_qvel = self.env.data.qvel[self.joint_qvel].flatten()
             self.sensor_outputs["qvel"] = robot_qvel
         if "torque" in self.output_components:
-            torques = self.env.sim.data.sensordata[self.sensor_addrs].flatten()
+            torques = self.env.data.sensordata[self.sensor_addrs].flatten()
             self.sensor_outputs["torques"] = torques
 
         # Limit sensor outputs 0 while the joint position is more than _limit_thresh away from its limits, then scales

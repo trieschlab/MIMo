@@ -91,7 +91,7 @@ class SimpleVision(Vision):
         for camera in self.camera_parameters:
             width = self.camera_parameters[camera]["width"]
             height = self.camera_parameters[camera]["height"]
-            imgs[camera] = self.env.render(mode="rgb_array", width=width, height=height, camera_name=camera)
+            imgs[camera] = self.env.render(render_mode="rgb_array", width=width, height=height, camera_name=camera)
 
         self.sensor_outputs = imgs
         return imgs

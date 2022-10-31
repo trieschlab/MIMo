@@ -15,8 +15,7 @@ from collections import deque
 from typing import Dict, List
 
 import numpy as np
-import mujoco_py
-from mujoco_py.generated import const
+import mujoco
 import trimesh
 from trimesh import PointCloud
 from cachetools import cachedmethod, LRUCache
@@ -83,7 +82,7 @@ class Touch:
 
         self.sensor_scales = {}
         for body_name in touch_params["scales"]:
-            body_id = env.sim.model.body_name2id(body_name)
+            body_id = env.model.body(body_name).id
             self.sensor_scales[body_id] = touch_params["scales"][body_name]
 
         # Get all information for the touch force function: Function name, reference to function, output size
@@ -158,8 +157,8 @@ class DiscreteTouch(Touch):
     def __init__(self, env, touch_params):
 
         super().__init__(env, touch_params)
-        self.m_data = env.sim.data
-        self.m_model = env.sim.model
+        self.m_data = env.data
+        self.m_model = env.model
 
         self.plotting_limits = {}
 
@@ -191,9 +190,9 @@ class DiscreteTouch(Touch):
         n_sensors = 0
 
         for geom_id in env_utils.get_geoms_for_body(self.m_model, body_id):
-            g_body_id = self.m_model.geom_bodyid[geom_id]
-            contype = self.m_model.geom_contype[geom_id]
-            conaffinity = self.m_model.geom_conaffinity[geom_id]
+            g_body_id = self.m_model.geom(geom_id).bodyid.item()
+            contype = self.m_model.geom(geom_id).contype.item()
+            conaffinity = self.m_model.geom(geom_id).conaffinity.item()
             # Add a geom if it belongs to body and has collisions enabled (at least potentially)
             if g_body_id == body_id and (contype > 0 or conaffinity > 0):
                 n_sensors += self.add_geom(geom_id=geom_id, scale=scale)
@@ -217,7 +216,7 @@ class DiscreteTouch(Touch):
         """
         geom_id = env_utils.get_geom_id(self.m_model, geom_id=geom_id, geom_name=geom_name)
 
-        if self.m_model.geom_contype[geom_id] == 0 and self.m_model.geom_conaffinity[geom_id] == 0:
+        if self.m_model.geom(geom_id).contype.item() == 0 and self.m_model.geom(geom_id).conaffinity.item() == 0:
             raise RuntimeWarning("Added sensors to geom with collisions disabled!")
         return self._add_sensorpoints(geom_id, scale)
 
@@ -285,29 +284,29 @@ class DiscreteTouch(Touch):
         # Add sensor points for the given geom using given resolution
         # Returns the number of sensor points added
         # Also set the maximum size of the geom, for plotting purposes
-        geom_type = self.m_model.geom_type[geom_id]
-        size = self.m_model.geom_size[geom_id]
+        geom_type = self.m_model.geom(geom_id).type.item()
+        size = self.m_model.geom(geom_id).size
         limit = 1
-        if geom_type == const.GEOM_BOX:
+        if geom_type == mujoco.mjtGeom.mjGEOM_BOX:
             limit = np.max(size)
             points = spread_points_box(scale, size)
-        elif geom_type == const.GEOM_SPHERE:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_SPHERE:
             limit = size[0]
             points = spread_points_sphere(scale, size[0])
-        elif geom_type == const.GEOM_CAPSULE:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_CAPSULE:
             limit = size[1] + size[0]
             points = spread_points_capsule(scale, 2*size[1], size[0])
-        elif geom_type == const.GEOM_CYLINDER:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_CYLINDER:
             # Cylinder size 0 is radius, size 1 is half length
             limit = np.max(size)
             points = spread_points_cylinder(scale, 2*size[1], size[0])
-        elif geom_type == const.GEOM_PLANE:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_PLANE:
             RuntimeWarning("Cannot add sensors to plane geoms!")
             return None
-        elif geom_type == const.GEOM_ELLIPSOID:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_ELLIPSOID:
             raise NotImplementedError("Ellipsoids currently not implemented")
-        elif geom_type == const.GEOM_MESH:
-            size = self.m_model.geom_rbound[geom_id]
+        elif geom_type == mujoco.mjtGeom.mjGEOM_MESH:
+            size = self.m_model.geom(geom_id).rbound
             limit = size
             points = spread_points_sphere(scale, size)
         else:
@@ -437,7 +436,7 @@ class DiscreteTouch(Touch):
 
         points = self.sensor_positions[geom_id]
         limit = self.plotting_limits[geom_id]
-        title = self.m_model.geom_id2name(geom_id)
+        title = self.m_model.geom(geom_id).name
         env_utils.plot_points(points, limit=limit, title=title)
 
     def plot_force_geom(self, geom_id: int = None, geom_name: str = None):
@@ -501,8 +500,6 @@ class DiscreteTouch(Touch):
 
         env_utils.plot_forces(points, forces, limit=np.max(points) + 0.5)
 
-    # TODO: Plot forces for body subtree
-
     # =============== Raw force and contact normal ====================================
     # =================================================================================
 
@@ -521,7 +518,7 @@ class DiscreteTouch(Touch):
 
         """
         forces = np.zeros(6, dtype=np.float64)
-        mujoco_py.functions.mj_contactForce(self.m_model, self.m_data, contact_id, forces)
+        mujoco.mj_contactForce(self.m_model, self.m_data, contact_id, forces)
         contact = self.m_data.contact[contact_id]
         if geom_id == contact.geom1:
             forces *= -1  # Convention is that normal points away from geom1
@@ -727,7 +724,7 @@ class DiscreteTouch(Touch):
 
         """
         # Get all sensors within distance (distance here is just double the sensor scale)
-        body_id = self.m_model.geom_bodyid[geom_id]
+        body_id = self.m_model.geom(geom_id).bodyid.item()
         scale = self.sensor_scales[body_id]
         nearest_sensors, sensor_distances = self.get_sensors_within_distance(contact_id, geom_id, 2*scale)
 
@@ -864,8 +861,8 @@ class TrimeshTouch(Touch):
 
     def __init__(self, env, touch_params):
         super().__init__(env, touch_params=touch_params)
-        self.m_model = self.env.sim.model
-        self.m_data = self.env.sim.data
+        self.m_model = self.env.model
+        self.m_data = self.env.data
 
         # for each body, _submeshes stores the individual watertight meshes as a list and '_active_subvertices' stores
         # a boolean area of whether the vertices are active sensors. Inactive sensors do not output data and are not
@@ -913,12 +910,11 @@ class TrimeshTouch(Touch):
         body_id = env_utils.get_body_id(self.m_model, body_id=body_id, body_name=body_name)
         meshes = []
         for geom_id in env_utils.get_geoms_for_body(self.m_model, body_id):
-            contype = self.m_model.geom_contype[geom_id]
-            conaffinity = self.m_model.geom_conaffinity[geom_id]
+            contype = self.m_model.geom(geom_id).contype.item()
+            conaffinity = self.m_model.geom(geom_id).conaffinity.item()
             if contype == 0 and conaffinity == 0:
                 continue
             mesh = self._get_mesh(geom_id, scale)
-
             # Move meshes from geom into body frame
             mesh.vertices = env_utils.geom_pos_to_body(self.m_data, mesh.vertices.copy(), geom_id, body_id)
             meshes.append(mesh)
@@ -1038,26 +1034,26 @@ class TrimeshTouch(Touch):
         """
         # Do sensorpoints for a single geom
         # TODO: Use our own normals instead of default from trimesh face estimation
-        geom_type = self.m_model.geom_type[geom_id]
-        size = self.m_model.geom_size[geom_id]
+        geom_type = self.m_model.geom(geom_id).type.item()
+        size = self.m_model.geom(geom_id).size
 
-        if geom_type == const.GEOM_BOX:
+        if geom_type == mujoco.mjtGeom.mjGEOM_BOX:
             mesh = mesh_box(scale, size)
-        elif geom_type == const.GEOM_SPHERE:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_SPHERE:
             mesh = mesh_sphere(scale, size[0])
-        elif geom_type == const.GEOM_CAPSULE:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_CAPSULE:
             mesh = mesh_capsule(scale, 2 * size[1], size[0])
-        elif geom_type == const.GEOM_CYLINDER:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_CYLINDER:
             # Cylinder size 0 is radius, size 1 is half length
             mesh = mesh_cylinder(scale, 2 * size[1], size[0])
-        elif geom_type == const.GEOM_PLANE:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_PLANE:
             RuntimeWarning("Cannot add sensors to plane geoms!")
             return None
-        elif geom_type == const.GEOM_ELLIPSOID:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_ELLIPSOID:
             mesh = mesh_ellipsoid(scale, size)
-        elif geom_type == const.GEOM_MESH:
+        elif geom_type == mujoco.mjtGeom.mjGEOM_MESH:
             # TODO: Use convex hull of mesh as sensor mesh? Would not have remotely consistent spacing
-            size = self.m_model.geom_rbound[geom_id]
+            size = self.m_model.geom(geom_id).rbound
             mesh = mesh_sphere(scale, size)
         else:
             return None
@@ -1470,7 +1466,7 @@ class TrimeshTouch(Touch):
 
         """
         forces = np.zeros(6, dtype=np.float64)
-        mujoco_py.functions.mj_contactForce(self.m_model, self.m_data, contact_id, forces)
+        mujoco.mj_contactForce(self.m_model, self.m_data, contact_id, forces)
         contact = self.m_data.contact[contact_id]
         if contact.geom1 in env_utils.get_geoms_for_body(self.m_model, body_id=body_id):
             forces *= -1  # Convention is that normal points away from geom1
@@ -1563,8 +1559,8 @@ class TrimeshTouch(Touch):
         contact_tuples = []
         for i in range(self.m_data.ncon):
             contact = self.m_data.contact[i]
-            body1 = self.m_model.geom_bodyid[contact.geom1]
-            body2 = self.m_model.geom_bodyid[contact.geom2]
+            body1 = self.m_model.geom(contact.geom1).bodyid.item()
+            body2 = self.m_model.geom(contact.geom2).bodyid.item()
             # Do we sense this contact at all
             if self.has_sensors(body1) or self.has_sensors(body2):
                 rel_bodies = []
@@ -1705,7 +1701,7 @@ class TrimeshTouch(Touch):
 
         points = self.meshes[body_id].vertices
         limit = self.plotting_limits[body_id]
-        title = self.m_model.body_id2name(body_id)
+        title = self.m_model.body(body_id).name
         env_utils.plot_points(points, limit=limit, title=title)
 
     # Plot forces for single body
@@ -1722,7 +1718,7 @@ class TrimeshTouch(Touch):
 
         sensor_points = self.sensor_positions[body_id]
         force_vectors = self.sensor_outputs[body_id] / 20
-        title = self.m_model.body_id2name(body_id) + " forces"
+        title = self.m_model.body(body_id).name + " forces"
         if force_vectors.shape[1] == 1:
             normals = self.meshes[body_id].vertex_normals[self.active_vertices[body_id], :]
             force_vectors = force_vectors * normals

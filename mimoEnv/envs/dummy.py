@@ -59,7 +59,7 @@ class MIMoDummyEnv(MIMoEnv):
     def __init__(self,
                  model_path=BENCHMARK_XML,
                  initial_qpos={},
-                 n_substeps=2,
+                 frame_skip=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=DEFAULT_TOUCH_PARAMS,
                  vision_params=DEFAULT_VISION_PARAMS,
@@ -67,14 +67,14 @@ class MIMoDummyEnv(MIMoEnv):
                  goals_in_observation=False,
                  done_active=True,
                  show_sensors=False,
-                 print_space_sizes=False,):
+                 print_space_sizes=True, ):
 
         self.steps = 0
         self.show_sensors = show_sensors
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
+                         frame_skip=frame_skip,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
                          vision_params=vision_params,
@@ -105,21 +105,27 @@ class MIMoDummyEnv(MIMoEnv):
             print("Number of sensor points for each body: ")
         for body_id in self.touch.sensor_positions:
             if self.show_sensors:
-                print(self.sim.model.body_id2name(body_id), self.touch.sensor_positions[body_id].shape[0])
+                print(self.model.body(body_id).name, self.touch.sensor_positions[body_id].shape[0])
             count_touch_sensors += self.touch.get_sensor_count(body_id)
         print("Total number of sensor points: ", count_touch_sensors)
 
         # Plot the sensor points for each body once
         if self.show_sensors:
             for body_id in self.touch.sensor_positions:
-                body_name = self.sim.model.body_id2name(body_id)
+                body_name = self.model.body(body_id).name
                 env_utils.plot_points(self.touch.sensor_positions[body_id], limit=1., title=body_name)
 
     def _step_callback(self):
         """ Simply increments the step counter. """
         self.steps += 1
+        self.vision.save_obs_to_file("test_imgs", suffix=str(self.steps))
 
-    def _is_success(self, achieved_goal, desired_goal):
+    def reset_model(self):
+        """ Resets to the initial simulation state"""
+        self.set_state(self.init_qpos, self.init_qvel)
+        return self._get_obs()
+
+    def is_success(self, achieved_goal, desired_goal):
         """ Dummy function that always returns `False`.
 
         Args:
@@ -131,7 +137,7 @@ class MIMoDummyEnv(MIMoEnv):
         """
         return False
 
-    def _is_failure(self, achieved_goal, desired_goal):
+    def is_failure(self, achieved_goal, desired_goal):
         """ Dummy function that always returns `False`.
 
         Args:
@@ -143,7 +149,15 @@ class MIMoDummyEnv(MIMoEnv):
         """
         return False
 
-    def _sample_goal(self):
+    def is_truncated(self):
+        """ Dummy function. Always returns `False`.
+
+        Returns:
+            bool: `False`
+        """
+        return False
+
+    def sample_goal(self):
         """ A dummy function returning an empty array of shape (0,).
 
         Returns:
@@ -151,7 +165,7 @@ class MIMoDummyEnv(MIMoEnv):
         """
         return np.zeros((0,))
 
-    def _get_achieved_goal(self):
+    def get_achieved_goal(self):
         """Dummy function returning an empty array with the same shape as the goal.
 
         Returns:
@@ -183,7 +197,7 @@ class MIMoShowroomEnv(MIMoDummyEnv):
     def __init__(self,
                  model_path=DEMO_XML,
                  initial_qpos={},
-                 n_substeps=2,
+                 frame_skip=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=DEFAULT_TOUCH_PARAMS,
                  vision_params=DEFAULT_VISION_PARAMS,
@@ -191,11 +205,11 @@ class MIMoShowroomEnv(MIMoDummyEnv):
                  goals_in_observation=False,
                  done_active=True,
                  show_sensors=False,
-                 print_space_sizes=False,):
+                 print_space_sizes=False, ):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
+                         frame_skip=frame_skip,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
                          vision_params=vision_params,
@@ -213,7 +227,7 @@ class MIMoV2DemoEnv(MIMoDummyEnv):
     def __init__(self,
                  model_path=BENCHMARK_XML_V2,
                  initial_qpos={},
-                 n_substeps=2,
+                 frame_skip=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=DEFAULT_TOUCH_PARAMS_V2,
                  vision_params=DEFAULT_VISION_PARAMS,
@@ -221,11 +235,11 @@ class MIMoV2DemoEnv(MIMoDummyEnv):
                  goals_in_observation=False,
                  done_active=True,
                  show_sensors=False,
-                 print_space_sizes=False,):
+                 print_space_sizes=False, ):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
+                         frame_skip=frame_skip,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
                          vision_params=vision_params,

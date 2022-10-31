@@ -19,7 +19,6 @@ defined in :data:`SELFBODY_XML`.
 
 import os
 import numpy as np
-import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS, SCENE_DIRECTORY
 import mimoEnv.utils as env_utils
@@ -107,7 +106,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
     def __init__(self,
                  model_path=SELFBODY_XML,
                  initial_qpos=SITTING_POSITION,
-                 n_substeps=1,
+                 frame_skip=1,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=TOUCH_PARAMS,
                  vision_params=None,
@@ -120,7 +119,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
+                         frame_skip=frame_skip,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
                          vision_params=vision_params,
@@ -128,9 +127,9 @@ class MIMoSelfBodyEnv(MIMoEnv):
                          goals_in_observation=True,
                          done_active=True)
 
-        self.init_sitting_qpos = self.sim.data.qpos.copy()
+        self.init_sitting_qpos = self.data.qpos.ravel().copy()
 
-    def _sample_goal(self):
+    def sample_goal(self):
         """Samples a new goal and returns it.
 
         The goal consists of a target geom that we try to touch, returned as a one-hot encoding.
@@ -149,16 +148,12 @@ class MIMoSelfBodyEnv(MIMoEnv):
         if isinstance(self.target_geom, int):
             target_geom_onehot[self.target_geom] = 1
 
-        self.target_body = self.sim.model.body_id2name(self.sim.model.geom_bodyid[self.target_geom])
-        #for body_id in self.touch.sensor_scales:
-        #    body_geoms = env_utils.get_geoms_for_body(self.sim.model, body_id)
-        #    if self.target_geom in body_geoms:
-        #        self.target_body = self.sim.model.body_id2name(body_id)
+        self.target_body = self.model.body(self.model.geom(self.target_geom).bodyid).name
         print('Target body: ', self.target_body)
 
         return target_geom_onehot
 
-    def _is_success(self, achieved_goal, desired_goal):
+    def is_success(self, achieved_goal, desired_goal):
         """ We have succeeded when we have a touch sensation on the goal body.
 
         We ignore the :attr:`.goal` attribute in this for performance reasons and determine the the success condition
@@ -206,8 +201,8 @@ class MIMoSelfBodyEnv(MIMoEnv):
         if info["is_success"]:
             reward = 500
         elif contact_with_fingers:
-            target_body_pos = self.sim.data.get_body_xpos(self.target_body)
-            fingers_pos = self.sim.data.get_body_xpos("right_fingers")
+            target_body_pos = self.data.body(self.target_body).xpos
+            fingers_pos = self.data.body("right_fingers").xpos
             distance = np.linalg.norm(fingers_pos - target_body_pos)
             reward = -distance
         else:
@@ -223,9 +218,9 @@ class MIMoSelfBodyEnv(MIMoEnv):
         """
         # Manually set body to sitting position (except for the right arm joints)
         for body_name in SITTING_POSITION:
-            env_utils.set_joint_qpos(self.sim.model, self.sim.data, body_name, SITTING_POSITION[body_name])
+            env_utils.set_joint_qpos(self.model, self.data, body_name, SITTING_POSITION[body_name])
 
-    def _reset_sim(self):
+    def reset_model(self):
         """ Reset to the initial sitting position.
 
         Returns:
@@ -233,18 +228,11 @@ class MIMoSelfBodyEnv(MIMoEnv):
         """
         # set qpos as new initial position and velocity as zero
         qpos = self.init_sitting_qpos
-        qvel = np.zeros(self.sim.data.qvel.shape)
+        qvel = np.zeros(self.data.qvel.ravel().shape)
+        self.set_state(qpos, qvel)
+        return self._get_obs()
 
-        new_state = mujoco_py.MjSimState(
-            self.initial_state.time, qpos, qvel, self.initial_state.act, self.initial_state.udd_state
-        )
-
-        self.sim.set_state(new_state)
-        self.sim.forward()
-
-        return True
-
-    def _is_failure(self, achieved_goal, desired_goal):
+    def is_failure(self, achieved_goal, desired_goal):
         """ Dummy function that always returns False.
 
         Args:
@@ -256,7 +244,15 @@ class MIMoSelfBodyEnv(MIMoEnv):
         """
         return False
 
-    def _get_achieved_goal(self):
+    def is_truncated(self):
+        """ Dummy function. Always returns `False`.
+
+        Returns:
+            bool: `False`
+        """
+        return False
+
+    def get_achieved_goal(self):
         """ Dummy function that returns an empty array.
 
         Returns:

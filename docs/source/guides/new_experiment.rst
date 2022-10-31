@@ -222,23 +222,23 @@ parent class.
 Next we need to override all the abstract functions. We will use the head height as our goal
 variable::
 
-    def _get_achieved_goal(self):
+    def get_achieved_goal(self):
         return self.sim.data.get_body_xpos('head')[2]
 
 Since we want fixed length episodes and have disabled `done_active` we don't need any of the
 other goal related functions and just implement them as dummy functions::
 
-    def _is_success(self, achieved_goal, desired_goal):
+    def is_success(self, achieved_goal, desired_goal):
         return False
 
-    def _is_failure(self, achieved_goal, desired_goal):
+    def is_failure(self, achieved_goal, desired_goal):
         return False
 
-    def _sample_goal(self):
+    def sample_goal(self):
         return 0.0
 
 The only things still missing are the reward and the reset functions. The reward will consist
-of a positive component based on the head height, determined in ``_get_achieved_goal``, and
+of a positive component based on the head height, determined in ``get_achieved_goal``, and
 a penalty for large actions::
 
     def compute_reward(self, achieved_goal, desired_goal, info):

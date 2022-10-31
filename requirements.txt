@@ -1,8 +1,8 @@
-numpy<=1.22.0
-gym<=0.20
-mujoco_py
+numpy
+gym
+imageio
+mujoco
 matplotlib
-glfw
 scipy
 trimesh
 cachetools
