@@ -1,7 +1,7 @@
 """ Simple script to view the showroom. We perform no training and MIMo takes no actions.
 """
 
-import gym
+import gymnasium as gym
 import time
 import numpy as np
 import mimoEnv
@@ -21,9 +21,9 @@ def main():
     start = time.time()
     for step in range(max_steps):
         action = np.zeros(env.action_space.shape)
-        obs, reward, done, info = env.step(action)
+        obs, reward, done, trunc, info = env.step(action)
         env.render()
-        if done:
+        if done or trunc:
             env.reset()
 
     print("Elapsed time: ", time.time() - start, "Simulation time:", max_steps*env.dt)

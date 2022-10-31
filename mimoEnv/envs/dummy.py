@@ -67,7 +67,7 @@ class MIMoDummyEnv(MIMoEnv):
                  goals_in_observation=False,
                  done_active=True,
                  show_sensors=False,
-                 print_space_sizes=True, ):
+                 print_space_sizes=False, ):
 
         self.steps = 0
         self.show_sensors = show_sensors
@@ -118,7 +118,6 @@ class MIMoDummyEnv(MIMoEnv):
     def _step_callback(self):
         """ Simply increments the step counter. """
         self.steps += 1
-        self.vision.save_obs_to_file("test_imgs", suffix=str(self.steps))
 
     def reset_model(self):
         """ Resets to the initial simulation state"""

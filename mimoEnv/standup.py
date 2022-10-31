@@ -19,7 +19,7 @@ To review a trained model::
 The available algorithms are `PPO`, `SAC`, `TD3`, `DDPG` and `A2C`.
 """
 
-import gym
+import gymnasium as gym
 import time
 import mimoEnv
 import argparse
@@ -41,9 +41,9 @@ def test(env, test_for=1000, model=None):
             action = env.action_space.sample()
         else:
             action, _ = model.predict(obs)
-        obs, _, done, _ = env.step(action)
+        obs, _, done, trunc, _ = env.step(action)
         env.render()
-        if done:
+        if done or trunc:
             time.sleep(1)
             obs = env.reset()
     env.reset()

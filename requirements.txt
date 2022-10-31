@@ -1,6 +1,7 @@
 numpy
-gym
+gymnasium
 imageio
+glfw
 mujoco
 matplotlib
 scipy

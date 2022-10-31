@@ -19,7 +19,7 @@ To review a trained model::
 The available algorithms are `PPO`, `SAC`, `TD3`, `DDPG` and `A2C`.
 """
 
-import gym
+import gymnasium as gym
 import time
 import mimoEnv
 import argparse
@@ -35,17 +35,17 @@ def test(env, test_for=1000, model=None):
             if necessary.
         model:  The stable baselines model object. If ``None`` we take random actions instead.
     """
-    env.seed(42)
-    obs = env.reset()
+    seed = 42
+    obs = env.reset(seed=seed)
     for idx in range(test_for):
         if model is None:
             action = env.action_space.sample()
         else:
             action, _ = model.predict(obs)
-        obs, rew, done, info = env.step(action)
-        if done:
+        obs, rew, done, trunc, info = env.step(action)
+        if done or trunc:
             time.sleep(1)
-            obs = env.reset()
+            obs, info = env.reset(seed=seed)
         env.render()
     env.reset()
     env.close()

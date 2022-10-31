@@ -9,8 +9,8 @@ import glfw
 import mujoco
 import copy
 
-from gym import spaces, utils
-from gym.envs.mujoco import MujocoEnv
+from gymnasium import spaces, utils
+from gymnasium.envs.mujoco import MujocoEnv
 
 from mimoTouch.touch import TrimeshTouch
 from mimoVision.vision import SimpleVision
@@ -300,7 +300,7 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
 
         self.model = mujoco.MjModel.from_xml_path(self.fullpath)
         self.data = mujoco.MjData(self.model)
-        mujoco.mj_forward(self.model, self.data) # Run forward once to ensure everything calculated
+        mujoco.mj_forward(self.model, self.data)  # Run forward once to ensure everything calculated
 
         # Rendering setup
         self._viewers = {}
@@ -491,8 +491,8 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
                 Can be used to end the episode prematurely before a `terminal state` is reached.
             info (dictionary): `info` contains auxiliary diagnostic information (helpful for debugging, learning, and
                 logging).
-                This might, for instance, contain: metrics that describe the agent's performance state, variables that are
-                hidden from observations, or individual reward terms that are combined to produce the total reward.
+                This might, for instance, contain: metrics that describe the agent's performance state, variables that
+                are hidden from observations, or individual reward terms that are combined to produce the total reward.
         """
         self.do_simulation(action, self.frame_skip)
         self._step_callback()
@@ -806,10 +806,12 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         self.viewer = self._viewers.get(mode)
         if self.viewer is None:
             if mode == "human":
-                from gym.envs.mujoco.mujoco_rendering import Viewer
+                from gymnasium.envs.mujoco.mujoco_rendering import Viewer
+                # Need this, otherwise window is made if we create an offscreen context first
+                glfw.window_hint(glfw.VISIBLE, 1)
                 self.viewer = Viewer(self.model, self.data)
             elif mode in {"rgb_array", "depth_array"}:
-                from gym.envs.mujoco.mujoco_rendering import RenderContextOffscreen
+                from gymnasium.envs.mujoco.mujoco_rendering import RenderContextOffscreen
                 self.viewer = RenderContextOffscreen(self.model, self.data)
                 self.offscreen_context = self.viewer.opengl_context
             else:
@@ -820,3 +822,9 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
             self.viewer_setup()
             self._viewers[mode] = self.viewer
         return self.viewer
+
+    def _viewer_setup(self):
+        """Initial configuration of the viewer. Can be used to set the camera position,
+        for example.
+        """
+        pass
