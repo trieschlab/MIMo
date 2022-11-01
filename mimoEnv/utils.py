@@ -24,6 +24,7 @@ MUJOCO_DOF_SIZES = {
     mujoco.mjtJoint.mjJNT_HINGE: 1,
 }
 """ Size of qvel entries for each joint type; free, ball, slide, hinge.
+
 :meta hide-value:
 """
 

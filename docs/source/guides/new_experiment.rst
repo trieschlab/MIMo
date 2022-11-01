@@ -234,6 +234,9 @@ other goal related functions and just implement them as dummy functions::
     def is_failure(self, achieved_goal, desired_goal):
         return False
 
+    def is_truncated(self):
+        return False
+
     def sample_goal(self):
         return 0.0
 
@@ -242,7 +245,7 @@ of a positive component based on the head height, determined in ``get_achieved_g
 a penalty for large actions::
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        quad_ctrl_cost = 0.01 * np.square(self.sim.data.ctrl).sum()
+        quad_ctrl_cost = 0.01 * np.square(self.data.ctrl).sum()
         reward = achieved_goal - 0.2 - quad_ctrl_cost
         return reward
 
@@ -253,30 +256,24 @@ those from the randomization. The crib does not have joints and other joints in 
 scene belong to MIMo. We then set the state with our new randomized positions and let the
 simulation settle for a few timesteps::
 
-    def _reset_sim(self):
-        self.sim.set_state(self.initial_state)
-        default_state = self.sim.get_state()
-        qpos = self.sim.data.qpos
+    def reset_model(self):
+        self.set_state(self.init_qpos, self.init_qvel)
+        qpos = self.init_crouch_position
 
         # set initial positions stochastically
-        qpos[7:] = qpos[7:] + self.np_random.uniform(low=-0.1, high=0.1, size=len(qpos[6:]))
+        qpos[7:] = qpos[7:] + self.np_random.uniform(low=-0.01, high=0.01, size=len(qpos[7:]))
 
         # set initial velocities to zero
-        qvel = np.zeros(self.sim.data.qvel.shape)
+        qvel = np.zeros(self.data.qvel.ravel().shape)
 
-        new_state = mujoco_py.MjSimState(
-            default_state.time, qpos, qvel, default_state.act, default_state.udd_state
-        )
-        self.sim.set_state(new_state)
-        self.sim.forward()
+        self.set_state(qpos, qvel)
 
         # perform 100 steps with no actions to stabilize initial position
         actions = np.zeros(self.action_space.shape)
         self._set_action(actions)
-        for _ in range(100):
-            self.sim.step()
+        mujoco.mj_step(self.model, self.data, nstep=100)
 
-        return True
+        return self._get_obs()
 
 Finally we register our new environment with gym by adding these lines to
 ``mimoEnv/__init__.py``, which also lets us set our fixed episode length::
