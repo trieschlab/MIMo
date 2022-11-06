@@ -127,7 +127,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
                          goals_in_observation=True,
                          done_active=True)
 
-        self.init_sitting_qpos = self.data.qpos.ravel().copy()
+        self.init_sitting_qpos = self.data.qpos.copy()
 
     def sample_goal(self):
         """Samples a new goal and returns it.
@@ -149,7 +149,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
             target_geom_onehot[self.target_geom] = 1
 
         self.target_body = self.model.body(self.model.geom(self.target_geom).bodyid).name
-        print('Target body: ', self.target_body)
+        #print('Target body: ', self.target_body)
 
         return target_geom_onehot
 
@@ -228,7 +228,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
         """
         # set qpos as new initial position and velocity as zero
         qpos = self.init_sitting_qpos
-        qvel = np.zeros(self.data.qvel.ravel().shape)
+        qvel = np.zeros(self.data.qvel.shape)
         self.set_state(qpos, qvel)
         return self._get_obs()
 

@@ -95,7 +95,7 @@ class MIMoStandupEnv(MIMoEnv):
                          goals_in_observation=False,
                          done_active=False)
 
-        self.init_crouch_position = self.data.qpos.ravel().copy()
+        self.init_crouch_position = self.data.qpos.copy()
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
@@ -138,13 +138,13 @@ class MIMoStandupEnv(MIMoEnv):
         """
 
         self.set_state(self.init_qpos, self.init_qvel)
-        qpos = self.init_crouch_position
+        qpos = self.init_crouch_position.copy()
 
         # set initial positions stochastically
         qpos[7:] = qpos[7:] + self.np_random.uniform(low=-0.01, high=0.01, size=len(qpos[7:]))
 
         # set initial velocities to zero
-        qvel = np.zeros(self.data.qvel.ravel().shape)
+        qvel = np.zeros(self.data.qvel.shape)
 
         self.set_state(qpos, qvel)
 

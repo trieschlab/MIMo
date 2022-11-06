@@ -20,6 +20,7 @@ import numpy as np
 import copy
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
+import mimoEnv.utils as env_utils
 
 
 REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
@@ -155,14 +156,13 @@ class MIMoReachEnv(MIMoEnv):
             self._step_callback()
 
         # reset target in random initial position and velocities as zero
-        self.data.body("target").qpos = np.array([
-            self.init_qpos[-7] + self.np_random.uniform(low=-0.1, high=0, size=1)[0],
-            self.init_qpos[-6] + self.np_random.uniform(low=-0.2, high=0.1, size=1)[0],
-            self.init_qpos[-5] + self.np_random.uniform(low=-0.1, high=0, size=1)[0]
-        ])
-        qvel = np.zeros(self.data.qvel.ravel().shape)
+        self.data.qpos[-7] = self.init_qpos[-7] + self.np_random.uniform(low=-0.1, high=0, size=1)[0]
+        self.data.qpos[-6] = self.init_qpos[-6] + self.np_random.uniform(low=-0.2, high=0.1, size=1)[0]
+        self.data.qpos[-5] = self.init_qpos[-5] + self.np_random.uniform(low=-0.1, high=0, size=1)[0]
 
-        self.set_state(self.data.qpos.ravel().copy(), qvel)
+        qvel = np.zeros(self.data.qvel.shape)
+
+        self.set_state(self.data.qpos.copy(), qvel)
         self.target_init_pos = copy.deepcopy(self.data.body('target').xpos)
         return self._get_obs()
 
@@ -179,26 +179,13 @@ class MIMoReachEnv(MIMoEnv):
         head_target_dif[2] = head_target_dif[2] - 0.067375  # extra difference to eyes height in head
         half_eyes_dist = 0.0245  # horizontal distance between eyes / 2
         eyes_target_dist = head_target_dist - 0.07  # remove distance from head center to eyes
-        self.data.body("head").qpos = np.array([np.arctan(head_target_dif[1] / head_target_dif[0]),  # head - horizontal
-                                                np.arctan(-head_target_dif[2] / head_target_dif[0]),  # head - vertical
-                                                0  # head - side tild
-                                                ])
-        #self.data.qpos[13] = np.arctan(head_target_dif[1] / head_target_dif[0])  # head - horizontal
-        #self.data.qpos[14] = np.arctan(-head_target_dif[2] / head_target_dif[0])  # head - vertical
-        #self.data.qpos[15] = 0  # head - side tild
-        self.data.body("left_eye").qpos = np.array(
-            [np.arctan(-half_eyes_dist / eyes_target_dist),  # left eye -  horizontal
-             0,  # left eye - vertical
-             0  # left eye - torsional
-             ])
-        self.data.body("right_eye").qpos = np.array(
-            [np.arctan(-half_eyes_dist / eyes_target_dist),  # right eye -  horizontal
-             0,  # right eye - vertical
-             0  # right eye - torsional
-             ])
-        #self.data.qpos[16] = np.arctan(-half_eyes_dist / eyes_target_dist)  # left eye -  horizontal
-        #self.data.qpos[17] = 0  # left eye - vertical
-        #self.data.qpos[17] = 0  # left eye - torsional
-        #self.data.qpos[19] = np.arctan(-half_eyes_dist / eyes_target_dist)  # right eye - horizontal
-        #self.data.qpos[20] = 0  # right eye - vertical
-        #self.data.qpos[21] = 0  # right eye - torsional
+
+        self.data.qpos[13] = np.arctan(head_target_dif[1] / head_target_dif[0])  # head - horizontal
+        self.data.qpos[14] = np.arctan(-head_target_dif[2] / head_target_dif[0])  # head - vertical
+        self.data.qpos[15] = 0  # head - side tild
+        self.data.qpos[16] = np.arctan(-half_eyes_dist / eyes_target_dist)  # left eye -  horizontal
+        self.data.qpos[17] = 0  # left eye - vertical
+        self.data.qpos[17] = 0  # left eye - torsional
+        self.data.qpos[19] = np.arctan(-half_eyes_dist / eyes_target_dist)  # right eye - horizontal
+        self.data.qpos[20] = 0  # right eye - vertical
+        self.data.qpos[21] = 0  # right eye - torsional
