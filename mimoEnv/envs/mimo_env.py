@@ -497,6 +497,7 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         self.do_simulation(action, self.frame_skip)
         self._step_callback()
         obs = self._get_obs()
+        self._obs_callback()
 
         achieved_goal = self.get_achieved_goal()
 
@@ -518,14 +519,23 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         return obs, reward, terminated, truncated, info
 
     def _step_callback(self):
-        """A custom callback that is called after stepping the simulation, but before collecting observations.
+        """ A custom callback that is called after stepping the simulation, but before collecting observations.
 
-        Can be used to enforce additional constraints on the simulation state.
+        Useful to enforce additional constraints on the simulation state before observations are collected.
+        Note that the sensory modalities do not update until get_obs is called, so they will not have updated to the
+        current timestep.
         """
         pass
 
     def _substep_callback(self):
         """ A custom callback that is called after each simulation substep.
+        """
+        pass
+
+    def _obs_callback(self):
+        """ A custom callback that is called after collecting the observations.
+
+        Like _step_callback, but with up-to-date observations.
         """
         pass
 

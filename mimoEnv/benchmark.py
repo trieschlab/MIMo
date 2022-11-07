@@ -6,7 +6,7 @@ NAME HERE @ LINK
 
 import os
 import math
-import gym
+import gymnasium as gym
 import time
 import copy
 import cProfile
@@ -148,6 +148,9 @@ def run_paper_benchmarks():
 
 if __name__ == "__main__":
     configurations = []
-    configurations.append(("MIMoV1", "MIMoBench-v0", {}, 3600))
-    configurations.append(("MIMoV2", "MIMoBenchV2-v0", {}, 3600))
+    configurations.append(("MIMoV1-mujoco", "MIMoBench-v0", {}, 3600))
+    configurations.append(("MIMoV2-mujoco", "MIMoBenchV2-v0", {}, 3600))
+    configurations.append(("mujoco-reach", "MIMoReach-v0", {}, 3600))
+    configurations.append(("mujoco-standup", "MIMoStandup-v0", {}, 3600))
+    configurations.append(("mujoco-selfbody", "MIMoSelfBody-v0", {}, 3600))
     benchmark(configurations, "optimized_results")

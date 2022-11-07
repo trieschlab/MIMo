@@ -951,7 +951,8 @@ class TrimeshTouch(Touch):
                 if other_mesh == mesh or isinstance(other_mesh, PointCloud):
                     continue
                 # If our vertices are contained in the other mesh, make them inactive
-                # TODO: This has weird inconcistencies, check those
+                # This will produce inconsistent results if two parallel surfaces are too close together, similar to
+                # z-fighting. Seems to work consistently with a distance of at least .1 mm in the mujoco files.
                 contained = other_mesh.contains(mesh.vertices)
                 mask = np.logical_and(mask, np.invert(contained))
             active_vertices.append(mask)
@@ -1775,21 +1776,20 @@ class TrimeshTouch(Touch):
         fig, ax = env_utils.plot_forces(points=points, vectors=forces, limit=limit, title=title, show=False)
 
         if show_contact_points:
-            for body_id in body_ids:
-                for contact_id, contact_body_id, forces in self.contact_tuples:
-                    if body_id == contact_body_id:
-                        contact_position = self.get_contact_position_relative(contact_id, body_id)
-                        if focus == "world":
-                            contact_position = env_utils.body_pos_to_world(self.m_data,
-                                                                           position=contact_position,
-                                                                           body_id=body_id)
-                        else:
-                            contact_position = env_utils.body_pos_to_body(self.m_data,
-                                                                          position=contact_position,
-                                                                          body_id_source=body_id,
-                                                                          body_id_target=body_ids[0])
-                        ax.scatter(contact_position[0], contact_position[1], contact_position[2],
-                                   color="y", s=15, depthshade=True, alpha=0.8)
+            for contact_id, contact_body_id, forces in self.contact_tuples:
+                if contact_body_id in body_ids:
+                    contact_position = self.get_contact_position_relative(contact_id, contact_body_id)
+                    if focus == "world":
+                        contact_position = env_utils.body_pos_to_world(self.m_data,
+                                                                       position=contact_position,
+                                                                       body_id=contact_body_id)
+                    else:
+                        contact_position = env_utils.body_pos_to_body(self.m_data,
+                                                                      position=contact_position,
+                                                                      body_id_source=contact_body_id,
+                                                                      body_id_target=body_ids[0])
+                    ax.scatter(contact_position[0], contact_position[1], contact_position[2],
+                               color="y", s=15, depthshade=True, alpha=0.8)
         plt.show()
 
     def plot_force_body_subtree(self, body_id: int = None, body_name: str = None, title=""):

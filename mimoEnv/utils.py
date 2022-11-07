@@ -149,8 +149,11 @@ def get_geoms_for_body(sim_model, body_id):
     Returns:
         list of int: A list of the ids of the geoms belonging to the given body.
     """
-    geom_start = sim_model.body(body_id).geomadr.item()
-    geom_end = geom_start + sim_model.body(body_id).geomnum.item()
+    #geom_start = sim_model.body(body_id).geomadr.item()
+    #geom_end = geom_start + sim_model.body(body_id).geomnum.item()
+    #return range(geom_start, geom_end)
+    geom_start = sim_model.body_geomadr[body_id]
+    geom_end = geom_start + sim_model.body_geomnum[body_id]
     return range(geom_start, geom_end)
 
 
@@ -170,7 +173,7 @@ def get_child_bodies(sim_model, body_id):
     children_dict = {}
     # Built a dictionary listing the children for each node
     for i in range(sim_model.nbody):
-        parent = sim_model.body(i).parentid.item()
+        parent = sim_model.body_parentid[i]
         if parent in children_dict:
             children_dict[parent].append(i)
         else:
@@ -200,8 +203,8 @@ def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
         qpos (numpy.ndarray): The new joint position. The shape of the array must match the joint!
     """
     joint_id = mujoco_model.joint(joint_name).id
-    joint_qpos_addr = mujoco_model.jnt(joint_id).qposadr.item()
-    joint_type = mujoco_model.jnt(joint_id).type.item()
+    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
     n_qpos = MUJOCO_JOINT_SIZES[joint_type]
     mujoco_data.qpos[joint_qpos_addr:joint_qpos_addr + n_qpos] = qpos
 
@@ -216,8 +219,8 @@ def get_joint_qpos_addr(mujoco_model, joint_id):
     Returns:
         A list of indices.
     """
-    joint_qpos_addr = mujoco_model.jnt(joint_id).qposadr.item()
-    joint_type = mujoco_model.jnt(joint_id).type.item()
+    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
     n_qpos = MUJOCO_JOINT_SIZES[joint_type]
     return range(joint_qpos_addr, joint_qpos_addr + n_qpos)
 
@@ -232,8 +235,8 @@ def get_joint_qvel_addr(mujoco_model, joint_id):
     Returns:
         A list of indices.
     """
-    joint_qvel_addr = mujoco_model.jnt(joint_id).dofadr.item()
-    joint_type = mujoco_model.jnt(joint_id).type.item()
+    joint_qvel_addr = mujoco_model.jnt_dofadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
     n_qvel = MUJOCO_DOF_SIZES[joint_type]
     return range(joint_qvel_addr, joint_qvel_addr + n_qvel)
 
@@ -250,8 +253,8 @@ def get_data_for_sensor(mujoco_model, mujoco_data, sensor_name):
         numpy.ndarray: The output values of the sensor. The shape will depend on the sensor type.
     """
     sensor_id = mujoco_model.sensor(sensor_name).id
-    start = mujoco_model.sensor(sensor_id).adr.item()
-    end = start + mujoco_model.sensor(sensor_id).dim.item()
+    start = mujoco_model.sensor_adr[sensor_id]
+    end = start + mujoco_model.sensor_dim[sensor_id]
     return mujoco_data.sensordata[start:end]
 
 
@@ -265,8 +268,8 @@ def get_sensor_addr(mujoco_model, sensor_id):
     Returns:
         A list of indices.
     """
-    start = mujoco_model.sensor(sensor_id).adr.item()
-    end = start + mujoco_model.sensor(sensor_id).dim.item()
+    start = mujoco_model.sensor_adr[sensor_id]
+    end = start + mujoco_model.sensor_dim[sensor_id]
     return range(start, end)
 
 
@@ -284,7 +287,7 @@ def get_geom_position(mujoco_data, geom_id):
     Returns:
         numpy.ndarray: The position of the geom in the world frame. Shape (3,).
     """
-    return mujoco_data.geom(geom_id).xpos
+    return mujoco_data.geom_xpos[geom_id]
 
 
 def get_body_position(mujoco_data, body_id):
@@ -297,7 +300,7 @@ def get_body_position(mujoco_data, body_id):
     Returns:
         numpy.ndarray: The position of the body in the world frame. Shape (3,).
     """
-    return mujoco_data.body(body_id).xpos
+    return mujoco_data.xpos[body_id]
 
 
 def get_geom_rotation(mujoco_data, geom_id):
@@ -310,7 +313,7 @@ def get_geom_rotation(mujoco_data, geom_id):
     Returns:
           numpy.ndarray: A (3,3) array containing the rotation matrix.
     """
-    return np.reshape(mujoco_data.geom(geom_id).xmat, (3, 3))
+    return np.reshape(mujoco_data.geom_xmat[geom_id], (3, 3))
 
 
 def get_body_rotation(mujoco_data, body_id):
@@ -323,7 +326,7 @@ def get_body_rotation(mujoco_data, body_id):
     Returns:
           numpy.ndarray: A (3,3) array containing the rotation matrix.
     """
-    return np.reshape(mujoco_data.body(body_id).xmat, (3, 3))
+    return np.reshape(mujoco_data.xmat[body_id], (3, 3))
 
 
 def world_pos_to_geom(mujoco_data, position, geom_id):

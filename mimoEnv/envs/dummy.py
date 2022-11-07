@@ -115,7 +115,7 @@ class MIMoDummyEnv(MIMoEnv):
                 body_name = self.model.body(body_id).name
                 env_utils.plot_points(self.touch.sensor_positions[body_id], limit=1., title=body_name)
 
-    def _step_callback(self):
+    def _obs_callback(self):
         """ Simply increments the step counter. """
         self.steps += 1
 
