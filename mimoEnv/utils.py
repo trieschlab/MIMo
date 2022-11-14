@@ -149,9 +149,6 @@ def get_geoms_for_body(sim_model, body_id):
     Returns:
         list of int: A list of the ids of the geoms belonging to the given body.
     """
-    #geom_start = sim_model.body(body_id).geomadr.item()
-    #geom_end = geom_start + sim_model.body(body_id).geomnum.item()
-    #return range(geom_start, geom_end)
     geom_start = sim_model.body_geomadr[body_id]
     geom_end = geom_start + sim_model.body_geomnum[body_id]
     return range(geom_start, geom_end)
