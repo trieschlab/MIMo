@@ -186,57 +186,6 @@ def get_child_bodies(sim_model, body_id):
     return children
 
 
-def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
-    """ Sets the joint position for the joint with name joint_name.
-
-    Directly sets the joint to the position provided by `qpos`. Note that the shape of `qpos` must match the joint! A
-    free joint for example has length 7. The sizes for all types can be found in :data:`MUJOCO_JOINT_SIZES`
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        mujoco_data (sim.data): The MuJoCo data object.
-        joint_name (str): The name of the joint.
-        qpos (numpy.ndarray): The new joint position. The shape of the array must match the joint!
-    """
-    joint_id = mujoco_model.joint_name2id(joint_name)
-    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
-    joint_type = mujoco_model.jnt_type[joint_id]
-    n_qpos = MUJOCO_JOINT_SIZES[joint_type]
-    mujoco_data.qpos[joint_qpos_addr:joint_qpos_addr + n_qpos] = qpos
-
-
-def get_joint_qpos_addr(mujoco_model, joint_id):
-    """ Get the indices in the qpos array corresponding to the given joint.
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        joint_id (int): The ID of the joint.
-
-    Returns:
-        A list of indices.
-    """
-    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
-    joint_type = mujoco_model.jnt_type[joint_id]
-    n_qpos = MUJOCO_JOINT_SIZES[joint_type]
-    return range(joint_qpos_addr, joint_qpos_addr + n_qpos)
-
-
-def get_joint_qvel_addr(mujoco_model, joint_id):
-    """ Get the indices in the qvel array corresponding to the given joint.
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        joint_id (int): The ID of the joint.
-
-    Returns:
-        A list of indices.
-    """
-    joint_qvel_addr = mujoco_model.jnt_dofadr[joint_id]
-    joint_type = mujoco_model.jnt_type[joint_id]
-    n_qvel = MUJOCO_DOF_SIZES[joint_type]
-    return range(joint_qvel_addr, joint_qvel_addr + n_qvel)
-
-
 def get_data_for_sensor(mujoco_model, mujoco_data, sensor_name):
     """ Get sensor data from the sensor with the provided name.
 
@@ -341,6 +290,140 @@ def material_name2id(mujoco_model, material_name):
     if mat_id is None:
         raise RuntimeError("Could not find material with name {}".format(material_name))
     return mat_id
+
+
+def equality_name2id(mujoco_model, equality_constraint_name):
+    """ Returns the id for the equality constraint with the given name.
+
+    Constraints in mujoco can be named, but we need the id to be able to do almost anything. This function allows
+    grabbing the id of a constraint with a given name. It uses :func:`~mimoEnv.utils._decode_name` to do this, which is
+    not optimized, so do not use this often.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        equality_constraint_name (str): The name of the constraint.
+
+    Returns:
+        int: The id of the constraint.
+    """
+    const_id = None
+    for i, name_adr in enumerate(mujoco_model.name_eqadr):
+        name = _decode_name(mujoco_model, name_adr)
+        if name == equality_constraint_name:
+            const_id = i
+            break
+    if const_id is None:
+        raise RuntimeError("Could not find equality constraint with name {}".format(equality_constraint_name))
+    return const_id
+
+
+# ======================== Joint manipulation utils ===============================
+# =================================================================================
+
+
+def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
+    """ Sets the joint position for the joint with name joint_name.
+
+    Directly sets the joint to the position provided by `qpos`. Note that the shape of `qpos` must match the joint! A
+    free joint for example has length 7. The sizes for all types can be found in :data:`MUJOCO_JOINT_SIZES`
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_data (sim.data): The MuJoCo data object.
+        joint_name (str): The name of the joint.
+        qpos (numpy.ndarray): The new joint position. The shape of the array must match the joint!
+    """
+    joint_id = mujoco_model.joint_name2id(joint_name)
+    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qpos = MUJOCO_JOINT_SIZES[joint_type]
+    mujoco_data.qpos[joint_qpos_addr:joint_qpos_addr + n_qpos] = qpos
+
+
+def get_joint_qpos_addr(mujoco_model, joint_id):
+    """ Get the indices in the qpos array corresponding to the given joint.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_id (int): The ID of the joint.
+
+    Returns:
+        A list of indices.
+    """
+    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qpos = MUJOCO_JOINT_SIZES[joint_type]
+    return range(joint_qpos_addr, joint_qpos_addr + n_qpos)
+
+
+def get_joint_qvel_addr(mujoco_model, joint_id):
+    """ Get the indices in the qvel array corresponding to the given joint.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_id (int): The ID of the joint.
+
+    Returns:
+        A list of indices.
+    """
+    joint_qvel_addr = mujoco_model.jnt_dofadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qvel = MUJOCO_DOF_SIZES[joint_type]
+    return range(joint_qvel_addr, joint_qvel_addr + n_qvel)
+
+
+def set_joint_locking_angle(mujoco_model, joint_name, angle, constraint_id=None):
+    """ Sets the angle from default at which the joint will be locked.
+
+    The angle is in radians, and can be positive or negative. This function does not lock or unlock a joint, merely
+    changes the angle.
+    This function requires that there be a constraint already existing the scene XML. This is the case for MIMo by
+    default, with each joint having a constraint of the same name that is disabled at initialization.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_name (str): The name of the joint.
+        angle (float): The locking angle in radians, as a delta from the model starting value.
+        constraint_id (int): If the ID of the constraint is already known the name search can be bypassed by passing
+            it here.
+    """
+    if constraint_id is None:
+        constraint_id = equality_name2id(mujoco_model, joint_name)
+    mujoco_model.eq_data[constraint_id, 0] = angle
+
+
+def lock_joint(mujoco_model, joint_name, joint_angle=None):
+    """ Locks a joint to a fixed angle.
+
+    This function utilizes MuJoCos equality constraints to achieve the locking effect, requiring that there be a
+    constraint already existing the scene XML. This is the case for MIMo by default, with each joint having a constraint
+    of the same name that is disabled at initialization.
+    In effect this function enables the equality constraint with same name as the argument.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_name (str): The name of the joint.
+        joint_angle (float): The locking angle in radians, as a delta from the model starting value. The angle that the
+            joint will be locked to can be set separately using :func:`~mimoEnv.utils.set_joint_locking_angle`. By
+            default joints are locked into the value they have in the scene xml.
+    """
+    constraint_id = equality_name2id(mujoco_model, joint_name)
+    if joint_angle is not None:
+        set_joint_locking_angle(mujoco_model, joint_name, joint_angle, constraint_id=constraint_id)
+    mujoco_model.eq_active[constraint_id] = True
+
+
+def unlock_joint(mujoco_model, joint_name):
+    """ Unlocks a given joint.
+
+    See :func:`~mimoEnv.utils.lock_joint`.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_name (str): The name of the joint.
+    """
+    constraint_id = equality_name2id(mujoco_model, joint_name)
+    mujoco_model.eq_active[constraint_id] = False
 
 
 # ======================== Mujoco frame utils =====================================

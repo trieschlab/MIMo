@@ -32,10 +32,26 @@ MuJoCo access utilities
    mimoEnv.utils.get_body_id
    mimoEnv.utils.get_geoms_for_body
    mimoEnv.utils.get_child_bodies
-   mimoEnv.utils.set_joint_qpos
    mimoEnv.utils.get_data_for_sensor
+   mimoEnv.utils.get_sensor_addr
    mimoEnv.utils.texture_name2id
    mimoEnv.utils.material_name2id
+   mimoEnv.utils.equality_name2id
+
+Joint Manipulation utilities
+++++++++++++++++++++++++++++
+
+ .. autosummary::
+   :toctree: _autosummary
+   :recursive:
+   :nosignatures:
+
+   mimoEnv.utils.set_joint_qpos
+   mimoEnv.utils.get_joint_qpos_addr
+   mimoEnv.utils.get_joint_qvel_addr
+   mimoEnv.utils.set_joint_locking_angle
+   mimoEnv.utils.lock_joint
+   mimoEnv.utils.unlock_joint
    
 MuJoCo coordinate frame utilities
 +++++++++++++++++++++++++++++++++
