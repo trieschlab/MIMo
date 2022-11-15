@@ -6,6 +6,11 @@ register(id='MIMoBench-v0',
          max_episode_steps=6000,
          )
 
+register(id='MIMoBenchV2-v0',
+         entry_point='mimoEnv.envs:MIMoV2DemoEnv',
+         max_episode_steps=6000,
+         )
+
 register(id='MIMoV2Demo-v0',
          entry_point='mimoEnv.envs:MIMoV2DemoEnv',
          max_episode_steps=500,

@@ -4,6 +4,8 @@ The abstract base class is :class:`~mimoEnv.envs.mimo_env.MIMoEnv`. Default para
 are provided as well.
 """
 import os
+import sys
+import glfw
 import numpy as np
 import mujoco_py
 import copy
@@ -13,7 +15,7 @@ import sys
 from gym import spaces, utils
 from gym.envs.robotics import robot_env
 
-from mimoTouch.touch import DiscreteTouch
+from mimoTouch.touch import TrimeshTouch
 from mimoVision.vision import SimpleVision
 from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception
@@ -189,7 +191,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     By default all sensory modalities are disabled and the only sensor outputs are the relative joint positions.
 
     Implementing subclasses will have to override the following functions:
-
     - :meth:`._is_success`, to determine when an episode completes successfully.
     - :meth:`._is_failure`, to determine when an episode has conclusively failed.
     - :meth:`.compute_reward`, to compute the reward for at each step.
@@ -258,7 +259,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         done_active: If `True`, :meth:`._is_done` returns `True` if the simulation reaches a success or failure state.
             If `False`, :meth:`._is_done` always returns `False` and the function calling :meth:`.step` has to figure
             out when to stop or reset the simulation on its own.
-
     """
 
     def __init__(self,
@@ -344,13 +344,16 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     @property
     def dt(self):
+        """ Time passed during each call to :meth:`.step`"""
         return self.sim.model.opt.timestep * self.n_substeps
 
     @property
     def n_actuators(self):
+        """ The number of actuators for MIMo."""
         return self.mimo_actuators.shape[0]
 
     def _get_actuators(self):
+        """ Returns the names of the actuators associated with MIMo."""
         actuators = [i for i, name in enumerate(self.sim.model.actuator_names) if name.startswith("act:")]
         self.mimo_actuators = np.asarray(actuators)
 
@@ -360,6 +363,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
 
     def _set_facial_expressions(self, emotion_textures):
+        """ Associates facial textures in the model with human readable names for the associated emotions"""
         self.facial_expressions = {}
         for emote in emotion_textures:
             tex_name = emotion_textures[emote]
@@ -376,7 +380,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         Args:
             initial_qpos (dict): A dictionary with the intial joint position for each joint. Keys are the joint names.
-
         """
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
         # observation space and goals are not set yet
@@ -414,7 +417,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Args:
             touch_params (dict): The parameter dictionary.
         """
-        self.touch = DiscreteTouch(self, touch_params)
+        self.touch = TrimeshTouch(self, touch_params)
 
     def _vision_setup(self, vision_params):
         """ Perform the setup and initialization of the vision system.
@@ -439,6 +442,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def do_simulation(self, action, n_frames):
         """ Step simulation forward for n_frames number of steps.
 
+        Args:
         """
         self._set_action(action)
         for _ in range(n_frames):
@@ -494,8 +498,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     def _substep_callback(self):
         """ A custom callback that is called after each simulation substep.
-
-
         """
         pass
 
@@ -641,7 +643,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.sim.model.mat_texid[self._head_material_id] = new_tex_id
 
     def _is_success(self, achieved_goal, desired_goal):
-        """ Indicates whether or not the achieved goal successfully achieved the desired goal.
+        """ Indicates whether or not the the achieved goal mathes the desired goal.
 
         Args:
             achieved_goal (object): The goal that was achieved during execution.
@@ -649,7 +651,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         Returns:
             bool: If we successfully reached the desired goal state.
-
         """
         raise NotImplementedError
 
@@ -680,7 +681,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         Return:
             bool: Whether the current episode is done.
-
         """
         return self.done_active and (info["is_success"] or info["is_failure"])
 
@@ -689,6 +689,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         Returns:
             object: The desired end state.
+
         """
         raise NotImplementedError
 
@@ -697,6 +698,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         Returns:
             object: The achieved end state.
+
         """
         raise NotImplementedError
 
@@ -715,7 +717,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Returns:
             float: The reward that corresponds to the provided achieved goal w.r.t. to the desired
             goal. Note that the following should always hold true:
-
                 ob, reward, done, info = env.step()
                 assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
         """

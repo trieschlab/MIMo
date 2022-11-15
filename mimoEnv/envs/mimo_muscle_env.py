@@ -23,7 +23,6 @@ FPMAX = 1.3
 FMAX = 50
 
 
-
 def FL(lce):
     """
     Force length
@@ -152,10 +151,6 @@ class MIMoMuscleEnv(MIMoEnv):
                          goals_in_observation=goals_in_observation,
                          done_active=done_active)
 
-        self.phi_min = self.sim.model.jnt_range[self.mimo_actuated_joints, 0]
-        self.phi_max = self.sim.model.jnt_range[self.mimo_actuated_joints, 1]
-        self._set_muscles()
-
     def _env_setup(self, initial_qpos):
         super()._env_setup(initial_qpos)
         # Also perform all the muscle setup
@@ -178,7 +173,6 @@ class MIMoMuscleEnv(MIMoEnv):
         because we have 2 antagonistic muscles per joint.
         """
         self._compute_parametrization()
-        self._set_action_space()
         self._set_initial_muscle_state()
 
     def _set_max_forces(self):
@@ -195,8 +189,10 @@ class MIMoMuscleEnv(MIMoEnv):
         """
         Compute parameters for muscles from angle and muscle fiber length ranges.
         """
-        # compute remaining parameters
+        self.phi_min = self.sim.model.jnt_range[self.mimo_actuated_joints, 0]
+        self.phi_max = self.sim.model.jnt_range[self.mimo_actuated_joints, 1]
         eps = 0.001
+
         self.moment_1 = (self.lce_max - self.lce_min + eps) / (
             self.phi_max - self.phi_min + eps
         )
@@ -255,10 +251,10 @@ class MIMoMuscleEnv(MIMoEnv):
         The minus sign at the end is a MuJoCo convention. A positive force multiplied by a positive moment results then in a NEGATIVE torque,
         (as muscles pull, they dont push) and the joint velocity gives us the correct muscle fiber velocities.
         """
-        self.force_muscles_1 = (FL(self.lce_1) * FV(self.lce_dot_1, self.vmax) * self.activity[:self.n_actuators] + FP(self.lce_1)) \
-                               * self.maximum_isometric_forces[:, 0]
-        self.force_muscles_2 = FL(self.lce_2) * FV(self.lce_dot_2, self.vmax) * self.activity[self.n_actuators:] + FP(self.lce_2) \
-                               * self.maximum_isometric_forces[:, 1]
+        self.force_muscles_1 = (FL(self.lce_1) * FV(self.lce_dot_1, self.vmax) * self.activity[:self.n_actuators]
+                                + FP(self.lce_1)) * self.maximum_isometric_forces[:, 0]
+        self.force_muscles_2 = (FL(self.lce_2) * FV(self.lce_dot_2, self.vmax) * self.activity[self.n_actuators:]
+                                + FP(self.lce_2)) * self.maximum_isometric_forces[:, 1]
         torque = self.moment_1 * self.force_muscles_1 + self.moment_2 * self.force_muscles_2
         self.joint_torque = -torque
 

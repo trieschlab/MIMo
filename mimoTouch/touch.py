@@ -10,6 +10,7 @@ Both of the implementations also have functions for visualizing the touch sensat
 """
 
 import math
+import operator
 from collections import deque
 from typing import Dict, List
 
@@ -18,6 +19,9 @@ import mujoco_py
 from mujoco_py.generated import const
 import trimesh
 from trimesh import PointCloud
+from cachetools import cachedmethod, LRUCache
+import CacheToolsUtils as ctu
+from matplotlib import pyplot as plt
 
 import mimoEnv.utils as env_utils
 from mimoEnv.utils import rotate_vector_transpose, rotate_vector, EPS
@@ -350,8 +354,11 @@ class DiscreteTouch(Touch):
         relative_position = self.get_contact_position_relative(contact_id, geom_id)
         sensor_points = self.sensor_positions[geom_id]
         distances = np.linalg.norm(sensor_points - relative_position, axis=1)
-        sorted_idxs = np.argpartition(distances, k)
-        return sorted_idxs[:k], distances[sorted_idxs[:k]]
+        if distances.shape[0] <= k:
+            return np.arange(distances.shape[0]), distances
+        else:
+            sorted_idxs = np.argpartition(distances, k)
+            return sorted_idxs[:k], distances[sorted_idxs[:k]]
 
     def get_sensors_within_distance(self, contact_id, geom_id, distance):
         """ Finds all sensors on a geom that are within a given distance to a contact.
@@ -381,6 +388,9 @@ class DiscreteTouch(Touch):
     def get_contact_position_world(self, contact_id):
         """ Get the position of a contact in the world frame.
 
+        Note that this is halfway between the touching geoms. Since geoms can intersect this point will likely be
+        located inside both.
+
         Args:
             contact_id: The ID of the contact.
 
@@ -401,7 +411,14 @@ class DiscreteTouch(Touch):
             A numpy array with the position of the contact.
 
         """
-        return env_utils.world_pos_to_geom(self.m_data, self.get_contact_position_world(contact_id), geom_id)
+        body_pos = env_utils.world_pos_to_geom(self.m_data, self.get_contact_position_world(contact_id), geom_id)
+        contact = self.m_data.contact[contact_id]
+        if contact.dist < 0:
+            # Have to correct contact position towards surface of our body.
+            # Note that distance is negative for intersecting geoms and the normal vector points into the sensing geom.
+            normal = self.get_contact_normal(contact_id, geom_id)
+            body_pos = body_pos + normal * contact.dist / 2
+        return body_pos
 
     # =============== Visualizations ==================================================
     # =================================================================================
@@ -765,6 +782,24 @@ def scale_linear(force, distance, scale):
     return out_force
 
 
+def scale_linear_v(force, distance, scale):
+    """ Like :func:`.scale_linear`, but for array inputs.
+
+    Args:
+        force: The unadjusted force.
+        distance: The adjusted force reduces linearly with increasing distance.
+        scale: The scaling limit. If 'distance >= scale' the return value is reduced to 0.
+
+    Returns:
+        The scaled force.
+
+    """
+    factor = (scale-distance) / scale
+    factor[factor < 0] = 0
+    out_force = (force[:, np.newaxis] * factor).T
+    return out_force
+
+
 # =============== Trimesh based alternative implementation ========================
 # =================================================================================
 
@@ -792,6 +827,9 @@ class TrimeshTouch(Touch):
         Touch functions return their output, while response functions do not return anything and instead write their
         adjusted forces directly into the output dictionary.
 
+        An LRU cache is used to speed up performance of nearest sensor point searches. This cache persists through
+        calls to :meth:`.reset`.
+
         The following attributes are provided in addition to those of :class:`~mimoTouch.touch.Touch`.
 
         Attributes:
@@ -804,11 +842,16 @@ class TrimeshTouch(Touch):
                 `True`, otherwise `False`.
             plotting_limits: A convenience dictionary listing axis limits for plotting forces or sensor points for
                 geoms.
+            contact_tuples: A list of tuples listing the contact index, the relevant sensing body and the raw contact
+                forces for that contact. Note that a contact may appear twice if both involved bodies have sensors.
             _submeshes: A dictionary like :attr:`.meshes`, but storing a list of the individual geom meshes instead.
             _active_subvertices: A dictionary like :attr:`.active_vertices`, but storing a list of masks for each geom
                 mesh instead.
             _vertex_to_sensor_idx: A dictionary that maps the indices for each active vertex. Calculations happen on
                 submeshes, so the indices have to mapped onto the output array. This dictionary stores that mapping.
+            _neighbour_cache: An LRU cache storing the results for the nearest neighbour searches. Hit rate and current
+                size can be determined with ``._neighbour_cache.hits()`` and ``._neighbour_cache._cache.currsize``
+                respectively.
 
         """
 
@@ -837,8 +880,9 @@ class TrimeshTouch(Touch):
 
         self.meshes: Dict[int, trimesh.Trimesh] = {}
         self.active_vertices = {}
-        self.sensor_positions = {}
+        self.contact_tuples = []
 
+        self._neighbour_cache = ctu.StatsCache(LRUCache(maxsize=200))
         self.plotting_limits = {}
 
         # Add sensors to bodies
@@ -1108,64 +1152,119 @@ class TrimeshTouch(Touch):
                 closest_distance = distance
         return self._convert_active_sensor_idx(body_id, closest[0], closest[1]), closest_distance
 
-    def get_k_nearest_sensors(self, contact_pos, body_id, k):
+    @cachedmethod(operator.attrgetter("_neighbour_cache"),
+                  key=lambda inst, distances, body_id, submesh_id, vertex_id, k:
+                  hash(("nearest_k", body_id, submesh_id, vertex_id, k)))
+    def _nearest_k_search(self, distances, body_id, submesh_id, vertex_id, k):
+        """ Finds the k nearest sensor points using BFS.
+
+        The results from this function are cached in :attr:`._neighbour_cache`.
+
+        Args:
+            distances: A list of arrays, storing the distances between the sensor points and a given contact point.
+                This list is used to terminate search early if we have k candidates already and a new vertex is further
+                away than the furthest so far.
+            body_id: The id of the body on which we search for sensor points.
+            submesh_id: The submesh of the vertex with the shortest distance. Only used for the cache.
+            vertex_id: The id of the vertex with the shortest distance. Only used for the cache.
+            k: How many closest neighbours we return.
+
+        Returns:
+            The indices of the k-nearest sensors in submesh format.
+
+        """
+        # Use trimesh meshes to get nearest vertex on all submeshes, then get up to k extra candidates for each submesh,
+        # then get the k closest from the candidates of all submeshes
+        candidate_sensor_idxs = []
+        for i, mesh in enumerate(self._submeshes[body_id]):
+            mesh_distances = distances[i]
+            sub_idx = np.argmin(mesh_distances)
+            active_vertices_on_submesh = self._active_subvertices[body_id][i]
+
+            # If the mesh only has a single vertex and it is an active vertex, take it and go to next mesh
+            if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
+                candidate_sensor_idxs.append((i, sub_idx))
+                continue
+
+            # Perform nearest k search, caching results.
+            graph = mesh.vertex_adjacency_graph
+            nodes_to_check = deque()
+            nodes_to_check.append(sub_idx)
+            nodes_to_check.extend(graph[sub_idx])
+            largest_distance_so_far = 0
+            checked = set()
+            while len(nodes_to_check) > 0:
+                candidate = nodes_to_check.pop()
+                if candidate in checked:
+                    continue
+                checked.add(candidate)
+                distance = mesh_distances[candidate]
+                # If we have enough candidates and the current node is further away than the furthest, skip this
+                # node. Otherwise put neighbours into queue to check. If node is also active, add it to candidates.
+                if len(candidate_sensor_idxs) >= k and distance > largest_distance_so_far:
+                    continue
+                else:
+                    nodes_to_check.extend(set(graph[candidate]) - checked)
+                    if active_vertices_on_submesh[candidate]:
+                        candidate_sensor_idxs.append((i, candidate))
+                        if len(candidate_sensor_idxs) < k and distance > largest_distance_so_far:
+                            largest_distance_so_far = distance
+        return candidate_sensor_idxs
+
+    def get_k_nearest_sensors(self, contact_pos, body_id, k, k_margin=1.4):
         """ Given a position and a body, find the k sensors on the body closest to the position.
+
+        Uses a cache to speed up the simulation. For a given contact we determine the closest sensor vertex on a
+        given body. If this vertex is located in the cache, the nearest neighbour search is skipped and instead
+        pulled from the cache. To ensure that the cache is accurate even as the contact point moves around a vertex,
+        we store slightly more than k candidate neighbours in the cache. How many more is determined by ``k_margin``.
 
         Args:
             contact_pos: The position. Should be a numpy array of shape `(3,)`
             body_id: The ID of the body. The body must have sensors!
             k: The number of sensors to return.
+            k_margin: The factor by which k is increased for the cache.
 
         Returns:
             The indices of the k-nearest sensors to the contact and the distances between them and the position.
 
         """
-        # Use trimesh meshes to get nearest vertex on all submeshes, then get up to k extra candidates for each submesh,
-        # then get the k closest from the candidates of all submeshes
-        candidate_sensors_idx = []
-        candidate_sensor_distances = []
-        largest_distance_so_far = 0
+        # Cache operates on closest vertex overall (even inactive), so have to find that first to determine if cache
+        # applies
+        distances = []
+        closest_id = (-1, -1)
+        closest_distance = math.inf
         for i, mesh in enumerate(self._submeshes[body_id]):
             mesh_distances = self._sensor_distances(contact_pos, mesh)
             sub_idx = np.argmin(mesh_distances)
             distance = mesh_distances[sub_idx]
-            active_vertices_on_submesh = self._active_subvertices[body_id][i]
-            if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
-                candidate_sensors_idx.append(self._convert_active_sensor_idx(body_id, i, sub_idx))
-                candidate_sensor_distances.append(distance)
-                continue
-            graph = mesh.vertex_adjacency_graph
-            candidates = deque()
-            candidates.append(sub_idx)
-            candidates.extend(graph[sub_idx])
-            checked = set()
-            while len(candidates) > 0:
-                candidate = candidates.pop()
-                if candidate in checked:
-                    continue
-                checked.add(candidate)
-                distance = mesh_distances[candidate]
-                # If the sensor is an output sensor, we still need more candidates, or it is closer than another:
-                #   Grab this sensor as a candidate
-                if len(candidate_sensors_idx) >= k and distance > largest_distance_so_far:
-                    continue
-                else:
-                    if active_vertices_on_submesh[candidate]:
-                        candidate_sensors_idx.append(self._convert_active_sensor_idx(body_id, i, candidate))
-                        candidate_sensor_distances.append(distance)
-                        if len(candidate_sensors_idx) < k:
-                            largest_distance_so_far = distance
-                    candidates.extend(set(graph[candidate]) - checked)
-        sensor_idx = np.asarray(candidate_sensors_idx)
-        distances = np.asanyarray(candidate_sensor_distances)
-        # Get k closest from all of these
-        sorted_idxs = np.argpartition(distances, k)
-        return sensor_idx[sorted_idxs[:k]], distances[sorted_idxs[:k]]
+            if distance < closest_distance:
+                closest_id = (i, sub_idx)
+                closest_distance = distance
+            distances.append(mesh_distances)
+
+        submesh_idx, vertex_idx = closest_id
+
+        k_search = int(math.floor(k * k_margin))
+
+        candidate_sensors_idx = \
+            self._nearest_k_search(distances, body_id, submesh_idx, vertex_idx, k_search)
+
+        sensors_idx = np.asarray([self._convert_active_sensor_idx(body_id, i, vert_idx)
+                                  for i, vert_idx in candidate_sensors_idx])
+        candidate_sensor_distances = np.asarray([distances[i][vert_idx] for i, vert_idx in candidate_sensors_idx])
+
+        # Get k closest from all of these candidates
+        if sensors_idx.shape[0] <= k:
+            return sensors_idx, candidate_sensor_distances
+        else:
+            sorted_idxs = np.argpartition(candidate_sensor_distances, k)
+            return sensors_idx[sorted_idxs[:k]], candidate_sensor_distances[sorted_idxs[:k]]
 
     def _get_mesh_adjacency_graph(self, mesh):
         """ Grab the adjacency graph for the mesh.
 
-        Currently just wraps trimeshes vertex adjacency function, since they already handle caching smartly.
+        Currently just wraps trimeshes vertex adjacency function, since they already handle caching.
 
         Args:
             mesh: The mesh.
@@ -1175,7 +1274,66 @@ class TrimeshTouch(Touch):
         """
         return mesh.vertex_adjacency_graph
 
-    def get_sensors_within_distance(self, contact_pos, body_id, distance_limit):
+    @cachedmethod(operator.attrgetter("_neighbour_cache"),
+                  key=lambda inst, distances, body_id, submesh_id, vertex_id, distance_limit:
+                  hash(("within_distance", body_id, submesh_id, vertex_id, distance_limit)))
+    def _nearest_within_distance_search(self, distances, body_id, submesh_id, vertex_id, distance_limit):
+        """ Finds all sensor points within a distance limit using BFS on the sensor mesh.
+
+        The results from this function are cached in :attr:`._neighbour_cache`.
+
+        Args:
+            distances: A list of arrays, storing the distances between the sensor points and a given contact point.
+            body_id: The id of the body on which we search for sensor points.
+            submesh_id: The submesh of the vertex with the shortest distance. Only used for the cache.
+            vertex_id: The id of the vertex with the shortest distance. Only used for the cache.
+            distance_limit: Sensor vertices further away than this limit are excluded from the output.
+
+        Returns:
+            The ids of the sensor vertices within distance
+        """
+        # Use trimesh to get nearest vertex on each submesh and then inspect neighbours from there. Have to check
+        # submeshes since we dont have edges between submeshes
+        candidate_sensors_idxs = []
+        for i, mesh in enumerate(self._submeshes[body_id]):
+            mesh_candidate_idxs = []
+            candidate_sensors_idxs.append(mesh_candidate_idxs)
+            mesh_distances = distances[i]
+            sub_idx = np.argmin(mesh_distances)
+            distance = mesh_distances[sub_idx]
+            # If even the closest point is too far away we can skip submesh
+            if distance > distance_limit:
+                continue
+            active_vertices_on_submesh = self._active_subvertices[body_id][i]
+            # If we only have a single sensor point and it is active we add it to the candidates and go to next
+            # submesh
+            if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
+                mesh_candidate_idxs.append(sub_idx)
+                continue
+
+            # The actual search happens here now simply using BFS
+            graph = self._get_mesh_adjacency_graph(mesh)
+            nodes_to_check = deque()
+            nodes_to_check.append(sub_idx)
+            nodes_to_check.extend(graph[sub_idx])
+            within_distance = mesh_distances < distance_limit
+            checked = np.invert(within_distance)
+
+            while len(nodes_to_check) > 0:
+                candidate = nodes_to_check.pop()
+                # If the point is beyond the distance or we checked it already we skip it, otherwise we add the
+                # neighbours into the queue to check. If the point is also an active sensor point we add it to the
+                # candidates.
+                if checked[candidate]:
+                    continue
+                checked[candidate] = 1
+                nodes_to_check.extend(graph[candidate])
+                if active_vertices_on_submesh[candidate]:
+                    mesh_candidate_idxs.append(candidate)
+
+        return candidate_sensors_idxs
+
+    def get_sensors_within_distance(self, contact_pos, body_id, distance_limit, distance_margin=1.5):
         """ Finds all sensors on a body that are within a given distance to a position.
 
         The distance used is the direct euclidean distance. A sensor is included in the output if and only if:
@@ -1184,58 +1342,60 @@ class TrimeshTouch(Touch):
         - There is a path from the sensor to the vertex closest to the position such that all vertices on that path are
           also within the distance limit.
 
+        Uses a cache to speed up the simulation. For a given contact we determine the closest sensor point on a
+        given body. If this point is located in the cache, the nearest neighbour search is skipped and instead
+        pulled from the cache. If the point is not located in the cache we store it there. Currently there is no
+        pruning or limiting of the size of the cache.
+        To facilitate accurate searches even as the contact point moves about, we search a slightly larger area on
+        the first occurrence, which is then pruned on subsequent occurrences using the distance limit. The increase for
+        the first search is determined by the factor ``distance_margin``.
+
         Args:
             contact_pos: The position. Should be a numpy array of shape `(3,)`
             body_id: The ID of the body. The body must have sensors!
             distance_limit: Sensors must be within this distance to the position to be included in the output.
+            distance_margin: How much the search limit is increased on the first search. Default 1.5.
 
         Returns:
             The indices of all sensors on the body that are within `distance` to the contact as well as the distances
             between the sensors and the position.
 
         """
-        # Use trimesh to get nearest vertex on each submesh and then inspect neighbours from there. Have to check
-        # submeshes since we dont have edges between submeshes
-        candidate_sensors_idx = []
-        candidate_sensor_distances = []
+        # Cache operates on closest vertex overall (even inactive), so have to find that first to determine if cache
+        # applies
+        distances = []
+        closest_id = (-1, -1)
+        closest_distance = math.inf
         for i, mesh in enumerate(self._submeshes[body_id]):
             mesh_distances = self._sensor_distances(contact_pos, mesh)
             sub_idx = np.argmin(mesh_distances)
             distance = mesh_distances[sub_idx]
-            if distance > distance_limit:
-                continue
-            active_vertices_on_submesh = self._active_subvertices[body_id][i]
+            if distance < closest_distance:
+                closest_id = (i, sub_idx)
+                closest_distance = distance
+            distances.append(mesh_distances)
+        submesh_idx, vertex_idx = closest_id
+
+        search_distance = distance_limit*distance_margin
+
+        # Perform the search or collect from the cache.
+        candidate_sensor_idxs = self._nearest_within_distance_search(distances, body_id, submesh_idx, vertex_idx,
+                                                                     search_distance)
+
+        # Get distances for the candidate sensors and filter out those further away than the limit
+        sensor_idxs = []
+        sensor_distances = []
+        for i in range(len(self._submeshes[body_id])):
             index_map = self._vertex_to_sensor_idx[body_id][i]
-            if mesh.vertices.shape[0] == 1 and active_vertices_on_submesh[0]:
-                candidate_sensors_idx.append(index_map[sub_idx])
-                candidate_sensor_distances.append(distance)
-                continue
-            graph = self._get_mesh_adjacency_graph(mesh)
-            candidates = deque()
-            candidates.append(sub_idx)
-            candidates.extend(graph[sub_idx])
+            vertex_distances = distances[i][candidate_sensor_idxs[i]]
+            sensor_idxs_for_submesh = index_map[candidate_sensor_idxs[i]]
+            distance_mask = vertex_distances < distance_limit
+            sensor_idxs.append(sensor_idxs_for_submesh[distance_mask])
+            sensor_distances.append(vertex_distances[distance_mask])
+        sensor_idxs = np.concatenate(sensor_idxs)
+        sensor_distances = np.concatenate(sensor_distances)
 
-            within_distance = mesh_distances < distance_limit
-            checked = np.invert(within_distance)
-
-            while len(candidates) > 0:
-                candidate = candidates.pop()
-                if checked[candidate]:
-                    continue
-                checked[candidate] = 1
-                # If the sensor is an output sensor, we still need more candidates, or it is closer than another:
-                #   Grab this sensor as a candidate
-                if not within_distance[candidate]:
-                    continue
-                else:
-                    if active_vertices_on_submesh[candidate]:
-                        candidate_sensors_idx.append(index_map[candidate])
-                        candidate_sensor_distances.append(mesh_distances[candidate])
-                    candidates.extend([node for node in graph[candidate] if not checked[candidate]])
-
-        sensor_idx = np.asarray(candidate_sensors_idx)
-        distances = np.asanyarray(candidate_sensor_distances)
-        return sensor_idx, distances
+        return sensor_idxs, sensor_distances
 
     def _sensor_distances(self, point, mesh):
         """ Returns the distances between a point and all sensor points on a mesh.
@@ -1259,6 +1419,9 @@ class TrimeshTouch(Touch):
     def get_contact_position_world(self, contact_id):
         """ Get the position of a contact in the world frame.
 
+        Note that this is halfway between the touching geoms. Since geoms can intersect this point will likely be
+        located inside both.
+
         Args:
             contact_id: The ID of the contact.
 
@@ -1279,7 +1442,14 @@ class TrimeshTouch(Touch):
             A numpy array with the position of the contact.
 
         """
-        return env_utils.world_pos_to_body(self.m_data, self.get_contact_position_world(contact_id), body_id)
+        contact_pos = env_utils.world_pos_to_body(self.m_data, self.get_contact_position_world(contact_id), body_id)
+        contact = self.m_data.contact[contact_id]
+        if contact.dist < 0:
+            # Have to correct contact position towards surface of our body.
+            # Note that distance is negative for intersecting geoms and the normal vector points into the sensing geom.
+            normal = self.get_contact_normal(contact_id, body_id)
+            contact_pos = contact_pos + normal * contact.dist / 2
+        return contact_pos
 
     # =============== Raw force and contact normal ====================================
     # =================================================================================
@@ -1411,6 +1581,7 @@ class TrimeshTouch(Touch):
                     forces = self.touch_function(i, rel_body)
                     contact_tuples.append((i, rel_body, forces))
 
+        self.contact_tuples = contact_tuples
         return contact_tuples
 
     def get_empty_sensor_dict(self, size):
@@ -1493,19 +1664,16 @@ class TrimeshTouch(Touch):
         """
         # Get all sensors within distance (distance here is just double the sensor scale)
         scale = self.sensor_scales[body_id]
+        search_scale = 3*scale
+        adjustment_scale = 2*scale
         contact_pos = self.get_contact_position_relative(contact_id=contact_id, body_id=body_id)
-        nearest_sensors, sensor_distances = self.get_sensors_within_distance(contact_pos, body_id, 2*scale)
+        nearest_sensors, sensor_distances = self.get_sensors_within_distance(contact_pos, body_id, search_scale)
 
-        adjusted_forces = {}
-        force_total = 0  # This variable c
-        for sensor_id, distance in zip(nearest_sensors, sensor_distances):
-            sensor_adjusted_force = scale_linear(force, distance, scale=2*scale)
-            force_total += sensor_adjusted_force[0]
-            adjusted_forces[sensor_id] = sensor_adjusted_force
+        sensor_adjusted_forces = scale_linear_v(force, sensor_distances, scale=adjustment_scale)
+        force_total = abs(np.sum(sensor_adjusted_forces[:, 0]))
 
-        factor = force[0] / force_total if abs(force_total) > EPS else 0
-        for sensor_id in adjusted_forces:
-            self.sensor_outputs[body_id][sensor_id] += adjusted_forces[sensor_id] * factor
+        factor = abs(force[0] / force_total) if force_total > EPS else 0
+        self.sensor_outputs[body_id][nearest_sensors] += sensor_adjusted_forces * factor
 
     def nearest(self, contact_id, body_id, force):
         """ Response function. Adds the output force directly to the nearest sensor.
@@ -1562,7 +1730,7 @@ class TrimeshTouch(Touch):
 
     # Plot forces for list of bodies.
     def plot_force_bodies(self, body_ids: List[int] = [], body_names: List[str] = [],
-                          title: str = "", focus: str = "world"):
+                          title: str = "", focus: str = "world", show_contact_points: bool = True):
         """ Plot the sensor output for a list of bodies.
 
         Given a list of bodies, either by ID or by name, plot the positions and outputs of all sensors on the bodies.
@@ -1578,6 +1746,8 @@ class TrimeshTouch(Touch):
             title: The title of the plot.
             focus: Coordinates are moved into a consistent reference frame. This parameter determines that reference
                 frame. Must be one of ``["world", "first"]``.
+            show_contact_points: If ``True`` the actual contact points are also plotted. Note that these are corrected
+                for intersecting bodies. Default True.
         """
         assert len(body_ids) > 0 or len(body_names) > 0
         assert focus in ["world", "first"]
@@ -1606,7 +1776,25 @@ class TrimeshTouch(Touch):
         points = np.concatenate(points)
         forces = np.concatenate(forces)
         limit = np.amax(np.abs(points))*1.2
-        env_utils.plot_forces(points=points, vectors=forces, limit=limit, title=title)
+        fig, ax = env_utils.plot_forces(points=points, vectors=forces, limit=limit, title=title, show=False)
+
+        if show_contact_points:
+            for body_id in body_ids:
+                for contact_id, contact_body_id, forces in self.contact_tuples:
+                    if body_id == contact_body_id:
+                        contact_position = self.get_contact_position_relative(contact_id, body_id)
+                        if focus == "world":
+                            contact_position = env_utils.body_pos_to_world(self.m_data,
+                                                                           position=contact_position,
+                                                                           body_id=body_id)
+                        else:
+                            contact_position = env_utils.body_pos_to_body(self.m_data,
+                                                                          position=contact_position,
+                                                                          body_id_source=body_id,
+                                                                          body_id_target=body_ids[0])
+                        ax.scatter(contact_position[0], contact_position[1], contact_position[2],
+                                   color="y", s=15, depthshade=True, alpha=0.8)
+        plt.show()
 
     def plot_force_body_subtree(self, body_id: int = None, body_name: str = None, title=""):
         """ Plot the sensor output for the kinematic subtree with the given body at its root.
