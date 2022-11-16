@@ -366,9 +366,17 @@ max_steps = 5000
 
 if __name__ == "__main__":
     vmax = np.ones((90,)) * 0.1
-    fmax = np.ones((180,)) * 0.1
+    fmax = np.ones((180,)) * 50
     for i in range(n_iterations):
         print("iteration", i+1)
+
+        # fmax adjusting
+        fmax_new = fmax_adjust("autoimgs/iteration_{}/fmax".format(i))
+        print("Norm of difference for fmax", np.linalg.norm(fmax - fmax_new, ord=2))
+        fmax = fmax_new
+        print("fmax post iteration", fmax)
+
+        # vmax adjusting
         for _ in range(n_vmax_iterations):
             vmax_new = vmax_iteration(n_episodes_random)
             print("Norm of difference for vmax", np.linalg.norm(vmax - vmax_new, ord=2))
@@ -376,8 +384,4 @@ if __name__ == "__main__":
         print("vmax post iteration", vmax)
         plotting_episode("autoimgs/iteration_{}/vmax".format(i))
 
-        fmax_new = fmax_adjust("autoimgs/iteration_{}/fmax".format(i))
-        print("Norm of difference for fmax", np.linalg.norm(fmax - fmax_new, ord=2))
-        fmax = fmax_new
-        print("fmax post iteration", fmax)
     plotting_episode("autoimgs/final")

@@ -380,9 +380,9 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 		<joint name="robot:right_lf_knuckle" 			joint1="robot:right_lf_knuckle" active="true" polycoef=".79 1 0 0 0"/>
 		<joint name="robot:right_lf_middle" 			joint1="robot:right_lf_middle" active="true" polycoef=".79 1 0 0 0"/>
 		<joint name="robot:right_lf_distal" 			joint1="robot:right_lf_distal" active="true" polycoef=".35 1 0 0 0"/>
-		<joint name="robot:right_th_swivel" 			joint1="robot:right_th_swivel" active="true" polycoef="0 1 0 0 0"/>
-		<joint name="robot:right_th_adduction" 			joint1="robot:right_th_adduction" active="true" polycoef="0 1 0 0 0"/>
-		<joint name="robot:right_th_rot" 				joint1="robot:right_th_rot" active="true" polycoef="0 1 0 0 0"/>
+		<joint name="robot:right_th_swivel" 			joint1="robot:right_th_swivel" active="true" polycoef="0.2 1 0 0 0"/>
+		<joint name="robot:right_th_adduction" 			joint1="robot:right_th_adduction" active="true" polycoef="-.5 1 0 0 0"/>
+		<joint name="robot:right_th_rot" 				joint1="robot:right_th_rot" active="true" polycoef="0.1 1 0 0 0"/>
 		<joint name="robot:right_th_pivot" 				joint1="robot:right_th_pivot" active="true" polycoef="0 1 0 0 0"/>
 		<joint name="robot:right_th_middle" 			joint1="robot:right_th_middle" active="true" polycoef=".79 1 0 0 0"/>
 		<joint name="robot:right_th_distal" 			joint1="robot:right_th_distal" active="true" polycoef=".35 1 0 0 0"/>
@@ -412,9 +412,9 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 		<joint name="robot:left_lf_knuckle" 			joint1="robot:left_lf_knuckle" active="true" polycoef=".79 1 0 0 0"/>
 		<joint name="robot:left_lf_middle" 				joint1="robot:left_lf_middle" active="true" polycoef=".79 1 0 0 0"/>
 		<joint name="robot:left_lf_distal" 				joint1="robot:left_lf_distal" active="true" polycoef=".35 1 0 0 0"/>
-		<joint name="robot:left_th_swivel" 				joint1="robot:left_th_swivel" active="true" polycoef="0 1 0 0 0"/>
-		<joint name="robot:left_th_adduction" 			joint1="robot:left_th_adduction" active="true" polycoef="0 1 0 0 0"/>
-		<joint name="robot:left_th_rot" 				joint1="robot:left_th_rot" active="true" polycoef="0 1 0 0 0"/>
+		<joint name="robot:left_th_swivel" 				joint1="robot:left_th_swivel" active="true" polycoef="0.2 1 0 0 0"/>
+		<joint name="robot:left_th_adduction" 			joint1="robot:left_th_adduction" active="true" polycoef="-.5 1 0 0 0"/>
+		<joint name="robot:left_th_rot" 				joint1="robot:left_th_rot" active="true" polycoef="0.1 1 0 0 0"/>
 		<joint name="robot:left_th_pivot" 				joint1="robot:left_th_pivot" active="true" polycoef="0 1 0 0 0"/>
 		<joint name="robot:left_th_middle" 				joint1="robot:left_th_middle" active="true" polycoef=".79 1 0 0 0"/>
 		<joint name="robot:left_th_distal" 				joint1="robot:left_th_distal" active="true" polycoef=".35 1 0 0 0"/>
