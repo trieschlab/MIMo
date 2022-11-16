@@ -3,6 +3,7 @@
 The abstract base class is :class:`~mimoEnv.envs.mimo_env.MIMoEnv`. Default parameters for all the sensory modalities
 are provided as well.
 """
+import warnings
 import numpy as np
 
 from gym import spaces
@@ -20,7 +21,6 @@ FVMAX = 1.2
 #VMAX = 0.1
 FPMAX = 1.3
 #FMAX = 50
-FMAX = 50
 
 
 def FL(lce):
@@ -113,12 +113,23 @@ class MIMoMuscleEnv(MIMoEnv):
         # user parameters ------------------------------
         self.lce_min = 0.75
         self.lce_max = 1.05
-        self.vmax = np.load('../mimoMuscle/vmax.npy')
-        #print(self.vmax)
+        try:
+            self.vmax = np.load('../mimoMuscle/vmax.npy')
+        except:
+            warnings.warn("No valid vmax file!", RuntimeWarning)
+            self.vmax = .1
+
+        try:
+            self.fmax = np.load("../mimoMuscle/fmax.npy")
+        except:
+            warnings.warn("No valid fmax file!", RuntimeWarning)
+            self.fmax = 50
+
+        self.tau = 0.01
 
         # Placeholders that gets overwritten later
-        self.phi_min = -1
-        self.phi_max = 1
+        self.phi_min = None
+        self.phi_max = None
 
         self.lce_1_ref = None
         self.lce_2_ref = None
@@ -227,7 +238,7 @@ class MIMoMuscleEnv(MIMoEnv):
         Very simple low-pass filter, even simpler than MuJoCo internal, update in the future.
         The time scale parameter is hard-coded so far to 100. which corresponds to tau=0.01.
         """
-        self.activity += 1 * self.dt * (self.prev_action - self.activity)
+        self.activity += (self.dt / self.tau) * self.dt * (self.prev_action - self.activity)
         self.activity = np.clip(self.activity, 0, 1)
 
     def _update_virtual_lengths(self):
@@ -255,7 +266,11 @@ class MIMoMuscleEnv(MIMoEnv):
                                 + FP(self.lce_1)) * self.maximum_isometric_forces[:, 0]
         self.force_muscles_2 = (FL(self.lce_2) * FV(self.lce_dot_2, self.vmax) * self.activity[self.n_actuators:]
                                 + FP(self.lce_2)) * self.maximum_isometric_forces[:, 1]
-        torque = self.moment_1 * self.force_muscles_1 + self.moment_2 * self.force_muscles_2
+        if isinstance(self.fmax, np.ndarray):
+            torque = self.moment_1 * self.force_muscles_1 * self.fmax[:self.n_actuators] \
+                     + self.moment_2 * self.force_muscles_2 * self.fmax[:self.n_actuators]
+        else:
+            torque = self.moment_1 * self.force_muscles_1 * self.fmax + self.moment_2 * self.force_muscles_2 * self.fmax
         self.joint_torque = -torque
 
     def _compute_muscle_action(self, action=None, update_action=True):
@@ -278,7 +293,7 @@ class MIMoMuscleEnv(MIMoEnv):
         # TODO scale appropriately to equal max isometric forces, this FMAX value was taken randomly
         # maximum isometric force is not enough because we have to appropriately scale the moment arms.
         """
-        self.sim.model.actuator_gear[self.mimo_actuators, 0] = self.joint_torque.copy() * FMAX
+        self.sim.model.actuator_gear[self.mimo_actuators, 0] = self.joint_torque.copy()
 
     @property
     def muscle_forces(self):
@@ -338,31 +353,65 @@ class MIMoMuscleEnv(MIMoEnv):
         self._set_initial_muscle_state()
         return obs
 
-    def collect_data_for_joint(self, joint_name):
-        joint_id = self.sim.model.joint_name2id(joint_name)
-        actuator_index = np.nonzero(self.mimo_actuators == joint_id)
+    def collect_data_for_actuator(self, actuator_index):
+        #print("Printing shapes for actuator index {} with {} total actuators".format(actuator_index, self.n_actuators))
+        #print("qpos", self.mimo_actuated_qpos.shape)
+        actuator_qpos = self.sim.data.qpos[self.mimo_actuated_qpos[actuator_index]].item()
+        #print("qvel", self.mimo_actuated_qvel.shape)
+        actuator_qvel = self.sim.data.qvel[self.mimo_actuated_qvel[actuator_index]].item()
 
-        actuator_qpos = self.mimo_actuated_qpos[actuator_index]
-        actuator_qvel = self.mimo_actuated_qvel[actuator_index]
+        #print("gear", self.sim.model.actuator_gear.shape)
+        actuator_gear = self.sim.model.actuator_gear[actuator_index, 0]
+        #print("torque", self.joint_torque.shape)
+        torque = self.joint_torque[actuator_index]
 
+        #print("action", self.prev_action.shape)
+        action_neg = self.prev_action[actuator_index]
+        action_pos = self.prev_action[self.n_actuators + actuator_index]
+
+        #print("activity", self.activity.shape)
         activity_neg = self.activity[actuator_index]
         activity_pos = self.activity[self.n_actuators + actuator_index]
 
+        #print("lce", self.lce_1.shape)
         lce_neg = self.lce_1[actuator_index]
         lce_pos = self.lce_2[actuator_index]
 
+        #print("lce_dot", self.lce_dot_1.shape)
         lce_neg_dot = self.lce_dot_1[actuator_index]
         lce_pos_dot = self.lce_dot_2[actuator_index]
 
+        #print("force", self.force_muscles_1.shape)
         force_neg = self.force_muscles_1[actuator_index]
         force_pos = self.force_muscles_2[actuator_index]
 
-        fl_neg = FL(self.lce_1)[actuator_index]
-        fv_neg = FV(self.lce_dot_1, self.vmax)[actuator_index]
-        fp_neg = FP(self.lce_1)[actuator_index]
-        fl_pos = FL(self.lce_2)[actuator_index]
-        fv_pos = FV(self.lce_dot_2, self.vmax)[actuator_index]
-        fp_pos = FP(self.lce_2)[actuator_index]
+        fl1 = FL(self.lce_1)
+        fl2 = FL(self.lce_2)
+        #print("FL", fl1.shape)
+        fl_neg = fl1[actuator_index]
+        fl_pos = fl2[actuator_index]
 
-        torque = self.joint_torque[actuator_index]
-        actuator_gear = self.sim.model.actuator_gear[actuator_index, 0]
+        fv1 = FV(self.lce_dot_1, self.vmax)
+        fv2 = FV(self.lce_dot_2, self.vmax)
+        #print("FV", fv1.shape)
+        fv_neg = fv1[actuator_index]
+        fv_pos = fv2[actuator_index]
+
+        fp1 = FP(self.lce_1)
+        fp2 = FP(self.lce_2)
+        #print("FP", fp1.shape)
+        fp_neg = fp1[actuator_index]
+        fp_pos = fp2[actuator_index]
+
+        output = [actuator_qpos, actuator_qvel,
+                  actuator_gear, torque,
+                  action_neg, action_pos,
+                  activity_neg, activity_pos,
+                  lce_neg, lce_pos,
+                  lce_neg_dot, lce_pos_dot,
+                  force_neg, force_pos,
+                  fl_neg, fl_pos,
+                  fv_neg, fv_pos,
+                  fp_neg, fp_pos]
+        #print(output)
+        return output

@@ -37,7 +37,7 @@ BENCHMARK_XML_V2 = os.path.join(SCENE_DIRECTORY, "benchmarkv2_scene.xml")
 :meta hide-value:
 """
 
-TEST_XML = os.path.join(SCENE_DIRECTORY, "test_scene.xml")
+TEST_XML = os.path.join(SCENE_DIRECTORY, "muscle_static_test.xml")
 """ Path to the benchmarking scene using MIMo v2.
 
 :meta hide-value:

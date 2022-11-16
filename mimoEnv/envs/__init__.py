@@ -5,3 +5,5 @@ from mimoEnv.envs.reach import MIMoReachEnv
 from mimoEnv.envs.standup import MIMoStandupEnv
 from mimoEnv.envs.selfbody import MIMoSelfBodyEnv
 from mimoEnv.envs.dummy import MIMoMuscleDemoEnv
+from mimoEnv.envs.muscle_test import MIMoStaticMuscleTestEnv
+from mimoEnv.envs.muscle_test import MIMoVelocityMuscleTestEnv

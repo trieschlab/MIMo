@@ -34,7 +34,7 @@
     </asset>
 	
 	<!-- Import everything except the kinematic tree -->
-	<include file="mimo/MIMo_metav2.xml"></include>
+	<include file="muscle_static_test_meta.xml"></include>
 
     <worldbody>
         <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
@@ -43,22 +43,15 @@
         <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
 
 		<!-- The location and orientation of the base model can be set using this body -->
-		<body name="mimo_location" pos="0 0 .4" euler="0 0 0">
+		<body name="mimo_location" pos="0 0 .5" euler="0 0 0">
 			<freejoint/>
 			<include file="mimo/MIMo_modelv2.xml"></include> <!-- Import the actual model-->
 		</body>
 
-        <body name="right_elbow_test" pos="1 -0.3 0.7">
-			<joint name="right_elbow_test" type="free" stiffness="0" limited="false"/>
-			<geom type="box" material="matgeom" size="0.01 0.01 0.1" pos="0 0 0" condim="6"/>
-		</body>
     </worldbody>
-	
-	<equality>
-        <joint joint1="robot:right_shoulder_ad_ab" polycoef="0 1 0 0 0"/>
-        <joint joint1="robot:right_shoulder_rotation" polycoef="0 1 0 0 0"/>
-		<weld body1="head"/>
-        <weld body1="upper_body"/>
-        <weld body1="right_lower_arm" body2="right_elbow_test"/>
+
+    <equality>
+		<weld body1="hip"/>
 	</equality>
+
 </mujoco>

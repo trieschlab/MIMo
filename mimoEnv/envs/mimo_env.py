@@ -354,7 +354,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     def _get_actuators(self):
         """ Returns the names of the actuators associated with MIMo."""
-        actuators = [i for i, name in enumerate(self.sim.model.actuator_names) if name.startswith("act:")]
+        actuators = [self.sim.model.actuator_name2id(name) for name in self.sim.model.actuator_names if name.startswith("act:")]
         self.mimo_actuators = np.asarray(actuators)
 
     def _set_action_space(self):

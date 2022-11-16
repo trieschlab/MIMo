@@ -38,5 +38,17 @@ register(id='MIMoSelfBody-v0',
 
 register(id='MIMoMuscle-v0',
          entry_point='mimoEnv.envs:MIMoMuscleDemoEnv',
-         max_episode_steps=500,
+         max_episode_steps=2000,
          )
+
+register(id='MIMoMuscleStaticTest-v0',
+         entry_point='mimoEnv.envs:MIMoStaticMuscleTestEnv',
+         max_episode_steps=5000,
+         )
+
+register(id='MIMoVelocityMuscleTest-v0',
+         entry_point='mimoEnv.envs:MIMoVelocityMuscleTestEnv',
+         max_episode_steps=5000,
+         )
+
+
