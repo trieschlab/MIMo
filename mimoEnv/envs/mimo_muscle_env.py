@@ -117,7 +117,7 @@ class MIMoMuscleEnv(MIMoEnv):
             self.vmax = np.load('../mimoMuscle/vmax.npy')
         except:
             warnings.warn("No valid vmax file!", RuntimeWarning)
-            self.vmax = 1.0
+            self.vmax = 100
 
         try:
             self.fmax = np.load("../mimoMuscle/fmax.npy")
@@ -125,7 +125,7 @@ class MIMoMuscleEnv(MIMoEnv):
             warnings.warn("No valid fmax file!", RuntimeWarning)
             self.fmax = 50
 
-        self.tau = 0.005
+        self.tau = 0.01
 
         # Placeholders that gets overwritten later
         self.phi_min = None

@@ -367,7 +367,7 @@ n_episodes_random = 1
 max_steps = 5000
 
 if __name__ == "__main__":
-    vmax = np.ones((90,)) * 0.1
+    vmax = np.ones((90,)) * 100
     fmax = np.ones((180,)) * 50
     for i in range(n_iterations):
         print("iteration", i+1)
