@@ -1,9 +1,11 @@
 import gym
 import os
-import mimoEnv
 import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
+
+import mimoEnv
+from mimoEnv.utils import EPS
 
 matplotlib.use("Agg")
 
@@ -143,7 +145,7 @@ def force_vel(velocity, c, VMAX, FVMAX):
 
 def vmax_iteration(n_episodes):
     env = gym.make("MIMoVelocityMuscleTest-v0")
-    max_vel = np.zeros_like(env.lce_dot_1)
+    max_vel = np.zeros_like(env.lce_dot_1) + EPS
     min_vel = np.ones_like(env.lce_dot_1) * 1000
     for ep in range(n_episodes):
         _ = env.reset()
@@ -314,7 +316,7 @@ def fmax_adjust(plot_dir):
             unscaled_torque = np.concatenate([torque_1, torque_2])
             max_unscaled_torque = np.maximum(max_unscaled_torque, unscaled_torque)
 
-    fmax = target_torque / max_unscaled_torque
+    fmax = target_torque / (max_unscaled_torque + EPS)
     np.save("fmax.npy", fmax)
     np.save(os.path.join(plot_dir, "fmax.npy"), fmax)
 
