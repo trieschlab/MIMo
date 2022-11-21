@@ -448,6 +448,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """ Step simulation forward for n_frames number of steps.
 
         Args:
+            action (np.ndarray): The control input for the actuators.
+            n_frames (int): The number of physics steps to perform.
         """
         self._set_action(action)
         for _ in range(n_frames):

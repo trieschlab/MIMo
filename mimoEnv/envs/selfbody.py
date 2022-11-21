@@ -51,7 +51,6 @@ TOUCH_PARAMS = {
 
 
 SITTING_POSITION = {
-    "mimo_location": np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]),
     "robot:hip_lean1": np.array([0.039088]), "robot:hip_rot1": np.array([0.113112]),
     "robot:hip_bend1": np.array([0.5323]), "robot:hip_lean2": np.array([0]), "robot:hip_rot2": np.array([0]),
     "robot:hip_bend2": np.array([0.5323]),
@@ -128,6 +127,15 @@ class MIMoSelfBodyEnv(MIMoEnv):
                          goals_in_observation=True,
                          done_active=True)
 
+        env_utils.set_joint_qpos(self.sim.model,
+                                 self.sim.data,
+                                 "mimo_location",
+                                 np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]))
+        #  "mimo_location": np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]),
+        for joint_name in SITTING_POSITION:
+            env_utils.lock_joint(self.sim.model, joint_name, joint_angle=SITTING_POSITION[joint_name][0])
+        # Let sim settle for a few timesteps to allow weld and locks to settle
+        self.do_simulation(np.zeros(self.action_space.shape), 25)
         self.init_sitting_qpos = self.sim.data.qpos.copy()
 
     def _sample_goal(self):
@@ -150,12 +158,6 @@ class MIMoSelfBodyEnv(MIMoEnv):
             target_geom_onehot[self.target_geom] = 1
 
         self.target_body = self.sim.model.body_id2name(self.sim.model.geom_bodyid[self.target_geom])
-        #for body_id in self.touch.sensor_scales:
-        #    body_geoms = env_utils.get_geoms_for_body(self.sim.model, body_id)
-        #    if self.target_geom in body_geoms:
-        #        self.target_body = self.sim.model.body_id2name(body_id)
-        print('Target body: ', self.target_body)
-
         return target_geom_onehot
 
     def _is_success(self, achieved_goal, desired_goal):
@@ -222,8 +224,9 @@ class MIMoSelfBodyEnv(MIMoEnv):
         Avoids some physics issues that would sometimes occur with welds.
         """
         # Manually set body to sitting position (except for the right arm joints)
-        for body_name in SITTING_POSITION:
-            env_utils.set_joint_qpos(self.sim.model, self.sim.data, body_name, SITTING_POSITION[body_name])
+        #for body_name in SITTING_POSITION:
+        #    env_utils.set_joint_qpos(self.sim.model, self.sim.data, body_name, SITTING_POSITION[body_name])
+        pass
 
     def _reset_sim(self):
         """ Reset to the initial sitting position.
