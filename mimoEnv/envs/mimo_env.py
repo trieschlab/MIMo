@@ -4,8 +4,6 @@ The abstract base class is :class:`~mimoEnv.envs.mimo_env.MIMoEnv`. Default para
 are provided as well.
 """
 import os
-import sys
-import glfw
 import numpy as np
 import mujoco_py
 import copy
@@ -308,7 +306,9 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.seed()
         # Action space
         self.action_space = None
+        self.mimo_joints = None
         self.mimo_actuators = None
+        self._get_joints()
         self._get_actuators()
         self._set_action_space()
 
@@ -353,9 +353,14 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         return self.mimo_actuators.shape[0]
 
     def _get_actuators(self):
-        """ Returns the names of the actuators associated with MIMo."""
+        """ Returns the IDs of the actuators associated with MIMo."""
         actuators = [self.sim.model.actuator_name2id(name) for name in self.sim.model.actuator_names if name.startswith("act:")]
         self.mimo_actuators = np.asarray(actuators)
+
+    def _get_joints(self):
+        """ Returns the IDs of the joints associated with MIMO."""
+        joints = [self.sim.model.joint_name2id(name) for name in self.sim.model.joint_names if name.startswith("robot:")]
+        self.mimo_joints = np.asarray(joints)
 
     def _set_action_space(self):
         bounds = self.sim.model.actuator_ctrlrange.copy().astype(np.float32)[self.mimo_actuators]

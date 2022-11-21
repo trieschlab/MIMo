@@ -200,10 +200,11 @@ class MIMoMuscleEnv(MIMoEnv):
         """
         Compute parameters for muscles from angle and muscle fiber length ranges.
         """
-        self.phi_min = self.sim.model.jnt_range[self.mimo_actuated_joints, 0]
-        self.phi_max = self.sim.model.jnt_range[self.mimo_actuated_joints, 1]
+        # Collect joint range from model, using springref as "neutral" position
+        self.phi_min = self.sim.model.jnt_range[self.mimo_actuated_joints, 0] - self.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()
+        self.phi_max = self.sim.model.jnt_range[self.mimo_actuated_joints, 1] - self.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()
+        # Calculate values for muscle model
         eps = 0.001
-
         self.moment_1 = (self.lce_max - self.lce_min + eps) / (
             self.phi_max - self.phi_min + eps
         )
@@ -212,6 +213,12 @@ class MIMoMuscleEnv(MIMoEnv):
             self.phi_min - self.phi_max + eps
         )
         self.lce_2_ref = self.lce_min - self.moment_2 * self.phi_max
+        # Adjust joint parameters in XML: stiffness and damping
+        self.sim.model.jnt_stiffness[self.mimo_joints] = self.sim.model.jnt_stiffness[self.mimo_joints] / 20
+        mimo_dof_ids = self.sim.model.jnt_dofadr[self.mimo_joints]
+        self.sim.model.dof_damping[mimo_dof_ids] = self.sim.model.dof_damping[mimo_dof_ids] / 10
+        self.sim.model.dof_armature[mimo_dof_ids] = self.sim.model.dof_armature[mimo_dof_ids] / 2
+        self.sim.model.dof_frictionloss[mimo_dof_ids] = self.sim.model.dof_frictionloss[mimo_dof_ids] / 2
 
     def _set_action_space(self):
         self.action_space = spaces.Box(
@@ -245,8 +252,8 @@ class MIMoMuscleEnv(MIMoEnv):
         """
         Update the muscle lengths from current joint angles.
         """
-        self.lce_1 = self.sim.data.qpos[self.mimo_actuated_qpos].flatten() * self.moment_1 + self.lce_1_ref
-        self.lce_2 = self.sim.data.qpos[self.mimo_actuated_qpos].flatten() * self.moment_2 + self.lce_2_ref
+        self.lce_1 = (self.sim.data.qpos[self.mimo_actuated_qpos].flatten() - self.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()) * self.moment_1 + self.lce_1_ref
+        self.lce_2 = (self.sim.data.qpos[self.mimo_actuated_qpos].flatten() - self.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()) * self.moment_2 + self.lce_2_ref
 
     def _update_virtual_velocities(self):
         """
@@ -262,10 +269,8 @@ class MIMoMuscleEnv(MIMoEnv):
         The minus sign at the end is a MuJoCo convention. A positive force multiplied by a positive moment results then in a NEGATIVE torque,
         (as muscles pull, they dont push) and the joint velocity gives us the correct muscle fiber velocities.
         """
-        self.force_muscles_1 = (FL(self.lce_1) * FV(self.lce_dot_1, self.vmax) * self.activity[:self.n_actuators]
-                                + FP(self.lce_1)) * self.maximum_isometric_forces[:, 0]
-        self.force_muscles_2 = (FL(self.lce_2) * FV(self.lce_dot_2, self.vmax) * self.activity[self.n_actuators:]
-                                + FP(self.lce_2)) * self.maximum_isometric_forces[:, 1]
+        self.force_muscles_1 = FL(self.lce_1) * FV(self.lce_dot_1, self.vmax) * self.activity[:self.n_actuators] + FP(self.lce_1)
+        self.force_muscles_2 = FL(self.lce_2) * FV(self.lce_dot_2, self.vmax) * self.activity[self.n_actuators:] + FP(self.lce_2)
         if isinstance(self.fmax, np.ndarray):
             torque = self.moment_1 * self.force_muscles_1 * self.fmax[:self.n_actuators] \
                      + self.moment_2 * self.force_muscles_2 * self.fmax[:self.n_actuators]
@@ -360,10 +365,11 @@ class MIMoMuscleEnv(MIMoEnv):
         #print("qvel", self.mimo_actuated_qvel.shape)
         actuator_qvel = self.sim.data.qvel[self.mimo_actuated_qvel[actuator_index]].item()
 
+        # This is the basic qpos adjusted for the springref parameter. This shifts the "neutral" position of the joint.
+        joint_qpos = actuator_qpos - self.sim.model.qpos_spring[self.mimo_actuated_qpos[actuator_index]].item()
+
         #print("gear", self.sim.model.actuator_gear.shape)
         actuator_gear = self.sim.model.actuator_gear[actuator_index, 0]
-        #print("torque", self.joint_torque.shape)
-        torque = self.joint_torque[actuator_index]
 
         #print("action", self.prev_action.shape)
         action_neg = self.prev_action[actuator_index]
@@ -404,7 +410,7 @@ class MIMoMuscleEnv(MIMoEnv):
         fp_pos = fp2[actuator_index]
 
         output = [actuator_qpos, actuator_qvel,
-                  actuator_gear, torque,
+                  joint_qpos, actuator_gear,
                   action_neg, action_pos,
                   activity_neg, activity_pos,
                   lce_neg, lce_pos,

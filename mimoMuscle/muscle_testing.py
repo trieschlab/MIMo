@@ -162,9 +162,22 @@ def vmax_iteration(n_episodes):
             # env.render()
             ep_steps += 1
 
-            if done or ep_steps >= max_steps:
+            if done:
                 break
-
+    # Take average of symmetric joints
+    # TODO: Automate this somehow
+    eye_vel = (max_vel[6:9] + max_vel[9:12]) / 2
+    max_vel[6:9] = eye_vel
+    max_vel[9:12] = eye_vel
+    leg_vel = (max_vel[-9:] + max_vel[-18:-9]) / 2
+    max_vel[-9:] = leg_vel
+    max_vel[-18:-9] = leg_vel
+    hand_vel = (max_vel[-41:-18] + max_vel[-71:-48]) / 2
+    max_vel[-41:-18] = hand_vel
+    max_vel[-71:-48] = hand_vel
+    arm_vel = (max_vel[-48:-41] + max_vel[-78:-71]) / 2
+    max_vel[-48:-41] = arm_vel
+    max_vel[-78:-71] = arm_vel
     np.save('vmax.npy', max_vel)
     env.close()
     return max_vel
@@ -204,7 +217,7 @@ def plotting_episode(plot_dir):
                              env.force_muscles_1.copy(),
                              env.force_muscles_2.copy()])
 
-        if done or ep_steps >= max_steps:
+        if done:
             break
 
     x = np.arange(ep_steps) * env.dt
@@ -220,8 +233,8 @@ def plotting_episode(plot_dir):
         actuator_name = actuator_name.replace("act:", "")
         axs[0, 0].set_title("qpos")
         axs[0, 1].set_title("qvel")
-        axs[1, 0].set_title("gear")
-        axs[1, 1].set_title("torque")
+        axs[1, 0].set_title("qpos_muscle")
+        axs[1, 1].set_title("gear")
         axs[2, 0].set_title("action")
         axs[3, 0].set_title("activity")
         axs[4, 0].set_title("lce")
@@ -333,8 +346,8 @@ def fmax_adjust(plot_dir):
         actuator_name = actuator_name.replace("act:", "")
         axs[0, 0].set_title("qpos")
         axs[0, 1].set_title("qvel")
-        axs[1, 0].set_title("gear")
-        axs[1, 1].set_title("torque")
+        axs[1, 0].set_title("qpos_muscle")
+        axs[1, 1].set_title("gear")
         axs[2, 0].set_title("action")
         axs[3, 0].set_title("activity")
         axs[4, 0].set_title("lce")
@@ -361,10 +374,9 @@ def fmax_adjust(plot_dir):
 # This is done by applying maximum control input for one set of muscles until muscle activation states have converged
 # and measuring the resuling output torque before moving to the next set of muscles
 
-n_iterations = 1
-n_vmax_iterations = 1
-n_episodes_random = 1
-max_steps = 5000
+n_iterations = 5
+n_vmax_iterations = 5
+n_episodes_random = 20
 
 if __name__ == "__main__":
     vmax = np.ones((90,)) * 100

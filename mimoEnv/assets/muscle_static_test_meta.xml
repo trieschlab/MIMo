@@ -119,47 +119,6 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 			<joint joint="robot:head_tilt" coef="-1"/>
 		</fixed>
 
-		<fixed class="mimo" name="left_ff_couple" limited="true" range="-1.5 1.5" stiffness=".0619" springlength="0">
-			<joint joint="robot:left_ff_middle" coef=".9"/>
-			<joint joint="robot:left_ff_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="left_mf_couple" limited="true" range="-1.5 1.5" stiffness=".117" springlength="0">
-			<joint joint="robot:left_mf_middle" coef=".9"/>
-			<joint joint="robot:left_mf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="left_rf_couple" limited="true" range="-1.5 1.5" stiffness=".078" springlength="0">
-			<joint joint="robot:left_rf_middle" coef=".9"/>
-			<joint joint="robot:left_rf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="left_lf_couple" limited="true" range="-1.5 1.5" stiffness=".0196" springlength="0">
-			<joint joint="robot:left_lf_middle" coef=".9"/>
-			<joint joint="robot:left_lf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="left_th_couple" limited="true" range="-1.5 1.5" stiffness=".378" springlength="0">
-			<joint joint="robot:left_th_middle" coef=".9"/>
-			<joint joint="robot:left_th_distal" coef="-1"/>
-		</fixed>
-
-		<fixed class="mimo" name="right_ff_couple" limited="true" range="-1.5 1.5" stiffness=".0619" springlength="0">
-			<joint joint="robot:right_ff_middle" coef=".9"/>
-			<joint joint="robot:right_ff_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="right_mf_couple" limited="true" range="-1.5 1.5" stiffness=".117" springlength="0">
-			<joint joint="robot:right_mf_middle" coef=".9"/>
-			<joint joint="robot:right_mf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="right_rf_couple" limited="true" range="-1.5 1.5" stiffness=".078" springlength="0">
-			<joint joint="robot:right_rf_middle" coef=".9"/>
-			<joint joint="robot:right_rf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="right_lf_couple" limited="true" range="-1.5 1.5" stiffness=".0196" springlength="0">
-			<joint joint="robot:right_lf_middle" coef=".9"/>
-			<joint joint="robot:right_lf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="right_th_couple" limited="true" range="-1.5 1.5" stiffness=".378" springlength="0">
-			<joint joint="robot:right_th_middle" coef=".9"/>
-			<joint joint="robot:right_th_distal" coef="-1"/>
-		</fixed>
 	</tendon>
 	
 	<sensor>
