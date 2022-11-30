@@ -16,11 +16,9 @@ import mimoEnv.utils as mimo_utils
 # These would be found in a GENERAL actuator
 LMAX = 1.6
 LMIN = 0.5
+# FVMAX: Adjust this maybe also?
 FVMAX = 1.2
-# TODO atm VMAX was just measured from random movements, will be adapted for mimo
-#VMAX = 0.1
 FPMAX = 1.3
-#FMAX = 50
 
 
 def FL(lce):
@@ -117,13 +115,13 @@ class MIMoMuscleEnv(MIMoEnv):
             self.vmax = np.load('../mimoMuscle/vmax.npy')
         except:
             warnings.warn("No valid vmax file!", RuntimeWarning)
-            self.vmax = 100
+            self.vmax = 10
 
         try:
             self.fmax = np.load("../mimoMuscle/fmax.npy")
         except:
             warnings.warn("No valid fmax file!", RuntimeWarning)
-            self.fmax = 50
+            self.fmax = 5
 
         self.tau = 0.01
 
