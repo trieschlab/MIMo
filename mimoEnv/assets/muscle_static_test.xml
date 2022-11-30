@@ -2,7 +2,7 @@
 
     <compiler inertiafromgeom="true" angle="degree"/>
 
-    <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
+    <option timestep="0.005" gravity="0 0 0" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
 
     <size nconmax="1000" njmax="5000" nstack="10000000" nuser_cam="3"/>
 
