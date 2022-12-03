@@ -213,10 +213,14 @@ class MIMoMuscleEnv(MIMoEnv):
         self.lce_2_ref = self.lce_min - self.moment_2 * self.phi_max
         # Adjust joint parameters in XML: stiffness and damping
         self.sim.model.jnt_stiffness[self.mimo_joints] = self.sim.model.jnt_stiffness[self.mimo_joints] / 20
+        #self.sim.model.jnt_stiffness[self.mimo_joints] = np.zeros_like(self.sim.model.jnt_stiffness[self.mimo_joints])
         mimo_dof_ids = self.sim.model.jnt_dofadr[self.mimo_joints]
         self.sim.model.dof_damping[mimo_dof_ids] = self.sim.model.dof_damping[mimo_dof_ids] / 10
         self.sim.model.dof_armature[mimo_dof_ids] = self.sim.model.dof_armature[mimo_dof_ids] / 2
         self.sim.model.dof_frictionloss[mimo_dof_ids] = self.sim.model.dof_frictionloss[mimo_dof_ids] / 2
+        #self.sim.model.dof_damping[mimo_dof_ids] = np.zeros_like(self.sim.model.dof_damping[mimo_dof_ids])
+        #self.sim.model.dof_armature[mimo_dof_ids] = np.zeros_like(self.sim.model.dof_armature[mimo_dof_ids])
+        #self.sim.model.dof_frictionloss[mimo_dof_ids] = np.zeros_like(self.sim.model.dof_frictionloss[mimo_dof_ids])
 
     def _set_action_space(self):
         self.action_space = spaces.Box(
@@ -418,4 +422,66 @@ class MIMoMuscleEnv(MIMoEnv):
                   fv_neg, fv_pos,
                   fp_neg, fp_pos]
         #print(output)
+        return output
+
+    def collect_data_for_actuators(self):
+        actuator_qpos = self.sim.data.qpos[self.mimo_actuated_qpos].flatten()
+        # print("qvel", self.mimo_actuated_qvel.shape)
+        actuator_qvel = self.sim.data.qvel[self.mimo_actuated_qvel].flatten()
+
+        # This is the basic qpos adjusted for the springref parameter. This shifts the "neutral" position of the joint.
+        joint_qpos = actuator_qpos - self.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()
+
+        # print("gear", self.sim.model.actuator_gear.shape)
+        actuator_gear = self.sim.model.actuator_gear[self.mimo_actuators, 0].flatten()
+
+        # print("action", self.prev_action.shape)
+        action_neg = self.prev_action[:self.n_actuators]
+        action_pos = self.prev_action[self.n_actuators:]
+
+        # print("activity", self.activity.shape)
+        activity_neg = self.activity[:self.n_actuators]
+        activity_pos = self.activity[self.n_actuators:]
+
+        # print("lce", self.lce_1.shape)
+        lce_neg = self.lce_1
+        lce_pos = self.lce_2
+
+        # print("lce_dot", self.lce_dot_1.shape)
+        lce_neg_dot = self.lce_dot_1
+        lce_pos_dot = self.lce_dot_2
+
+        # print("force", self.force_muscles_1.shape)
+        force_neg = self.force_muscles_1
+        force_pos = self.force_muscles_2
+
+        fl1 = FL(self.lce_1)
+        fl2 = FL(self.lce_2)
+        # print("FL", fl1.shape)
+        fl_neg = fl1
+        fl_pos = fl2
+
+        fv1 = FV(self.lce_dot_1, self.vmax)
+        fv2 = FV(self.lce_dot_2, self.vmax)
+        # print("FV", fv1.shape)
+        fv_neg = fv1
+        fv_pos = fv2
+
+        fp1 = FP(self.lce_1)
+        fp2 = FP(self.lce_2)
+        # print("FP", fp1.shape)
+        fp_neg = fp1
+        fp_pos = fp2
+
+        output = [actuator_qpos, actuator_qvel,
+                  joint_qpos, actuator_gear,
+                  action_neg, action_pos,
+                  activity_neg, activity_pos,
+                  lce_neg, lce_pos,
+                  lce_neg_dot, lce_pos_dot,
+                  force_neg, force_pos,
+                  fl_neg, fl_pos,
+                  fv_neg, fv_pos,
+                  fp_neg, fp_pos]
+        # print(output)
         return output

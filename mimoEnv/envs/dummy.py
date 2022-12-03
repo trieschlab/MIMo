@@ -336,10 +336,11 @@ class MIMoMuscleDemoEnv(MIMoMuscleEnv):
         """Initial configuration of the viewer. Can be used to set the camera position,
         for example.
         """
-        self.viewer.cam.trackbodyid = 0  # id of the body to track
-        self.viewer.cam.distance = 1.5  # how much you "zoom in", smaller is closer
-        self.viewer.cam.lookat[0] = 0  # x,y,z offset from the object (works if trackbodyid=-1)
-        self.viewer.cam.lookat[1] = 0
-        self.viewer.cam.lookat[2] = 0.5  # 0.24 -0.04 .8
-        self.viewer.cam.elevation = -20
-        self.viewer.cam.azimuth = 180
+        pass
+        #self.viewer.cam.trackbodyid = 0  # id of the body to track
+        #self.viewer.cam.distance = 1.5  # how much you "zoom in", smaller is closer
+        #self.viewer.cam.lookat[0] = 0  # x,y,z offset from the object (works if trackbodyid=-1)
+        #self.viewer.cam.lookat[1] = 0
+        #self.viewer.cam.lookat[2] = 0.5  # 0.24 -0.04 .8
+        #self.viewer.cam.elevation = -20
+        #self.viewer.cam.azimuth = 180

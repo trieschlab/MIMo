@@ -60,8 +60,4 @@
 		
     </worldbody>
 
-    <equality>
-		<weld body1="hip"/>
-	</equality>
-
 </mujoco>
