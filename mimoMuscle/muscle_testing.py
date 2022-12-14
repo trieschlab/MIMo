@@ -201,8 +201,8 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
         if ep % decay_lr_every == 0:
             lr = lr * lr_decay
             norm_of_delta_over_lr = np.linalg.norm(vmaxes[ep, :] - vmaxes[ep - decay_lr_every], ord=2)
-            print("{} episodes elapsed, updating lr to {:.6g}".format(ep, lr))
-            print("Norm of difference for VMAX since last: {:.6g}".format(norm_of_delta_over_lr))
+            print("{} episodes elapsed, updating lr to {:.6g}, "
+                  "Norm of difference for VMAX since last: {:.6g}".format(ep, lr, norm_of_delta_over_lr))
 
     np.save(os.path.join(save_dir, "vmax.npy"), max_vel)
     np.save("vmax.npy", max_vel)
@@ -390,9 +390,10 @@ def create_joint_plots(plot_dir, data, dt=None):
 
         # Connect axis for flexor/extensor plots
         for i in range(2, 10):
-            axs[i, 0].get_shared_x_axes().join(axs[i, 0], axs[i, 1])
-            axs[i, 1].set_xticklabels([])
+            axs[i, 0].get_shared_y_axes().join(axs[i, 0], axs[i, 1])
+            axs[i, 1].set_yticklabels([])
             axs[i, 0].autoscale()
+            axs[i, 0].set_xlim([0, xlimit])
 
         fig.tight_layout()
         fig.savefig(os.path.join(plot_dir, actuator_name + ".png"))
@@ -665,19 +666,22 @@ if __name__ == "__main__":
 
     # Experiments to ensure repeatability:
     # Measure for difference between two runs: 2 * (run1 - run2) / (run1 + run2)
-    # n_episodes_per_it = 20, lr = 0.1, lr_decay = 0.8, n_iterations = 20, max error ~12%
-    # n_episodes_per_it = 100, lr = 0.1, lr_decay = 0.8, n_iterations = 20, max error ~8.27%, average error 2.58%
-    # n_episodes_per_it = 20, lr = 0.1, lr_decay = 0.7, n_iterations = 20,
+    # 8 n_episodes_per_it = 20,  lr = 0.1, lr_decay = 0.8,  n_iterations = 20, max error ~12%
+    # 9 n_episodes_per_it = 100, lr = 0.1, lr_decay = 0.8,  n_iterations = 20, max error ~ 8.27%, average error 2.58%
+    # 10 n_episodes_per_it = 20,  lr = 0.1, lr_decay = 0.7,  n_iterations = 20, max error ~18.25%, average error 4.82%
+    # 11 n_episodes_per_it = 100, lr = 0.1, lr_decay = 0.7,  n_iterations = 20, max error ~ 7.30%, average error 1.97%
+    # 12 n_episodes_per_it = 50,  lr = 0.1, lr_decay = 0.75, n_iterations = 30, max error ~ 8.23%, average error 2.52%
+    # 13 n_episodes_per_it = 50,  lr = 0.1, lr_decay = 0.7,  n_iterations = 30, max error ~ 7.36%, average error 2.34%
     V2_static_scene = "MIMoMuscleStaticTest-v0"
     V2_velocity_scene = "MIMoVelocityMuscleTest-v0"
     video_scene = "MIMoMuscle-v0"
     n_iterations_fmax = 3
-    n_iterations_vmax = 20
-    n_episodes_per_it = 20
+    n_iterations_vmax = 30
+    n_episodes_per_it = 50
     n_recording_episodes = 5
     lr = 0.1
-    lr_decay = 0.7
-    plotting_dir = "experiment10_repeatability_tests"
+    lr_decay = 0.75
+    plotting_dir = "experiment13_repeatability_tests"
     repeatability_test(plotting_dir,
                        n_fmax=n_iterations_fmax,
                        n_vmax=n_iterations_vmax,
