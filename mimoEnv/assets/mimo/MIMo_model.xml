@@ -26,9 +26,9 @@
 					<geom name="head" type="sphere" material="head" size=".0735" pos="0.01 0 0.0735"/>
 					<site name="vestibular" type="sphere" size="0.01" pos="0.01 0 0.0735" group="4"/>
 					<site name="torque_neck" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-					<joint name="robot:head_swivel" type="hinge" pos="0 0 0" axis="0 0 1" range="-111 111" stiffness=".15" damping=".19" frictionloss=".012"/>
-					<joint name="robot:head_tilt" type="hinge" pos="0 0 0.0123" axis="0 1 0" range="-70 81" stiffness=".29" damping=".33" frictionloss=".012"/>
-					<joint name="robot:head_tilt_side" type="hinge" pos="0 0 0.0245" axis="1 0 0" range="-70 70" stiffness=".24" damping=".19" frictionloss=".012"/>
+					<joint name="robot:head_swivel" type="hinge" pos="0 0 0" axis="0 0 1" range="-111 111" stiffness=".23" damping=".29" frictionloss=".018"/>
+					<joint name="robot:head_tilt" type="hinge" pos="0 0 0.0123" axis="0 1 0" range="-70 81" stiffness=".45" damping=".53" frictionloss=".018"/>
+					<joint name="robot:head_tilt_side" type="hinge" pos="0 0 0.0245" axis="1 0 0" range="-70 70" stiffness=".37" damping=".29" frictionloss=".018"/>
 					<body name="left_eye" pos=".07 .0245 .067375">
 						<site name="torque_left_eye" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<joint name="robot:left_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 1" range="-45 45" stiffness=".10" damping=".015" frictionloss=".001"/>
