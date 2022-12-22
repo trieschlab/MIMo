@@ -69,17 +69,17 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 					<joint name="robot:head_tilt_side" type="hinge" pos="0 0 0.0245" axis="1 0 0" range="-70 70" stiffness=".37" damping=".29" frictionloss=".018"/>
 					<body name="left_eye" pos=".07 .0245 .067375">
 						<site name="torque_left_eye" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-						<joint name="robot:left_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 1" range="-45 45" stiffness=".10" damping=".015" frictionloss=".001"/>
-						<joint name="robot:left_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".10" damping=".015" frictionloss=".001"/>
-						<joint name="robot:left_eye_torsional" type="hinge" pos="0 0 0" axis="-1 0 0" range="-8 8" stiffness=".10" damping=".015" frictionloss=".001"/>
+						<joint name="robot:left_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 1" range="-45 45" stiffness=".00000065" damping=".00000021" frictionloss=".000000054" armature=".00000001"/>
+						<joint name="robot:left_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".00000065" damping=".00000021" frictionloss=".000000054" armature=".00000001"/>
+						<joint name="robot:left_eye_torsional" type="hinge" pos="0 0 0" axis="-1 0 0" range="-8 8" stiffness=".00000012" damping=".000000037" frictionloss=".0000000016" armature=".00000001"/>/>
 						<geom type="sphere" material="eye_left" size=".01125" pos="0 0 0"/>
 						<camera name="eye_left" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
 					</body>
 					<body name="right_eye" pos=".07 -.0245 .067375">
 						<site name="torque_right_eye" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-						<joint name="robot:right_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 -1" range="-45 45" stiffness=".10" damping=".015" frictionloss=".001"/>
-						<joint name="robot:right_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".10" damping=".015" frictionloss=".001"/>
-						<joint name="robot:right_eye_torsional" type="hinge" pos="0 0 0" axis="1 0 0" range="-8 8" stiffness=".10" damping=".015" frictionloss=".001"/>
+						<joint name="robot:right_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 -1" range="-45 45" stiffness=".00000065" damping=".00000021" frictionloss=".000000054" armature=".00000001"/>
+						<joint name="robot:right_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".00000065" damping=".00000021" frictionloss=".000000054" armature=".00000001"/>
+						<joint name="robot:right_eye_torsional" type="hinge" pos="0 0 0" axis="1 0 0" range="-8 8" stiffness=".00000012" damping=".000000037" frictionloss=".0000000016" armature=".00000001"/>/>
 						<geom type="sphere" material="eye_right" size=".01125" pos="0 0 0"/>
 						<camera name="eye_right" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
 					</body>
@@ -365,13 +365,13 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 					<geom type="box" size=".030  .025 .01" pos="0.023 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 					<geom type="cylinder" size=".0101 .0251" pos=".053 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 					<body name="right_big_toe" pos=".053 .0175 0">
-						<joint name="robot:right_big_toe" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".002"/>
+						<joint name="robot:right_big_toe" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".002" armature=".0001" stiffness=".053" damping=".02"/>
 						<site name="torque_right_big_toe" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<geom type="box" size=".0095 .007 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 						<geom type="cylinder" size=".01 .0075" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 					</body>
 					<body name="right_toes" pos=".053 -.0075 0">
-						<joint name="robot:right_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".002"/>
+						<joint name="robot:right_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".002" armature=".0001" stiffness=".053" damping=".02"/>
 						<site name="torque_right_toes" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<geom type="box" size=".0095 .016 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 						<geom type="cylinder" size=".01 .0165" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
@@ -401,13 +401,13 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 					<geom type="box" size=".030  .025 .01" pos="0.023 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 					<geom type="cylinder" size=".0101 .0251" pos=".053 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 					<body name="left_toes" pos=".053 .0075 0">
-						<joint name="robot:left_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".002"/>
+						<joint name="robot:left_toes" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".002" armature=".0001" stiffness=".053" damping=".02"/>
 						<site name="torque_left_toes" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<geom type="box" size=".0095 .016 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 						<geom type="cylinder" size=".01 .0165" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
 					</body>
 					<body name="left_big_toe" pos=".053 -.0175 0">
-						<joint name="robot:left_big_toe" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".0004" armature=".0001" stiffness=".01" damping=".002"/>
+						<joint name="robot:left_big_toe" type="hinge" pos="0 0 0" axis="0 -1 0" range="-60 80" frictionloss=".002" armature=".0001" stiffness=".053" damping=".02"/>
 						<site name="torque_left_big_toe" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<geom type="box" size=".0095 .007 .0099" pos=".0095 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 						<geom type="cylinder" size=".01 .0075" pos=".019 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
