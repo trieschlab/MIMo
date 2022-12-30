@@ -111,15 +111,17 @@ class MIMoMuscleEnv(MIMoEnv):
         # user parameters ------------------------------
         self.lce_min = 0.75
         self.lce_max = 1.05
+        self.vmax = None
+        self.fmax = None
         try:
             self.vmax = np.load('../mimoMuscle/vmax.npy')
-        except:
+        except FileNotFoundError:
             warnings.warn("No valid vmax file!", RuntimeWarning)
             self.vmax = 10
 
         try:
             self.fmax = np.load("../mimoMuscle/fmax.npy")
-        except:
+        except FileNotFoundError:
             warnings.warn("No valid fmax file!", RuntimeWarning)
             self.fmax = 5
 
@@ -164,6 +166,7 @@ class MIMoMuscleEnv(MIMoEnv):
         super()._env_setup(initial_qpos)
         # Also perform all the muscle setup
         self._set_max_forces()
+        self._collect_muscle_parameters()
         self._get_actuated_joints()
         self._set_muscles()
 
@@ -189,10 +192,25 @@ class MIMoMuscleEnv(MIMoEnv):
         Collect maximum isometric forces from mujoco actuator gears.
         """
         force_ranges = np.abs(self.sim.model.actuator_forcerange[self.mimo_actuators, :]).copy()
-        # Have to disable force limits afterwards
-        self.sim.model.actuator_forcelimited[self.mimo_actuators] = np.zeros_like(self.sim.model.actuator_forcelimited[self.mimo_actuators])
         gears = self.sim.model.actuator_gear[self.mimo_actuators, 0].copy()
         self.maximum_isometric_forces = (force_ranges.T * gears).T
+        # Have to disable force limits afterwards
+        self.sim.model.actuator_forcelimited[self.mimo_actuators] = np.zeros_like(self.sim.model.actuator_forcelimited[self.mimo_actuators])
+
+    def _collect_muscle_parameters(self):
+        # TODO: Put default fmax/vmax into actuator user parameters, load them here
+        # We use the first two parameters as storage for the actuator specific muscle values: vmax and fmax
+        #if self.sim.model.nuser_actuator >= 3:
+        #    vmax = self.sim.model.actuator_user[self.mimo_actuators, 0]
+        #    fmax_neg = self.sim.model.actuator_user[self.mimo_actuators, 1]
+        #    fmax_pos = self.sim.model.actuator_user[self.mimo_actuators, 2]
+        #    self.vmax = vmax
+        #    self.fmax = np.concatenate([fmax_neg, fmax_pos])
+        #else:
+        #    warnings.warn("Muscle parameters missing from MIMo actuators!")
+        #    self.vmax = 5
+        #    self.fmax = 5
+        pass
 
     def _compute_parametrization(self):
         """
@@ -211,16 +229,10 @@ class MIMoMuscleEnv(MIMoEnv):
             self.phi_min - self.phi_max + eps
         )
         self.lce_2_ref = self.lce_min - self.moment_2 * self.phi_max
-        # Adjust joint parameters in XML: stiffness and damping
-        self.sim.model.jnt_stiffness[self.mimo_joints] = self.sim.model.jnt_stiffness[self.mimo_joints] / 20
-        #self.sim.model.jnt_stiffness[self.mimo_joints] = np.zeros_like(self.sim.model.jnt_stiffness[self.mimo_joints])
+        # Adjust joint parameters: stiffness and damping
+        self.sim.model.jnt_stiffness[self.mimo_joints] = np.zeros_like(self.sim.model.jnt_stiffness[self.mimo_joints])
         mimo_dof_ids = self.sim.model.jnt_dofadr[self.mimo_joints]
-        self.sim.model.dof_damping[mimo_dof_ids] = self.sim.model.dof_damping[mimo_dof_ids] / 10
-        self.sim.model.dof_armature[mimo_dof_ids] = self.sim.model.dof_armature[mimo_dof_ids] / 2
-        self.sim.model.dof_frictionloss[mimo_dof_ids] = self.sim.model.dof_frictionloss[mimo_dof_ids] / 2
-        #self.sim.model.dof_damping[mimo_dof_ids] = np.zeros_like(self.sim.model.dof_damping[mimo_dof_ids])
-        #self.sim.model.dof_armature[mimo_dof_ids] = np.zeros_like(self.sim.model.dof_armature[mimo_dof_ids])
-        #self.sim.model.dof_frictionloss[mimo_dof_ids] = np.zeros_like(self.sim.model.dof_frictionloss[mimo_dof_ids])
+        self.sim.model.dof_damping[mimo_dof_ids] = self.sim.model.dof_damping[mimo_dof_ids] / 20
 
     def _set_action_space(self):
         self.action_space = spaces.Box(
@@ -264,18 +276,23 @@ class MIMoMuscleEnv(MIMoEnv):
         self.lce_dot_1 = self.moment_1 * self.sim.data.qvel[self.mimo_actuated_qvel].flatten()
         self.lce_dot_2 = self.moment_2 * self.sim.data.qvel[self.mimo_actuated_qvel].flatten()
 
+    def set_fmax(self, fmax):
+        self.fmax = fmax
+
+    def set_vmax(self, vmax):
+        self.vmax = vmax
+
     def _update_torque(self):
         """
-        Torque times maximum isometric force wouldnt normally result in a torque, but in the one-dimensional
-        scalar case there is no difference. (I.e. they are commutative)
-        The minus sign at the end is a MuJoCo convention. A positive force multiplied by a positive moment results then in a NEGATIVE torque,
-        (as muscles pull, they dont push) and the joint velocity gives us the correct muscle fiber velocities.
+        The minus sign at the end is a MuJoCo convention. A positive force multiplied by a positive moment results then
+        in a NEGATIVE torque, (as muscles pull, they don't push) and the joint velocity gives us the correct muscle
+        fiber velocities.
         """
         self.force_muscles_1 = FL(self.lce_1) * FV(self.lce_dot_1, self.vmax) * self.activity[:self.n_actuators] + FP(self.lce_1)
         self.force_muscles_2 = FL(self.lce_2) * FV(self.lce_dot_2, self.vmax) * self.activity[self.n_actuators:] + FP(self.lce_2)
         if isinstance(self.fmax, np.ndarray):
             torque = self.moment_1 * self.force_muscles_1 * self.fmax[:self.n_actuators] \
-                     + self.moment_2 * self.force_muscles_2 * self.fmax[:self.n_actuators]
+                     + self.moment_2 * self.force_muscles_2 * self.fmax[self.n_actuators:]
         else:
             torque = self.moment_1 * self.force_muscles_1 * self.fmax + self.moment_2 * self.force_muscles_2 * self.fmax
         self.joint_torque = -torque

@@ -1,6 +1,6 @@
 """ Functions in this model are designed to help transition actuation models for MIMo.
 
-By default MIMo uses direct torque motors for actuation with the maximum torques corresponding to the maximum voluntary
+By default, MIMo uses direct torque motors for actuation with the maximum torques corresponding to the maximum voluntary
 isometric torques. A second actuation model exists based on ZITAT ZU PAPIER. This second model more accurately
 represents the position and velocity dependent force generating behaviour of real muscles. The second model requires
 several adjustments to the actuation and joint parameters, which can be done using the functions in this module.
@@ -178,7 +178,7 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
     for ep in range(1, n_episodes + 1):
         # Set initial values for this iteration
         max_vel_episode = np.zeros_like(env.lce_dot_1) + EPS
-        env.vmax = max_vel
+        env.set_vmax(max_vel)
         _ = env.reset()
         ep_steps = 0
         action = np.zeros(env.action_space.shape)
@@ -204,6 +204,8 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
             print("{} episodes elapsed, updating lr to {:.6g}, "
                   "Norm of difference for VMAX since last: {:.6g}".format(ep, lr, norm_of_delta_over_lr))
 
+    # Average vmax since that does deviate between runs
+    max_vel = average_left_right(env, max_vel)
     np.save(os.path.join(save_dir, "vmax.npy"), max_vel)
     np.save("vmax.npy", max_vel)
     # Make plot of vmax over time
@@ -272,6 +274,7 @@ def fmax_calibration(env_name, save_dir, n_iterations=3, make_plots=True):
     env = gym.make(env_name)
     target_torque = np.concatenate([env.maximum_isometric_forces[:, 0], env.maximum_isometric_forces[:, 1]])
     fmax = env.fmax
+    n_actuators = env.n_actuators
     if not isinstance(fmax, np.ndarray):
         fmax = np.ones_like(target_torque) * fmax
 
@@ -284,9 +287,8 @@ def fmax_calibration(env_name, save_dir, n_iterations=3, make_plots=True):
         # Setup for this iteration
         print("FMAX iteration {} of {}".format(ep + 1, n_iterations))
         _ = env.reset()
-        env.fmax = fmax.copy()
+        env.set_fmax(fmax.copy())
         fmax_old = fmax.copy()
-        n_actuators = env.n_actuators
         ep_steps = 0
         max_unscaled_torque = np.zeros(env.action_space.shape)
 
@@ -330,6 +332,8 @@ def fmax_calibration(env_name, save_dir, n_iterations=3, make_plots=True):
         fmax = target_torque / (max_unscaled_torque + EPS)
         print("Norm of difference for fmax: {:.6g}".format(np.linalg.norm(fmax - fmax_old, ord=2)))
 
+    fmax[:n_actuators] = average_left_right(env, fmax[:n_actuators])
+    fmax[n_actuators:] = average_left_right(env, fmax[n_actuators:])
     np.save(os.path.join(save_dir, "fmax.npy"), fmax)
 
     # Plot the data
@@ -391,7 +395,6 @@ def create_joint_plots(plot_dir, data, dt=None):
         # Connect axis for flexor/extensor plots
         for i in range(2, 10):
             axs[i, 0].get_shared_y_axes().join(axs[i, 0], axs[i, 1])
-            axs[i, 1].set_yticklabels([])
             axs[i, 0].autoscale()
             axs[i, 0].set_xlim([0, xlimit])
 
@@ -399,6 +402,20 @@ def create_joint_plots(plot_dir, data, dt=None):
         fig.savefig(os.path.join(plot_dir, actuator_name + ".png"))
         fig.clear()
         plt.close(fig)
+
+
+def average_left_right(env, array):
+    averaged_array = array.copy()
+    actuator_ids = env.mimo_actuators
+    actuator_names = [env.sim.model.actuator_id2name(act_id) for act_id in actuator_ids]
+    lefts = [i for i, name in enumerate(actuator_names) if "left" in name]
+    rights = [i for i, name in enumerate(actuator_names) if "right" in name]
+    averages = (array[lefts] + array[rights]) / 2
+    averaged_array[lefts] = averages
+    averaged_array[rights] = averages
+    dif = np.amax(np.abs(averaged_array - array))
+    print("Max Deviation to average", dif)
+    return averaged_array
 
 
 def plotting_episode(save_dir):
@@ -516,11 +533,11 @@ def recording_episode(env_name: str, video_dir: str, env_params={}, video_width=
 
 def calibrate_full(save_dir,
                    n_fmax=3,
-                   n_vmax=20,
-                   n_episodes_per_it=20,
+                   n_vmax=30,
+                   n_episodes_per_it=50,
                    n_episodes_video=5,
                    lr_initial=0.1,
-                   lr_decay=0.8,
+                   lr_decay=0.7,
                    fmax_scene="MIMoMuscleStaticTest-v0",
                    vmax_scene="MIMoVelocityMuscleTest-v0",
                    video_scene=None):
@@ -581,11 +598,11 @@ def calibrate_full(save_dir,
 
 def repeatability_test(save_dir,
                        n_fmax=3,
-                       n_vmax=20,
-                       n_episodes_per_it=100,
+                       n_vmax=30,
+                       n_episodes_per_it=50,
                        n_episodes_video=5,
                        lr_initial=0.1,
-                       lr_decay=0.8,
+                       lr_decay=0.7,
                        fmax_scene="MIMoMuscleStaticTest-v0",
                        vmax_scene="MIMoVelocityMuscleTest-v0",
                        video_scene=None
@@ -595,11 +612,11 @@ def repeatability_test(save_dir,
     Args:
         save_dir: The directory where output files and subdirectories will be created.
         n_fmax: The number of iterations for the FMAX calibration. Default 3.
-        n_vmax: The number of iterations for the VMAX calibration. Default 20.
-        n_episodes_per_it: The number of episodes for each VMAX iteration. Default 20.
+        n_vmax: The number of iterations for the VMAX calibration. Default 30.
+        n_episodes_per_it: The number of episodes for each VMAX iteration. Default 50.
         n_episodes_video: After calibration, this many episodes will be recorded to video using the new parameters.
-        lr_initial: The initial learning rate for the VMAX iteration.
-        lr_decay: Decay factor after each VMAX iteration.
+        lr_initial: The initial learning rate for the VMAX iteration. Default 0.1.
+        lr_decay: Decay factor after each VMAX iteration. Default 0.7.
         fmax_scene: The environment to use for the FMAX calibration.
         vmax_scene: The environment to use for the VMAX calibration.
         video_scene: The scene that will be used to record videos.
@@ -672,6 +689,7 @@ if __name__ == "__main__":
     # 11 n_episodes_per_it = 100, lr = 0.1, lr_decay = 0.7,  n_iterations = 20, max error ~ 7.30%, average error 1.97%
     # 12 n_episodes_per_it = 50,  lr = 0.1, lr_decay = 0.75, n_iterations = 30, max error ~ 8.23%, average error 2.52%
     # 13 n_episodes_per_it = 50,  lr = 0.1, lr_decay = 0.7,  n_iterations = 30, max error ~ 7.36%, average error 2.34%
+    # 17 repeatability final params:
     V2_static_scene = "MIMoMuscleStaticTest-v0"
     V2_velocity_scene = "MIMoVelocityMuscleTest-v0"
     video_scene = "MIMoMuscle-v0"
@@ -680,8 +698,8 @@ if __name__ == "__main__":
     n_episodes_per_it = 50
     n_recording_episodes = 5
     lr = 0.1
-    lr_decay = 0.75
-    plotting_dir = "experiment13_repeatability_tests"
+    lr_decay = 0.70
+    plotting_dir = "experiment19_repeatability_final_params"
     repeatability_test(plotting_dir,
                        n_fmax=n_iterations_fmax,
                        n_vmax=n_iterations_vmax,
@@ -692,3 +710,13 @@ if __name__ == "__main__":
                        fmax_scene=V2_static_scene,
                        vmax_scene=V2_velocity_scene,
                        video_scene=video_scene)
+    #calibrate_full(plotting_dir,
+    #               n_fmax=n_iterations_fmax,
+    #               n_vmax=n_iterations_vmax,
+    #               n_episodes_per_it=n_episodes_per_it,
+    #               n_episodes_video=n_recording_episodes,
+    #               lr_initial=lr,
+    #               lr_decay=lr_decay,
+    #               fmax_scene=V2_static_scene,
+    #               vmax_scene=V2_velocity_scene,
+    #               video_scene=video_scene)
