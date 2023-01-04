@@ -113,18 +113,8 @@ class MIMoMuscleEnv(MIMoEnv):
         self.lce_max = 1.05
         self.vmax = None
         self.fmax = None
-        try:
-            self.vmax = np.load('../mimoMuscle/vmax.npy')
-        except FileNotFoundError:
-            warnings.warn("No valid vmax file!", RuntimeWarning)
-            self.vmax = 10
 
-        try:
-            self.fmax = np.load("../mimoMuscle/fmax.npy")
-        except FileNotFoundError:
-            warnings.warn("No valid fmax file!", RuntimeWarning)
-            self.fmax = 5
-
+        self.time_step = None
         self.tau = 0.01
 
         # Placeholders that gets overwritten later
@@ -198,19 +188,42 @@ class MIMoMuscleEnv(MIMoEnv):
         self.sim.model.actuator_forcelimited[self.mimo_actuators] = np.zeros_like(self.sim.model.actuator_forcelimited[self.mimo_actuators])
 
     def _collect_muscle_parameters(self):
-        # TODO: Put default fmax/vmax into actuator user parameters, load them here
-        # We use the first two parameters as storage for the actuator specific muscle values: vmax and fmax
-        #if self.sim.model.nuser_actuator >= 3:
-        #    vmax = self.sim.model.actuator_user[self.mimo_actuators, 0]
-        #    fmax_neg = self.sim.model.actuator_user[self.mimo_actuators, 1]
-        #    fmax_pos = self.sim.model.actuator_user[self.mimo_actuators, 2]
-        #    self.vmax = vmax
-        #    self.fmax = np.concatenate([fmax_neg, fmax_pos])
-        #else:
-        #    warnings.warn("Muscle parameters missing from MIMo actuators!")
-        #    self.vmax = 5
+        """ Loads the muscle model parameters from the XML.
+
+        We store the FMAX and VMAX parameters in the user fields for the actuators. The first value is VMAX, the second
+        value FMAX for the muscle acting in the negative joint direction, the third value FMAX for the positive joint
+        direction.
+        If there are no use user arguments, we print a warning and proceed with default values.
+        If the values in the user arguments are invalid we raise ValueErrors.
+        """
+        #try:
+        #    self.vmax = np.load('../mimoMuscle/vmax.npy')
+        #except FileNotFoundError:
+        #    warnings.warn("No valid vmax file!", RuntimeWarning)
+        #    self.vmax = 10
+
+        #try:
+        #    self.fmax = np.load("../mimoMuscle/fmax.npy")
+        #except FileNotFoundError:
+        #    warnings.warn("No valid fmax file!", RuntimeWarning)
         #    self.fmax = 5
-        pass
+        if self.sim.model.nuser_actuator >= 3:
+            print("Reading Muscle parameters from XML")
+            vmax = self.sim.model.actuator_user[self.mimo_actuators, 0]
+            fmax_neg = self.sim.model.actuator_user[self.mimo_actuators, 1]
+            fmax_pos = self.sim.model.actuator_user[self.mimo_actuators, 2]
+            self.vmax = vmax
+            self.fmax = np.concatenate([fmax_neg, fmax_pos])
+            if np.any(self.vmax < mimo_utils.EPS):
+                raise ValueError("Illegal VMAX, VMAX values must be greater than 0!")
+            if not np.isfinite(self.vmax).all():
+                raise ValueError("NaN or Inf in VMAX!")
+            if not np.isfinite(self.fmax).all():
+                raise ValueError("NaN or Inf in FMAX!")
+        else:
+            warnings.warn("Muscle parameters missing from MIMo actuators!")
+            self.vmax = 1
+            self.fmax = 5
 
     def _compute_parametrization(self):
         """
@@ -220,13 +233,12 @@ class MIMoMuscleEnv(MIMoEnv):
         self.phi_min = self.sim.model.jnt_range[self.mimo_actuated_joints, 0] - self.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()
         self.phi_max = self.sim.model.jnt_range[self.mimo_actuated_joints, 1] - self.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()
         # Calculate values for muscle model
-        eps = 0.001
-        self.moment_1 = (self.lce_max - self.lce_min + eps) / (
-            self.phi_max - self.phi_min + eps
+        self.moment_1 = (self.lce_max - self.lce_min + mimo_utils.EPS) / (
+            self.phi_max - self.phi_min + mimo_utils.EPS
         )
         self.lce_1_ref = self.lce_min - self.moment_1 * self.phi_min
-        self.moment_2 = (self.lce_max - self.lce_min + eps) / (
-            self.phi_min - self.phi_max + eps
+        self.moment_2 = (self.lce_max - self.lce_min + mimo_utils.EPS) / (
+            self.phi_min - self.phi_max - mimo_utils.EPS
         )
         self.lce_2_ref = self.lce_min - self.moment_2 * self.phi_max
         # Adjust joint parameters: stiffness and damping
@@ -257,9 +269,10 @@ class MIMoMuscleEnv(MIMoEnv):
     def _update_activity(self):
         """
         Very simple low-pass filter, even simpler than MuJoCo internal, update in the future.
-        The time scale parameter is hard-coded so far to 100. which corresponds to tau=0.01.
         """
-        self.activity += (self.dt / self.tau) * self.dt * (self.prev_action - self.activity)
+        # Need sim timestep here rather than dt since we take calculate this every physics step, while dt is the
+        # duration of an environment step.
+        self.activity += self.sim.model.opt.timestep * (self.prev_action - self.activity) / self.tau
         self.activity = np.clip(self.activity, 0, 1)
 
     def _update_virtual_lengths(self):

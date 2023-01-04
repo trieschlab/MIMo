@@ -2,7 +2,7 @@
 
 	<default>
 		<default class="mimo">
-        	<joint limited="true" damping="1" stiffness="1" armature="0.01" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
+        	<joint limited="true" damping=".1" stiffness=".1" armature="0.001" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
         	<geom condim="3" material="skin" density="985" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
         	<motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
 		</default>
@@ -40,6 +40,8 @@
 	<!-- Internal contacts should not have friction to reduce "getting stuck" on ourselves-->
 	<contact>
 		<pair geom1="lb" geom2="ub1" condim="1"/>
+		<exclude body1="left_eye" body2="upper_body"/>
+		<exclude body1="right_eye" body2="upper_body"/>
 	</contact>
 	
 	<tendon>

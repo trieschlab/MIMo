@@ -147,6 +147,10 @@ class MIMoStaticMuscleTestEnv(MIMoMuscleEnv):
         """
         return 0
 
+    def _viewer_setup(self):
+        super()._viewer_setup()
+        self.viewer.cam.azimuth = 135
+
 
 class MIMoVelocityMuscleTestEnv(MIMoStaticMuscleTestEnv):
     def __init__(self,
