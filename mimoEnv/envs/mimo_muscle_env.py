@@ -196,17 +196,6 @@ class MIMoMuscleEnv(MIMoEnv):
         If there are no use user arguments, we print a warning and proceed with default values.
         If the values in the user arguments are invalid we raise ValueErrors.
         """
-        #try:
-        #    self.vmax = np.load('../mimoMuscle/vmax.npy')
-        #except FileNotFoundError:
-        #    warnings.warn("No valid vmax file!", RuntimeWarning)
-        #    self.vmax = 10
-
-        #try:
-        #    self.fmax = np.load("../mimoMuscle/fmax.npy")
-        #except FileNotFoundError:
-        #    warnings.warn("No valid fmax file!", RuntimeWarning)
-        #    self.fmax = 5
         if self.sim.model.nuser_actuator >= 3:
             print("Reading Muscle parameters from XML")
             vmax = self.sim.model.actuator_user[self.mimo_actuators, 0]
