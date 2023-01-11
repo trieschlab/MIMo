@@ -23,7 +23,19 @@ STATIC_TEST_XML = os.path.join(SCENE_DIRECTORY, "muscle_static_test.xml")
 :meta hide-value:
 """
 
+STATIC_TEST_XML_V2 = os.path.join(SCENE_DIRECTORY, "muscle_static_test_v2.xml")
+""" Path to the benchmarking scene using MIMo v2.
+
+:meta hide-value:
+"""
+
 VELOCITY_TEST_XML = os.path.join(SCENE_DIRECTORY, "muscle_velocity_test.xml")
+""" Path to the benchmarking scene using MIMo v2.
+
+:meta hide-value:
+"""
+
+VELOCITY_TEST_XML_V2 = os.path.join(SCENE_DIRECTORY, "muscle_velocity_test_v2.xml")
 """ Path to the benchmarking scene using MIMo v2.
 
 :meta hide-value:
@@ -152,9 +164,63 @@ class MIMoStaticMuscleTestEnv(MIMoMuscleEnv):
         self.viewer.cam.azimuth = 135
 
 
+class MIMoStaticMuscleTestV2Env(MIMoStaticMuscleTestEnv):
+    def __init__(self,
+                 model_path=STATIC_TEST_XML_V2,
+                 initial_qpos={},
+                 n_substeps=2,
+                 proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
+                 touch_params=None,
+                 vision_params=None,
+                 vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
+                 goals_in_observation=False,
+                 done_active=True,
+                 show_sensors=False,
+                 print_space_sizes=False,):
+
+        super().__init__(model_path=model_path,
+                         initial_qpos=initial_qpos,
+                         n_substeps=n_substeps,
+                         proprio_params=proprio_params,
+                         touch_params=touch_params,
+                         vision_params=vision_params,
+                         vestibular_params=vestibular_params,
+                         goals_in_observation=goals_in_observation,
+                         done_active=done_active,
+                         show_sensors=show_sensors,
+                         print_space_sizes=print_space_sizes,)
+
+
 class MIMoVelocityMuscleTestEnv(MIMoStaticMuscleTestEnv):
     def __init__(self,
                  model_path=VELOCITY_TEST_XML,
+                 initial_qpos={},
+                 n_substeps=2,
+                 proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
+                 touch_params=None,
+                 vision_params=None,
+                 vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
+                 goals_in_observation=False,
+                 done_active=True,
+                 show_sensors=False,
+                 print_space_sizes=False,):
+
+        super().__init__(model_path=model_path,
+                         initial_qpos=initial_qpos,
+                         n_substeps=n_substeps,
+                         proprio_params=proprio_params,
+                         touch_params=touch_params,
+                         vision_params=vision_params,
+                         vestibular_params=vestibular_params,
+                         goals_in_observation=goals_in_observation,
+                         done_active=done_active,
+                         show_sensors=show_sensors,
+                         print_space_sizes=print_space_sizes,)
+
+
+class MIMoVelocityMuscleTestV2Env(MIMoStaticMuscleTestEnv):
+    def __init__(self,
+                 model_path=VELOCITY_TEST_XML_V2,
                  initial_qpos={},
                  n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,

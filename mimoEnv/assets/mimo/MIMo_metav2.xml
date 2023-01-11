@@ -38,13 +38,13 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 
 <mujoco model="MIMo">
 
-	<!-- We use the first three user values on actuators to store the muscle model parameters. The first is  -->
+	<!-- We use the first three user values on actuators to store the muscle model parameters. The first is VMAX, the next two are FMAX.-->
 	<size nuser_actuator="3" />
 
 	<default>
 		<default class="mimo">
         	<joint limited="true" damping=".1" stiffness=".1" armature="0.001" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
-        	<geom condim="3" material="skin" density="985" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
+        	<geom condim="3" material="skin" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
         	<motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
     	</default>
 	</default>
@@ -201,12 +201,12 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 		<motor class="mimo"	name="act:head_tilt" 						joint="robot:head_tilt" 				gear="3.3" 			forcerange="-1 .55"		user=".9338 31.39 16.86"/>
 		<motor class="mimo"	name="act:head_tilt_side" 					joint="robot:head_tilt_side" 			gear="1.8" 			forcerange="-1 1"		user="1.068 15.69 15.69"/>
 
-		<motor class="mimo" name="act:left_eye_horizontal" 				joint="robot:left_eye_horizontal" 		gear=".0000054" 	forcerange="-1 1"		user="5.110 .00003025 .00003025"/>
-		<motor class="mimo" name="act:left_eye_vertical" 				joint="robot:left_eye_vertical" 		gear=".0000054" 	forcerange="-1 1"		user="6.179 .00002619 .00002771"/>
-		<motor class="mimo" name="act:left_eye_torsional" 				joint="robot:left_eye_torsional" 		gear=".0000037" 	forcerange="-1 1"		user="25.03 .000003686 .000003686"/>
-		<motor class="mimo" name="act:right_eye_horizontal" 			joint="robot:right_eye_horizontal" 		gear=".0000054" 	forcerange="-1 1"		user="5.110 .00003025 .00003025"/>
-		<motor class="mimo" name="act:right_eye_vertical" 				joint="robot:right_eye_vertical" 		gear=".0000054" 	forcerange="-1 1"		user="6.179 .00002619 .00002771"/>
-		<motor class="mimo" name="act:right_eye_torsional" 				joint="robot:right_eye_torsional" 		gear=".0000037" 	forcerange="-1 1"		user="25.03 .000003686 .000003686"/>
+		<motor class="mimo" name="act:left_eye_horizontal" 				joint="robot:left_eye_horizontal" 		gear=".0054" 		forcerange="-1 1"		user="5.110 .03025 .03025"/>
+		<motor class="mimo" name="act:left_eye_vertical" 				joint="robot:left_eye_vertical" 		gear=".0054" 		forcerange="-1 1"		user="6.179 .02619 .02771"/>
+		<motor class="mimo" name="act:left_eye_torsional" 				joint="robot:left_eye_torsional" 		gear=".0037" 		forcerange="-1 1"		user="25.03 .003686 .003686"/>
+		<motor class="mimo" name="act:right_eye_horizontal" 			joint="robot:right_eye_horizontal" 		gear=".0054" 		forcerange="-1 1"		user="5.110 .03025 .03025"/>
+		<motor class="mimo" name="act:right_eye_vertical" 				joint="robot:right_eye_vertical" 		gear=".0054" 		forcerange="-1 1"		user="6.179 .02619 .02771"/>
+		<motor class="mimo" name="act:right_eye_torsional" 				joint="robot:right_eye_torsional" 		gear=".0037" 		forcerange="-1 1"		user="25.03 .003686 .003686"/>
 
 		<motor class="mimo"	name="act:right_shoulder_horizontal" 		joint="robot:right_shoulder_horizontal" gear="1.8" 			forcerange="-1 1"		user="1.811 18.80 15.30"/>
 		<motor class="mimo"	name="act:right_shoulder_abduction" 		joint="robot:right_shoulder_ad_ab" 		gear="4" 			forcerange="-.6875 1"	user=".8793 44.17 69.23"/>

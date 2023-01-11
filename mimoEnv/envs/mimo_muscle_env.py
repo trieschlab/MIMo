@@ -210,9 +210,17 @@ class MIMoMuscleEnv(MIMoEnv):
             if not np.isfinite(self.fmax).all():
                 raise ValueError("NaN or Inf in FMAX!")
         else:
-            warnings.warn("Muscle parameters missing from MIMo actuators!")
-            self.vmax = 1
-            self.fmax = 5
+            warnings.warn("Muscle parameters missing from MIMo actuators! Trying calibration files...")
+            try:
+                self.vmax = np.load('../mimoMuscle/vmax.npy')
+            except FileNotFoundError:
+                warnings.warn("No vmax calibration file, using default value 1!", RuntimeWarning)
+                self.vmax = 1
+            try:
+                self.fmax = np.load("../mimoMuscle/fmax.npy")
+            except FileNotFoundError:
+                warnings.warn("No fmax calibration file, using default value of 5!", RuntimeWarning)
+                self.fmax = 5
 
     def _compute_parametrization(self):
         """
@@ -311,13 +319,11 @@ class MIMoMuscleEnv(MIMoEnv):
         return np.ones_like(self.joint_torque)
 
     def _apply_torque(self):
-        """
-        Slightly hacky force application:
+        """ Adjust mujoco values to actually apply muscle torque.
+
         We adjust the gear (which is just a scalar force multiplier) to be equal to the torque we want to apply,
         then we output an action-vector that is 1 everywhere. With this, we don't have to change anything
         inside the environment.step(action) function.
-        # TODO scale appropriately to equal max isometric forces, this FMAX value was taken randomly
-        # maximum isometric force is not enough because we have to appropriately scale the moment arms.
         """
         self.sim.model.actuator_gear[self.mimo_actuators, 0] = self.joint_torque.copy()
 

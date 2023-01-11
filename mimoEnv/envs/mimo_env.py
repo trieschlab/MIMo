@@ -353,12 +353,12 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         return self.mimo_actuators.shape[0]
 
     def _get_actuators(self):
-        """ Returns the IDs of the actuators associated with MIMo."""
+        """ Saves IDs of the actuators associated with MIMo in :attr:`.mimo_actuators`."""
         actuators = [self.sim.model.actuator_name2id(name) for name in self.sim.model.actuator_names if name.startswith("act:")]
         self.mimo_actuators = np.asarray(actuators)
 
     def _get_joints(self):
-        """ Returns the IDs of the joints associated with MIMO."""
+        """ Saves the IDs of the joints associated with MIMO in :attr:`.mimo_joints`."""
         joints = [self.sim.model.joint_name2id(name) for name in self.sim.model.joint_names if name.startswith("robot:")]
         self.mimo_joints = np.asarray(joints)
 

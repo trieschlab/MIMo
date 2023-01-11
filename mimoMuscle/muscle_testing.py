@@ -14,6 +14,7 @@ import cv2
 
 import mimoEnv
 from mimoEnv.utils import EPS
+from mimoEnv.envs.dummy import BENCHMARK_XML
 
 matplotlib.use("Agg")
 
@@ -167,6 +168,7 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
         A numpy array with the final VMAX values.
     """
     os.makedirs(save_dir, exist_ok=True)
+    vmax_scale_factor = 1
     env = gym.make(env_name)
     max_vel = env.vmax
     if not isinstance(max_vel, np.ndarray):
@@ -187,8 +189,8 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
             if not ep_steps % 200:
                 action[:] = np.random.randint(0, 2, size=action.shape)
             state, rew, done, info = env.step(action)
-            max_vel_episode = np.maximum(max_vel_episode, env.lce_dot_1)
-            max_vel_episode = np.maximum(max_vel_episode, env.lce_dot_2)
+            max_vel_episode = vmax_scale_factor * np.maximum(max_vel_episode, env.lce_dot_1)
+            max_vel_episode = vmax_scale_factor * np.maximum(max_vel_episode, env.lce_dot_2)
             ep_steps += 1
 
             if done:
@@ -203,10 +205,14 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
             norm_of_delta_over_lr = np.linalg.norm(vmaxes[ep, :] - vmaxes[ep - decay_lr_every], ord=2)
             print("{} episodes elapsed, updating lr to {:.6g}, "
                   "Norm of difference for VMAX since last: {:.6g}".format(ep, lr, norm_of_delta_over_lr))
+            #print(max_vel)
 
     # Average vmax since that does deviate between runs
     max_vel = average_left_right(env, max_vel)
     np.save(os.path.join(save_dir, "vmax.npy"), max_vel)
+    # VMAX is in relative quanitity, compute corresponding maximum qvel values (note that actual qvel may exceed this)
+    qvmax = np.stack([max_vel / env.moment_1, max_vel / env.moment_2], axis=-1)
+    np.save(os.path.join(save_dir, "qvmax.npy"), qvmax)
     np.save("vmax.npy", max_vel)
     # Make plot of vmax over time
     if make_plots:
@@ -214,7 +220,7 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
         actuator_names = [env.sim.model.actuator_id2name(act_id) for act_id in actuator_ids]
         print("Creating vmax plots")
         # VMAX plot
-        fig, axs = plt.subplots(len(actuator_names), 1, figsize=(10, 90))
+        fig, axs = plt.subplots(len(actuator_names), 1, figsize=(10, env.n_actuators))
         for i, actuator_name in enumerate(actuator_names):
             data = vmaxes[:, i]
             ax = axs[i]
@@ -228,7 +234,7 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
         fig.clear()
         plt.close(fig)
         # Change in VMAX plot
-        fig, axs = plt.subplots(len(actuator_names), 1, figsize=(10, 90))
+        fig, axs = plt.subplots(len(actuator_names), 1, figsize=(10, env.n_actuators))
         for i, actuator_name in enumerate(actuator_names):
             data = np.abs(vmaxes[1:, i] - vmaxes[:-1, i])
             ax = axs[i]
@@ -418,11 +424,11 @@ def average_left_right(env, array):
     return averaged_array
 
 
-def plotting_episode(save_dir):
+def plotting_episode(env_name, save_dir):
     os.makedirs(save_dir, exist_ok=True)
 
     print("Collecting data for plots")
-    env = gym.make("MIMoVelocityMuscleTest-v0")
+    env = gym.make(env_name)
     max_vel = env.vmax
     np.save(os.path.join(save_dir, 'vmax.npy'), max_vel)
     actuator_ids = env.mimo_actuators
@@ -462,9 +468,8 @@ def plotting_episode(save_dir):
     lengths_1 = [x[0] for x in muscle_props]
     vels_1 = [x[2] for x in muscle_props]
     forces_1 = [x[4] for x in muscle_props]
-    N = 90
-    fig, axs = plt.subplots(90, 3, figsize=(10, 90))
-    for midx in range(N):
+    fig, axs = plt.subplots(env.n_actuators, 3, figsize=(10, env.n_actuators))
+    for midx in range(env.n_actuators):
         f = FL
         lengthes = np.linspace(0.5, 1.2, 100)
         axs[midx, 0].plot(lengthes, f(lengthes), color='tab:blue')
@@ -543,9 +548,9 @@ def calibrate_full(save_dir,
                    video_scene=None):
     """ Determine muscle parameters for a given model.
 
-    Performs FMAX and VMAX calibrations. Afterward some scenes can be recorded to video with the new parameters. Note
-    that the parameter calibration requires specialised scenes, see the documentation for :func:`~.fmax_calibration` and
-    :func:`~.vmax_calibration` for more information.
+    Performs FMAX and VMAX calibrations. Afterward some scenes can be recorded to video with the new muscle parameters.
+    Note that the parameter calibration requires specialised scenes, see the documentation for
+    :func:`~.fmax_calibration` and :func:`~.vmax_calibration` for more information.
 
     Args:
         save_dir: The directory where output files and subdirectories will be created.
@@ -583,15 +588,21 @@ def calibrate_full(save_dir,
                             lr_decay=lr_decay,
                             decay_lr_every=n_episodes_per_it,
                             make_plots=True)
-    plotting_episode(os.path.join(save_dir, "vmax"))
+    plotting_episode(vmax_scene, os.path.join(save_dir, "vmax"))
     recording_env_params = {
         "touch_params": None,
         "vision_params": None,
     }
     if video_scene is not None:
         for i in range(n_episodes_video):
-            recording_episode(video_scene, os.path.join(save_dir, "video_{}".format(i)),
-                              env_params=recording_env_params)
+            if i < n_episodes_video / 2:
+                binary_actions = False
+            else:
+                binary_actions = True
+            recording_episode(video_scene,
+                              os.path.join(save_dir, "video_{}".format(i)),
+                              env_params=recording_env_params,
+                              binary_actions=binary_actions)
 
     return fmax, vmax
 
@@ -605,9 +616,10 @@ def repeatability_test(save_dir,
                        lr_decay=0.7,
                        fmax_scene="MIMoMuscleStaticTest-v0",
                        vmax_scene="MIMoVelocityMuscleTest-v0",
-                       video_scene=None
+                       video_scene=None,
+                       n_repeats=3
                        ):
-    """ Performs three full calibrations and compares the result against one another for repeatability.
+    """ Performs multiple full calibrations and compares the results against one another for repeatability.
 
     Args:
         save_dir: The directory where output files and subdirectories will be created.
@@ -620,61 +632,47 @@ def repeatability_test(save_dir,
         fmax_scene: The environment to use for the FMAX calibration.
         vmax_scene: The environment to use for the VMAX calibration.
         video_scene: The scene that will be used to record videos.
+        n_repeats: The number of repetitions
 
     """
-
-    fmax1, vmax1 = calibrate_full(os.path.join(save_dir, "test1"),
-                                  n_fmax=n_fmax,
-                                  n_vmax=n_vmax,
-                                  n_episodes_per_it=n_episodes_per_it,
-                                  n_episodes_video=n_episodes_video,
-                                  lr_initial=lr_initial,
-                                  lr_decay=lr_decay,
-                                  fmax_scene=fmax_scene,
-                                  vmax_scene=vmax_scene,
-                                  video_scene=video_scene)
-
-    fmax2, vmax2 = calibrate_full(os.path.join(save_dir, "test2"),
-                                  n_fmax=n_fmax,
-                                  n_vmax=n_vmax,
-                                  n_episodes_per_it=n_episodes_per_it,
-                                  n_episodes_video=n_episodes_video,
-                                  lr_initial=lr_initial,
-                                  lr_decay=lr_decay,
-                                  fmax_scene=fmax_scene,
-                                  vmax_scene=vmax_scene,
-                                  video_scene=video_scene)
-
-    fmax3, vmax3 = calibrate_full(os.path.join(save_dir, "test3"),
-                                  n_fmax=n_fmax,
-                                  n_vmax=n_vmax,
-                                  n_episodes_per_it=n_episodes_per_it,
-                                  n_episodes_video=n_episodes_video,
-                                  lr_initial=lr_initial,
-                                  lr_decay=lr_decay,
-                                  fmax_scene=fmax_scene,
-                                  vmax_scene=vmax_scene,
-                                  video_scene=video_scene)
+    fmaxes = []
+    vmaxes = []
+    for i in range(n_repeats):
+        fmax, vmax = calibrate_full(os.path.join(save_dir, "test{}".format(i)),
+                                    n_fmax=n_fmax,
+                                    n_vmax=n_vmax,
+                                    n_episodes_per_it=n_episodes_per_it,
+                                    n_episodes_video=n_episodes_video,
+                                    lr_initial=lr_initial,
+                                    lr_decay=lr_decay,
+                                    fmax_scene=fmax_scene,
+                                    vmax_scene=vmax_scene,
+                                    video_scene=video_scene)
+        fmaxes.append(fmax)
+        vmaxes.append(vmax)
 
     if os.path.exists("vmax.npy"):
         os.remove("vmax.npy")
     if os.path.exists("fmax.npy"):
         os.remove("fmax.npy")
 
-    dif1 = np.abs(2 * (vmax1 - vmax2) / (vmax1 + vmax2))
-    dif2 = np.abs(2 * (vmax1 - vmax3) / (vmax1 + vmax3))
-    dif3 = np.abs(2 * (vmax2 - vmax3) / (vmax2 + vmax3))
-    max_dif = np.maximum(dif3, np.maximum(dif1, dif2))
+    max_dif = np.zeros_like(vmax)
+    for i in range(n_repeats-1):
+        for j in range(i+1, n_repeats):
+            dif = np.abs(2 * (vmaxes[i] - vmaxes[j]) / (vmaxes[i] + vmaxes[j]))
+            max_dif = np.maximum(max_dif, dif)
 
-    fmax_dif1 = np.abs(2 * (fmax1 - fmax2) / (fmax1 + fmax2))
-    fmax_dif2 = np.abs(2 * (fmax1 - fmax3) / (fmax1 + fmax3))
-    fmax_dif3 = np.abs(2 * (fmax2 - fmax3) / (fmax2 + fmax3))
+    fmax_max_dif = np.zeros_like(fmax)
+    for i in range(n_repeats-1):
+        for j in range(i+1, n_repeats):
+            dif = np.abs(2 * (fmaxes[i] - fmaxes[j]) / (fmaxes[i] + fmaxes[j]))
+            fmax_max_dif = np.maximum(fmax_max_dif, dif)
 
     print("\n=== FMAX ===")
-    print("Maximum fmax difference", np.amax(np.maximum(fmax_dif3, np.maximum(fmax_dif1, fmax_dif2))))
+    print("Maximum fmax difference", np.amax(fmax_max_dif))
 
     print("\n=== VMAX ===")
-    print("Maximum deviation for each joint", max_dif)
+    print("Maximum deviation for each joint: ", max_dif)
     print("Maximum deviation total", np.amax(max_dif))
     print("Average deviation", np.sum(max_dif) / max_dif.shape[0])
 
@@ -689,34 +687,41 @@ if __name__ == "__main__":
     # 11 n_episodes_per_it = 100, lr = 0.1, lr_decay = 0.7,  n_iterations = 20, max error ~ 7.30%, average error 1.97%
     # 12 n_episodes_per_it = 50,  lr = 0.1, lr_decay = 0.75, n_iterations = 30, max error ~ 8.23%, average error 2.52%
     # 13 n_episodes_per_it = 50,  lr = 0.1, lr_decay = 0.7,  n_iterations = 30, max error ~ 7.36%, average error 2.34%
-    # 17 repeatability final params:
-    V2_static_scene = "MIMoMuscleStaticTest-v0"
-    V2_velocity_scene = "MIMoVelocityMuscleTest-v0"
+    V1_static_scene = "MIMoMuscleStaticTest-v0"
+    V1_velocity_scene = "MIMoVelocityMuscleTest-v0"
+    V2_static_scene = "MIMoMuscleStaticTestV2-v0"
+    V2_velocity_scene = "MIMoVelocityMuscleTestV2-v0"
     video_scene = "MIMoMuscle-v0"
     n_iterations_fmax = 3
     n_iterations_vmax = 30
     n_episodes_per_it = 50
-    n_recording_episodes = 5
+    n_recording_episodes = 6
     lr = 0.1
     lr_decay = 0.70
-    plotting_dir = "experiment19_repeatability_final_params"
-    repeatability_test(plotting_dir,
-                       n_fmax=n_iterations_fmax,
-                       n_vmax=n_iterations_vmax,
-                       n_episodes_per_it=n_episodes_per_it,
-                       n_episodes_video=n_recording_episodes,
-                       lr_initial=lr,
-                       lr_decay=lr_decay,
-                       fmax_scene=V2_static_scene,
-                       vmax_scene=V2_velocity_scene,
-                       video_scene=video_scene)
-    #calibrate_full(plotting_dir,
-    #               n_fmax=n_iterations_fmax,
-    #               n_vmax=n_iterations_vmax,
-    #               n_episodes_per_it=n_episodes_per_it,
-    #               n_episodes_video=n_recording_episodes,
-    #               lr_initial=lr,
-    #               lr_decay=lr_decay,
-    #               fmax_scene=V2_static_scene,
-    #               vmax_scene=V2_velocity_scene,
-    #               video_scene=video_scene)
+    plotting_dir = "video_check"
+
+    recording_env_params = {
+        "touch_params": None,
+        "vision_params": None,
+    }
+
+    for i in range(3):
+        recording_episode(video_scene, os.path.join(plotting_dir, "test_video_binary_{}".format(i)), env_params=recording_env_params, binary_actions=True)
+    for i in range(3):
+        recording_episode(V2_velocity_scene, os.path.join(plotting_dir, "test_video_velocity_binary_{}".format(i)), env_params=recording_env_params, binary_actions=True)
+    for i in range(3):
+        recording_episode(video_scene, os.path.join(plotting_dir, "test_video_{}".format(i)), env_params=recording_env_params, binary_actions=False)
+    for i in range(3):
+        recording_episode(V2_velocity_scene, os.path.join(plotting_dir, "test_video_velocity_{}".format(i)), env_params=recording_env_params, binary_actions=False)
+
+    #repeatability_test(plotting_dir,
+    #                   n_fmax=n_iterations_fmax,
+    #                   n_vmax=n_iterations_vmax,
+    #                   n_episodes_per_it=n_episodes_per_it,
+    #                   n_episodes_video=n_recording_episodes,
+    #                   lr_initial=lr,
+    #                   lr_decay=lr_decay,
+    #                   fmax_scene=V2_static_scene,
+    #                   vmax_scene=V2_velocity_scene,
+    #                   video_scene=video_scene,
+    #                   n_repeats=5)

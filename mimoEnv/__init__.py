@@ -51,4 +51,14 @@ register(id='MIMoVelocityMuscleTest-v0',
          max_episode_steps=3000,
          )
 
+register(id='MIMoMuscleStaticTestV2-v0',
+         entry_point='mimoEnv.envs:MIMoStaticMuscleTestV2Env',
+         max_episode_steps=5000,
+         )
+
+register(id='MIMoVelocityMuscleTestV2-v0',
+         entry_point='mimoEnv.envs:MIMoVelocityMuscleTestV2Env',
+         max_episode_steps=3000,
+         )
+
 
