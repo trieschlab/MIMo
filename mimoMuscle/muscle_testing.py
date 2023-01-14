@@ -677,6 +677,42 @@ def repeatability_test(save_dir,
     print("Average deviation", np.sum(max_dif) / max_dif.shape[0])
 
 
+def make_flfvfp_plots():
+    qvmin = 0.75
+    qvmax = 1.05
+    fl_y_limits = [0, 1.1]
+    fv_y_limits = [0, 1.3]
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+    l_range = np.linspace(.5, 1.5, 100)
+    v_range = np.linspace(-1.2, 0.4, 100)
+    fl_torque = FL(l_range)
+    fp_torque = FP(l_range)
+    fv_torque = FV_vec(v_range, 1.0)
+    fl_plot = axs[0]
+    fv_plot = axs[1]
+    fl_plot.plot(l_range, fl_torque, color='tab:cyan', label="FL")
+    fl_plot.plot(l_range, fp_torque, color='tab:olive', label="FP")
+    fl_plot.plot(l_range, fl_torque+fp_torque, color='tab:green', label="FL+FP")
+    fl_plot.fill_between(l_range, fl_y_limits[0], fl_y_limits[1], where=(l_range <= qvmax) & (l_range >= qvmin),  alpha=0.3, color="tab:red")
+    fl_plot.set_xlim([0.5, 1.5])
+    fl_plot.set_ylim(fl_y_limits)
+    fl_plot.set_xlabel("Virtual muscle length")
+    fl_plot.set_title("Force-length curves")
+    fl_plot.grid()
+    fl_plot.legend()
+    fv_plot.plot(v_range, fv_torque, color='tab:blue', label="FV")
+    fv_plot.set_xlim([-1.2, 0.4])
+    fv_plot.set_ylim(fv_y_limits)
+    fv_plot.set_xlabel("Virtual muscle speed")
+    fv_plot.set_title("Force-velocity curves")
+    fv_plot.legend()
+    fv_plot.grid()
+    fig.tight_layout()
+    fig.savefig("mimoflfvplots.png")
+    fig.clear()
+    plt.close(fig)
+
+
 if __name__ == "__main__":
 
     # Experiments to ensure repeatability:
@@ -700,19 +736,19 @@ if __name__ == "__main__":
     lr_decay = 0.70
     plotting_dir = "video_check"
 
-    recording_env_params = {
-        "touch_params": None,
-        "vision_params": None,
-    }
+    #recording_env_params = {
+    #    "touch_params": None,
+    #    "vision_params": None,
+    #}
 
-    for i in range(3):
-        recording_episode(video_scene, os.path.join(plotting_dir, "test_video_binary_{}".format(i)), env_params=recording_env_params, binary_actions=True)
-    for i in range(3):
-        recording_episode(V2_velocity_scene, os.path.join(plotting_dir, "test_video_velocity_binary_{}".format(i)), env_params=recording_env_params, binary_actions=True)
-    for i in range(3):
-        recording_episode(video_scene, os.path.join(plotting_dir, "test_video_{}".format(i)), env_params=recording_env_params, binary_actions=False)
-    for i in range(3):
-        recording_episode(V2_velocity_scene, os.path.join(plotting_dir, "test_video_velocity_{}".format(i)), env_params=recording_env_params, binary_actions=False)
+    #for i in range(3):
+    #    recording_episode(video_scene, os.path.join(plotting_dir, "test_video_binary_{}".format(i)), env_params=recording_env_params, binary_actions=True)
+    #for i in range(3):
+    #    recording_episode(V2_velocity_scene, os.path.join(plotting_dir, "test_video_velocity_binary_{}".format(i)), env_params=recording_env_params, binary_actions=True)
+    #for i in range(3):
+    #    recording_episode(video_scene, os.path.join(plotting_dir, "test_video_{}".format(i)), env_params=recording_env_params, binary_actions=False)
+    #for i in range(3):
+    #    recording_episode(V2_velocity_scene, os.path.join(plotting_dir, "test_video_velocity_{}".format(i)), env_params=recording_env_params, binary_actions=False)
 
     #repeatability_test(plotting_dir,
     #                   n_fmax=n_iterations_fmax,
@@ -725,3 +761,5 @@ if __name__ == "__main__":
     #                   vmax_scene=V2_velocity_scene,
     #                   video_scene=video_scene,
     #                   n_repeats=5)
+
+    make_flfvfp_plots()
