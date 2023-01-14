@@ -680,10 +680,12 @@ def repeatability_test(save_dir,
 def make_flfvfp_plots():
     qvmin = 0.75
     qvmax = 1.05
-    fl_y_limits = [0, 1.1]
+    l_min = 0.5
+    l_max = 1.6
+    fl_y_limits = [0, 1.2]
     fv_y_limits = [0, 1.3]
     fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-    l_range = np.linspace(.5, 1.5, 100)
+    l_range = np.linspace(l_min, l_max, 100)
     v_range = np.linspace(-1.2, 0.4, 100)
     fl_torque = FL(l_range)
     fp_torque = FP(l_range)
@@ -694,7 +696,7 @@ def make_flfvfp_plots():
     fl_plot.plot(l_range, fp_torque, color='tab:olive', label="FP")
     fl_plot.plot(l_range, fl_torque+fp_torque, color='tab:green', label="FL+FP")
     fl_plot.fill_between(l_range, fl_y_limits[0], fl_y_limits[1], where=(l_range <= qvmax) & (l_range >= qvmin),  alpha=0.3, color="tab:red")
-    fl_plot.set_xlim([0.5, 1.5])
+    fl_plot.set_xlim([l_min, l_max])
     fl_plot.set_ylim(fl_y_limits)
     fl_plot.set_xlabel("Virtual muscle length")
     fl_plot.set_title("Force-length curves")
