@@ -814,8 +814,9 @@ class TrimeshTouch(Touch):
         underlying sensor mesh. Trimesh is used for the mesh operations. Supported output types are
 
         - 'force_vector': The contact force vector (normal and frictional forces) reported in the coordinate frame of
-          the sensing geom.
+          the sensing body.
         - 'force_vector_global': Like 'force_vector', but reported in the world coordinate frame instead.
+        - 'normal_force': Returns the normal force only, as a vector in the frame of the sensing body.
 
         The output can be spread to nearby sensors in two different ways:
 
@@ -858,6 +859,7 @@ class TrimeshTouch(Touch):
     VALID_TOUCH_TYPES = {
         "force_vector": 3,
         "force_vector_global": 3,
+        "normal_force": 3,
     }
 
     VALID_RESPONSE_FUNCTIONS = ["nearest", "spread_linear"]
@@ -1545,6 +1547,23 @@ class TrimeshTouch(Touch):
         relative_forces = env_utils.rotate_vector_transpose(global_forces, env_utils.get_body_rotation(self.m_data,
                                                                                                        body_id))
         return relative_forces
+
+    def normal_force(self, contact_id, body_id):
+        """ Touch function. Returns normal force in the frame of the body.
+
+        Args:
+            contact_id: The ID of the contact.
+            body_id: The ID of the body.
+
+        Returns:
+            A 3d vector with the normal force.
+        """
+        contact = self.m_data.contact[contact_id]
+        forces = self.get_raw_force(contact_id, body_id)
+        force_rot = np.reshape(contact.frame, (3, 3))
+        normal_force = forces[0] * force_rot[:, 0]  # Forces[0] is the magnitude of the normal force, while the first row of the contact frame is the normal vector.
+        normal_force = env_utils.world_rot_to_body(self.m_data, normal_force, body_id)
+        return normal_force
 
     # =============== Output related functions ========================================
     # =================================================================================

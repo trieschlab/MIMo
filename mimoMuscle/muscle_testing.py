@@ -9,6 +9,7 @@ import gym
 import os
 import matplotlib
 from matplotlib import pyplot as plt
+from matplotlib.gridspec import GridSpec
 import numpy as np
 import cv2
 
@@ -533,8 +534,253 @@ def recording_episode(env_name: str, video_dir: str, env_params={}, video_width=
     env.close()
 
 
+def compliance_test():
+
+    # Plotting function
+    def plot_qpos_torque(qpos, motor_torques, net_torques, imgs, image_times, file_name):
+        """ Make the qpos/torque/img timeline plots.
+
+        Args:
+            qpos:
+            motor_torques:
+            imgs:
+            file_name:
+
+        Returns:
+
+        """
+
+        fig = plt.figure(figsize=(12, 6), layout="constrained")
+        heights = [2, 1, 1]
+        fig.tight_layout()
+        gs = GridSpec(3, 4, figure=fig, height_ratios=heights)
+
+        # Plot images
+        for i, plot_img in enumerate(imgs):
+            ax = fig.add_subplot(gs[0, i])
+            ax.imshow(plot_img)
+            ax.get_yaxis().set_visible(False)
+            ax.get_xaxis().set_visible(False)
+
+        # Plot torque and qpos
+        x = (np.arange(n_steps) + 1) * env.dt
+        torque_plot = fig.add_subplot(gs[2, :])
+        torque_plot.plot(x, motor_torques, color="tab:cyan", label="Active torque")
+        torque_plot.plot(x, net_torques, color="tab:green", label="Net torque")
+        torque_plot.set_xlim([np.min(x), np.max(x)])
+        torque_plot.set_xlabel("Time (s)")
+        torque_plot.set_ylabel("Torque (Nm)")
+        for image_time in image_times:
+            torque_plot.axvline(image_time * env.dt, color="tab:red", alpha=0.5)
+        torque_plot.legend()
+        torque_plot.grid(axis="y")
+
+        qpos_plot = fig.add_subplot(gs[1, :], sharex=torque_plot)
+        qpos_plot.plot(x, qpos, color="tab:cyan")
+        qpos_plot.set_xlim([np.min(x), np.max(x)])
+        #qpos_plot.get_xaxis().set_visible(False)
+        qpos_plot.tick_params(labelbottom=False)
+        #qpos_plot.set_xlabel("Time (s)")
+        qpos_plot.set_ylabel("Joint Position (rad)")
+        for image_time in image_times:
+            qpos_plot.axvline(image_time * env.dt, color="tab:red", alpha=0.5)
+        #qpos_plot.legend()
+        qpos_plot.grid(axis="y")
+
+        fig.savefig(file_name)
+        fig.clear()
+        plt.close(fig)
+
+    def make_video(images, file_name):
+        video_width = 500
+        video_height = 500
+        framerate = 1 / env.dt
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        video = cv2.VideoWriter(file_name,
+                                fourcc,
+                                framerate, (video_width, video_height))
+        for img in images:
+            video.write(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        cv2.destroyAllWindows()
+        video.release()
+
+    def collect_data(env, action, img_times):
+        qpos = []
+        motor_torques = []
+        net_torques = []
+        plot_imgs = []
+        video_imgs = []
+        for i in range(n_steps):
+            obs, _, done, _ = env.step(action)
+            # Collect information on right shoulder joint
+            qpos.append(env.sim.data.qpos[shoulder_joint_qpos])
+            motor_torque = env.sim.data.ctrl[shoulder_actuator_id] * env.sim.model.actuator_gear[
+                shoulder_actuator_id, 0]
+            motor_torques.append(motor_torque)
+            stiffness_torque = env.sim.model.jnt_stiffness[shoulder_joint_id] * env.sim.data.qpos[shoulder_joint_qpos]
+            damping_torque = env.sim.model.dof_damping[shoulder_joint_dof] * env.sim.data.qvel[shoulder_joint_qvel]
+            net_torque = motor_torque - damping_torque - stiffness_torque
+            net_torques.append(net_torque)
+            img = env.render(mode="rgb_array")
+            video_imgs.append(img)
+            if i + 1 in img_times:
+                plot_imgs.append(img)
+        return qpos, motor_torques, net_torques, plot_imgs, video_imgs
+
+    n_steps = 500
+
+    # First do the version without muscles
+    env = gym.make("MIMoComplianceTest-v0")
+    _ = env.reset()
+    # Collect all the indices and what have you for the right shoulder joint
+    shoulder_joint_id = env.sim.model.joint_name2id("robot:right_shoulder_ad_ab")
+    shoulder_joint_qpos = mimoEnv.utils.get_joint_qpos_addr(env.sim.model, shoulder_joint_id)
+    shoulder_joint_qvel = mimoEnv.utils.get_joint_qvel_addr(env.sim.model, shoulder_joint_id)
+    shoulder_joint_dof = env.sim.model.jnt_dofadr[shoulder_joint_id]
+    shoulder_actuator_name = "act:right_shoulder_abduction"
+    shoulder_actuator_id = env.sim.model.actuator_name2id(shoulder_actuator_name)
+
+    # Fixed control input
+    control_input = 0.1775
+    action = np.zeros(env.action_space.shape)
+    action[shoulder_actuator_id] = control_input
+    img_times_motor = [45, 52, 73, 450]
+    # Data collection
+    qpos_motor, motor_torques_motor, net_torques_motor, plot_imgs_motor, video_imgs_motor = collect_data(env, action, img_times_motor)
+    # Plot the data
+    plot_qpos_torque(qpos_motor, motor_torques_motor, net_torques_motor, plot_imgs_motor, img_times_motor, "compliance_motor.png")
+    make_video(video_imgs_motor, "compliance_motor.avi")
+    env.close()
+
+    # Muscle environment - soft
+    env = gym.make("MIMoComplianceMuscleTest-v0")
+    _ = env.reset()
+    control_input_agonist = 0.139
+    control_input_antagonist = 0.0
+    action = np.zeros(env.action_space.shape)
+    action[shoulder_actuator_id] = control_input_antagonist
+    action[shoulder_actuator_id + env.n_actuators] = control_input_agonist
+    img_times_soft = [45, 52, 77, 450]
+    # Data collection
+    qpos_soft, motor_torques_soft, net_torques_soft, plot_imgs_soft, video_imgs_soft = collect_data(env, action, img_times_soft)
+    # Plot the data
+    plot_qpos_torque(qpos_soft, motor_torques_soft, net_torques_soft, plot_imgs_soft, img_times_soft, "compliance_muscle_soft.png")
+    make_video(video_imgs_soft, "compliance_muscle_soft.avi")
+
+    # Muscle environment - hard
+    _ = env.reset()
+    control_input_agonist = 0.754
+    control_input_antagonist = 0.9
+    action = np.zeros(env.action_space.shape)
+    action[shoulder_actuator_id] = control_input_antagonist
+    action[shoulder_actuator_id + env.n_actuators] = control_input_agonist
+    img_times_stiff = [45, 52, 56, 450]
+    # Data collection
+    qpos_stiff, motor_torques_stiff, net_torques_stiff, plot_imgs_stiff, video_imgs_stiff = collect_data(env, action, img_times_stiff)
+    # Plot the data
+    plot_qpos_torque(qpos_stiff, motor_torques_stiff, net_torques_stiff, plot_imgs_stiff, img_times_stiff, "compliance_muscle_stiff.png")
+    make_video(video_imgs_stiff, "compliance_muscle_stiff.avi")
+
+    # Muscle environment - softish
+    _ = env.reset()
+    control_input_agonist = 0.1738
+    control_input_antagonist = 0.05
+    action = np.zeros(env.action_space.shape)
+    action[shoulder_actuator_id] = control_input_antagonist
+    action[shoulder_actuator_id + env.n_actuators] = control_input_agonist
+    img_times_softish = [45, 52, 74, 450]
+    # Data collection
+    qpos_softish, motor_torques_softish, net_torques_softish, plot_imgs_softish, video_imgs_softish = collect_data(env, action, img_times_softish)
+    # Plot the data
+    plot_qpos_torque(qpos_softish, motor_torques_softish, net_torques_softish, plot_imgs_softish, img_times_softish, "compliance_muscle_softish.png")
+    make_video(video_imgs_softish, "compliance_muscle_softish.avi")
+
+    # Muscle environment - medium
+    env = gym.make("MIMoComplianceMuscleTest-v0")
+    _ = env.reset()
+    control_input_agonist = 0.2763
+    control_input_antagonist = 0.2
+    action = np.zeros(env.action_space.shape)
+    action[shoulder_actuator_id] = control_input_antagonist
+    action[shoulder_actuator_id + env.n_actuators] = control_input_agonist
+    img_times_medium = [45, 52, 66, 450]
+    # Data collection
+    # Data collection
+    qpos_medium, motor_torques_medium, net_torques_medium, plot_imgs_medium, video_imgs_medium = collect_data(env, action, img_times_medium)
+    # Plot the data
+    plot_qpos_torque(qpos_medium, motor_torques_medium, net_torques_medium, plot_imgs_medium, img_times_medium, "compliance_muscle_medium.png")
+    make_video(video_imgs_medium, "compliance_muscle_medium.avi")
+
+    # Make paper plots:
+    # 4 Shots showing maximum deflection for Motor, muscle soft, muscle medium and muscle stiff
+    # One position plot -> Motor, Muscle soft, Muscle medium, Muscle stiff
+    # One torque plot -> Motor, Muscle soft, Muscle medium, Muscle stiff, net-torque only for muscle, both for motor
+    # Write Strong explanation as to torque plots
+    # Plot colors: Red motor, muscle shades of blue-green plots
+    #imgs = [plot_imgs_motor[2], plot_imgs_soft[2], plot_imgs_medium[2], plot_imgs_stiff[2]]
+    #img_times = [img_times_motor[2], img_times_soft[2], img_times_medium[2], img_times_stiff[2]]
+    imgs = plot_imgs_medium
+    img_times = img_times_medium
+    img_labels = ["A", "B", "C", "D"]
+    img_label_x_positions = [(img_time + 1) * env.dt for img_time in img_times]
+    img_label_x_positions[0] -= 0.1  # Adjust for narrow spacing by putting first text on left
+    fig = plt.figure(figsize=(8, 5), layout="constrained")
+    fig.tight_layout()
+    heights = [1.5, 1, 1]
+    gs = GridSpec(3, 4, figure=fig, height_ratios=heights)
+
+    # Plot images
+    for i, plot_img in enumerate(imgs):
+        ax = fig.add_subplot(gs[0, i])
+        ax.imshow(plot_img[100:-100, 125:-75, :])  # Slicing does a crop
+        ax.plot(0, 0, "-", color="tab:gray", label=img_labels[i])
+        ax.legend(handlelength=0, loc="upper left", handletextpad=-0.2)
+        #legend = ax.legend(handletextpad=-2.0, handlelength=0)
+        #legend.texts[0].set_color("tab:gray")
+        ax.get_yaxis().set_visible(False)
+        ax.get_xaxis().set_visible(False)
+
+    # Plot torque and qpos
+    x = (np.arange(n_steps) + 1) * env.dt
+    torque_plot = fig.add_subplot(gs[2, :])
+    #torque_plot.plot(x, motor_torques_motor, color="darkred", label="Motor active torque")
+    torque_plot.plot(x, net_torques_motor, color="red", label="Motor", alpha=0.8)
+    torque_plot.plot(x, net_torques_soft, color="cyan", label="Muscle - soft", alpha=0.8)
+    torque_plot.plot(x, net_torques_medium, color="darkturquoise", label="Muscle - medium", alpha=0.8)
+    torque_plot.plot(x, net_torques_stiff, color="darkcyan", label="Muscle - stiff", alpha=0.8)
+    torque_plot.set_xlim([np.min(x), np.max(x)])
+    torque_plot.set_xlabel("Time (s)")
+    torque_plot.set_ylabel("Torque (Nm)")
+    #for image_time in img_times:
+    #    torque_plot.axvline(image_time * env.dt, color="tab:gray", alpha=0.5)
+    torque_plot.legend()
+    torque_plot.grid(axis="y")
+
+    qpos_plot = fig.add_subplot(gs[1, :], sharex=torque_plot)
+    qpos_plot.plot(x, qpos_motor, color="red", label="Motor", alpha=0.8)
+    qpos_plot.plot(x, qpos_soft, color="cyan", label="Muscle - soft", alpha=0.8)
+    qpos_plot.plot(x, qpos_medium, color="darkturquoise", label="Muscle - medium", alpha=0.8)
+    qpos_plot.plot(x, qpos_stiff, color="darkcyan", label="Muscle - stiff", alpha=0.8)
+    qpos_plot.set_xlim([np.min(x), np.max(x)])
+    # qpos_plot.get_xaxis().set_visible(False)
+    qpos_plot.tick_params(labelbottom=False)
+    # qpos_plot.set_xlabel("Time (s)")
+    qpos_plot.set_ylabel("Joint Position (rad)")
+    for i, image_time in enumerate(img_times):
+        qpos_plot.axvline(image_time * env.dt, color="tab:gray", alpha=0.5)
+        qpos_plot.text(img_label_x_positions[i], 0.1, img_labels[i], rotation=0, verticalalignment='center', color="tab:gray", alpha=0.9)
+    #qpos_plot.legend()
+    qpos_plot.grid(axis="y")
+
+    fig.savefig("paperplot.png")
+    fig.clear()
+    plt.close(fig)
+
+    env.close()
+
 # ========================== Workflow functions ========================================
 # ======================================================================================
+
 
 def calibrate_full(save_dir,
                    n_fmax=3,
@@ -684,7 +930,7 @@ def make_flfvfp_plots():
     l_max = 1.6
     fl_y_limits = [0, 1.2]
     fv_y_limits = [0, 1.3]
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+    fig, axs = plt.subplots(1, 2, figsize=(8, 4))
     l_range = np.linspace(l_min, l_max, 100)
     v_range = np.linspace(-1.2, 0.4, 100)
     fl_torque = FL(l_range)
@@ -764,4 +1010,5 @@ if __name__ == "__main__":
     #                   video_scene=video_scene,
     #                   n_repeats=5)
 
-    make_flfvfp_plots()
+    #make_flfvfp_plots()
+    compliance_test()

@@ -7,7 +7,7 @@ A simple implementation treating using one 3D gyro and one 3D accelerometer is i
 """
 
 import numpy as np
-from mimoEnv.utils import get_data_for_sensor
+from mimoEnv.utils import get_sensor_addr
 
 
 class Vestibular:
@@ -35,7 +35,7 @@ class Vestibular:
 
         This function should perform the whole sensory pipeline and return the vestibular output as defined in
         :attr:`.vestibular_parameters`. Exact return value and functionality will depend on the implementation, but
-        should always be a numpy array.
+        should always be a flat numpy array.
 
         """
         raise NotImplementedError
@@ -54,7 +54,7 @@ class SimpleVestibular(Vestibular):
             "sensors": ["vestibular_acc", "vestibular_gyro"],
         }
 
-    The default model has two sensors that can be used for 'vestibular_acc' and 'vestibular_gyro' for the accelerometer
+    The default model has two sensors, 'vestibular_acc' and 'vestibular_gyro', that can be used for the accelerometer
     and the gyro, both located in the head.
 
     Attributes:
@@ -67,6 +67,8 @@ class SimpleVestibular(Vestibular):
     def __init__(self, env, vestibular_parameters):
         super().__init__(env, vestibular_parameters)
         self.sensors = vestibular_parameters["sensors"]
+        self.sensor_ids = [self.env.sim.model.sensor_name2id(name) for name in self.sensors]
+        self.sensor_addrs = np.asarray([get_sensor_addr(self.env.sim.model, idx) for idx in self.sensor_ids])
 
     def get_vestibular_obs(self):
         """ Produce the vestibular sensor outputs.
@@ -77,9 +79,5 @@ class SimpleVestibular(Vestibular):
             A numpy array containing the concatenated sensor values.
 
         """
-        data = []
-        for sensor in self.sensors:
-            sensor_output = get_data_for_sensor(self.env.sim.model, self.env.sim.data, sensor)
-            data.append(sensor_output)
-        self.sensor_outputs = data
-        return np.concatenate(data)
+        self.sensor_outputs = self.env.sim.data.sensordata[self.sensor_addrs].flatten()
+        return np.concatenate(self.sensor_outputs)

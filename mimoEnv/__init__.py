@@ -61,4 +61,12 @@ register(id='MIMoVelocityMuscleTestV2-v0',
          max_episode_steps=3000,
          )
 
+register(id='MIMoComplianceTest-v0',
+         entry_point='mimoEnv.envs:MIMoComplianceEnv',
+         )
+
+register(id='MIMoComplianceMuscleTest-v0',
+         entry_point='mimoEnv.envs:MIMoComplianceMuscleEnv',
+         )
+
 

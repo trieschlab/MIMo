@@ -44,7 +44,7 @@ class Proprioception:
 
         This function should perform the whole sensory pipeline and return the output as defined in
         :attr:`.proprio_parameters`. Exact return value and functionality will depend on the implementation, but
-        should always be a numpy array.
+        should always be a flat numpy array.
 
         """
         raise NotImplementedError
@@ -145,7 +145,7 @@ class SimpleProprioception(Proprioception):
         # from 0 to 1 at the limit and then beyond 1 beyond the limit
         if "limits" in self.output_components:
             l_dif = robot_qpos - (self.joint_limits[:, 0] + self.limit_thresh)
-            u_dif = (self.joint_limits[:, 1] + self.limit_thresh) - robot_qpos
+            u_dif = (self.joint_limits[:, 1] - self.limit_thresh) - robot_qpos
             response = np.minimum(l_dif, u_dif) / self.limit_thresh
             response = - np.minimum(response, 0)
             self.sensor_outputs["limits"] = response
