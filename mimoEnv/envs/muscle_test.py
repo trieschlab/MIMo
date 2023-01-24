@@ -79,7 +79,7 @@ class MIMoStaticMuscleTestEnv(MIMoMuscleEnv):
                 print(key, self.observation_space[key].shape)
             print("\nAction space: ", self.action_space.shape)
 
-    def _touch_setup(self, touch_params):
+    def touch_setup(self, touch_params):
         """ Perform the setup and initialization of the touch system.
 
         Uses the more complicated Trimesh implementation. Also plots the sensor points if :attr:`.show_sensors` is

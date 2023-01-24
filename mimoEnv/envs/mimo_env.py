@@ -200,12 +200,12 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     Additional functions that may be overridden optionally are:
 
     - :meth:`._is_done`, which determines the `done` return value after each step.
-    - :meth:`._proprio_setup`, :meth:`._touch_setup`, :meth:`._vision_setup`, :meth:`._vestibular_setup`, these
+    - :meth:`.proprio_setup`, :meth:`.touch_setup`, :meth:`.vision_setup`, :meth:`.vestibular_setup`, these
       functions initialize the associated sensor modality. These should be overridden if you want to replace the default
       implementation. Default implementations are :class:`~mimoProprioception.proprio.SimpleProprioception`,
       :class:`~mimoTouch.touch.DiscreteTouch`, :class:`~mimoVision.vision.SimpleVision`,
       :class:`~mimoVestibular.vestibular.SimpleVestibular`.
-    - :meth:`._get_proprio_obs`, :meth:`._get_touch_obs`, :meth:`._get_vision_obs`, :meth:`._get_vestibular_obs`, these
+    - :meth:`.get_proprio_obs`, :meth:`.get_touch_obs`, :meth:`.get_vision_obs`, :meth:`.get_vestibular_obs`, these
       functions collect the observations of the associated sensor modality. These allow you to do post processing on
       the output without having to alter the base implementations.
     - :meth:`._reset_sim`, which resets the physical simulation. If you have special conditions on the initial position
@@ -390,13 +390,13 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         # observation space and goals are not set yet
 
         # Do setups
-        self._proprio_setup(self.proprio_params)
+        self.proprio_setup(self.proprio_params)
         if self.touch_params is not None:
-            self._touch_setup(self.touch_params)
+            self.touch_setup(self.touch_params)
         if self.vision_params is not None:
-            self._vision_setup(self.vision_params)
+            self.vision_setup(self.vision_params)
         if self.vestibular_params is not None:
-            self._vestibular_setup(self.vestibular_params)
+            self.vestibular_setup(self.vestibular_params)
         # Should be able to get all types of sensor outputs here
         # Should be able to produce all control inputs here
 
@@ -404,7 +404,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         for joint_name in initial_qpos:
             mimo_utils.set_joint_qpos(self.sim.model, self.sim.data, joint_name, initial_qpos[joint_name])
 
-    def _proprio_setup(self, proprio_params):
+    def proprio_setup(self, proprio_params):
         """ Perform the setup and initialization of the proprioceptive system.
 
         This should be overridden if you want to use another implementation!
@@ -414,7 +414,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.proprioception = SimpleProprioception(self, proprio_params)
 
-    def _touch_setup(self, touch_params):
+    def touch_setup(self, touch_params):
         """ Perform the setup and initialization of the touch system.
 
         This should be overridden if you want to use another implementation!
@@ -424,7 +424,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.touch = TrimeshTouch(self, touch_params)
 
-    def _vision_setup(self, vision_params):
+    def vision_setup(self, vision_params):
         """ Perform the setup and initialization of the vision system.
 
         This should be overridden if you want to use another implementation!
@@ -434,7 +434,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.vision = SimpleVision(self, vision_params)
 
-    def _vestibular_setup(self, vestibular_params):
+    def vestibular_setup(self, vestibular_params):
         """ Perform the setup and initialization of the vestibular system.
 
         This should be overridden if you want to use another implementation!
@@ -541,7 +541,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.sim.forward()
         return True
 
-    def _get_proprio_obs(self):
+    def get_proprio_obs(self):
         """ Collects and returns the outputs of the proprioceptive system.
 
         Override this function if you want to make some simple post-processing!
@@ -551,7 +551,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         return self.proprioception.get_proprioception_obs()
 
-    def _get_touch_obs(self):
+    def get_touch_obs(self):
         """ Collects and returns the outputs of the touch system.
 
         Override this function if you want to make some simple post-processing!
@@ -562,7 +562,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         touch_obs = self.touch.get_touch_obs()
         return touch_obs
 
-    def _get_vision_obs(self):
+    def get_vision_obs(self):
         """ Collects and returns the outputs of the vision system.
 
         Override this function if you want to make some simple post-processing!
@@ -574,7 +574,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         vision_obs = self.vision.get_vision_obs()
         return vision_obs
 
-    def _get_vestibular_obs(self):
+    def get_vestibular_obs(self):
         """ Collects and returns the outputs of the vestibular system.
 
         Override this function if you want to make some simple post-processing!
@@ -597,22 +597,22 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             dict: A dictionary containing simulation outputs with separate entries for each sensor modality.
         """
         # robot proprioception:
-        proprio_obs = self._get_proprio_obs()
+        proprio_obs = self.get_proprio_obs()
         observation_dict = {
             "observation": proprio_obs,
         }
         # robot touch sensors:
         if self.touch:
-            touch_obs = self._get_touch_obs().ravel()
+            touch_obs = self.get_touch_obs().ravel()
             observation_dict["touch"] = touch_obs
         # robot vision:
         if self.vision:
-            vision_obs = self._get_vision_obs()
+            vision_obs = self.get_vision_obs()
             for sensor in vision_obs:
                 observation_dict[sensor] = vision_obs[sensor]
         # vestibular
         if self.vestibular:
-            vestibular_obs = self._get_vestibular_obs()
+            vestibular_obs = self.get_vestibular_obs()
             observation_dict["vestibular"] = vestibular_obs
 
         if self.goals_in_observation:
