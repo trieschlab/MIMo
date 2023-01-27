@@ -66,7 +66,7 @@ class SimpleVestibular(Vestibular):
     """
     def __init__(self, env, vestibular_parameters):
         super().__init__(env, vestibular_parameters)
-        self.sensors = vestibular_parameters["sensors"]
+        self.sensors = self.vestibular_parameters["sensors"]
         self.sensor_ids = [self.env.sim.model.sensor_name2id(name) for name in self.sensors]
         self.sensor_addrs = np.asarray([get_sensor_addr(self.env.sim.model, idx) for idx in self.sensor_ids])
 
@@ -80,4 +80,4 @@ class SimpleVestibular(Vestibular):
 
         """
         self.sensor_outputs = self.env.sim.data.sensordata[self.sensor_addrs].flatten()
-        return np.concatenate(self.sensor_outputs)
+        return np.asarray(self.sensor_outputs)
