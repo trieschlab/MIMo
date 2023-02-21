@@ -143,10 +143,6 @@ def benchmark(configurations, output_file):
 
         start = time.time()
         run(env, max_steps)
-        if env.touch is not None:
-            print(config_name)
-            print("Contacts:", env.touch.touch_contacts, env.touch.selftouch_contacts)
-            print("Cache hit rate:", env.touch._neighbour_cache.hits())
         env.close()
 
         end_time = time.time()
