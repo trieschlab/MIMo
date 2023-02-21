@@ -884,12 +884,16 @@ class TrimeshTouch(Touch):
         self.active_vertices = {}
         self.contact_tuples = []
 
-        self._neighbour_cache = ctu.StatsCache(LRUCache(maxsize=200))
         self.plotting_limits = {}
 
+        n_sensors = 0
         # Add sensors to bodies
         for body_id in self.sensor_scales:
             self.add_body(body_id=body_id, scale=self.sensor_scales[body_id])
+            n_sensors += self.get_sensor_count(body_id)
+
+        cache_size = n_sensors / 20 + len(self.sensor_scales)
+        self._neighbour_cache = ctu.StatsCache(LRUCache(maxsize=cache_size))
 
         # Get touch obs once to ensure all output arrays are initialized
         self.get_touch_obs()
