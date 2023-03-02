@@ -1,5 +1,5 @@
 numpy
-gymnasium
+gymnasium==0.26.3
 imageio
 glfw
 mujoco
