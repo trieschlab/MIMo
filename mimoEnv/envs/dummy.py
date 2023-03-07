@@ -14,8 +14,8 @@ import numpy as np
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_VISION_PARAMS, DEFAULT_VESTIBULAR_PARAMS, \
     DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS, DEFAULT_TOUCH_PARAMS_V2
-from mimoEnv.envs.mimo_muscle_env import MIMoMuscleEnv
 from mimoTouch.touch import TrimeshTouch
+from mimoActuation.muscle import MuscleModel
 import mimoEnv.utils as env_utils
 
 
@@ -243,7 +243,7 @@ class MIMoV2DemoEnv(MIMoDummyEnv):
                          print_space_sizes=print_space_sizes)
 
 
-class MIMoMuscleDemoEnv(MIMoMuscleEnv):
+class MIMoMuscleDemoEnv(MIMoEnv):
     """Same as :class:`~mimoEnv.envs.dummy.MIMoDummyEnv`, but using the muscle actuation model. Uses the v2 Version of
     MIMo by default.
     """
@@ -255,6 +255,7 @@ class MIMoMuscleDemoEnv(MIMoMuscleEnv):
                  touch_params=DEFAULT_TOUCH_PARAMS_V2,
                  vision_params=DEFAULT_VISION_PARAMS,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
+                 actuation_model=MuscleModel,
                  goals_in_observation=False,
                  done_active=True,
                  print_space_sizes=False, ):
@@ -268,6 +269,7 @@ class MIMoMuscleDemoEnv(MIMoMuscleEnv):
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
+                         actuation_model=actuation_model,
                          goals_in_observation=goals_in_observation,
                          done_active=done_active)
 

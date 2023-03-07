@@ -17,6 +17,7 @@ from mimoTouch.touch import TrimeshTouch
 from mimoVision.vision import SimpleVision
 from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception
+from mimoActuation.actuation import ActuationModel, TorqueMotorModel
 import mimoEnv.utils as mimo_utils
 
 
@@ -162,7 +163,7 @@ DEFAULT_VESTIBULAR_PARAMS = {
 
 
 DEFAULT_PROPRIOCEPTION_PARAMS = {
-    "components": ["velocity", "torque", "limits"],
+    "components": ["velocity", "torque", "limits", "actuation"],
     "threshold": .035,
 }
 """ Default parameters for proprioception. Relative joint positions are always included.
@@ -230,6 +231,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
       Default `None`.
     - `vestibular_params`: The configuration dictionary for the vestibular system. If `None` the module is disabled.
       Default `None`.
+    - `actuation_model`: Class for the actuation model. Default is :class:`~mimoActuation.actuation.TorqueMotorModel`.
+      The class must meet the interface defined by :class:`~mimoActuation.actuation.ActuationModel`.
     - `goals_in_observation`: If `True` the desired and achieved goals are included in the observation dictionary.
       Default `True`.
     - `done_active`: If `True`, :meth:`._is_done` returns `True` if the simulation reaches a success or failure state.
@@ -242,6 +245,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         goal: The desired goal.
         action_space: The action space. See Gym documentation for more.
         observation_space: The observation space. See Gym documentation for more.
+        actuation_model: Reference to the actuation model instance.
         proprio_params: The configuration dictionary for the proprioceptive system.
         proprioception: A reference to the proprioception instance.
         touch_params: The configuration dictionary for the touch system.
@@ -267,6 +271,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
+                 actuation_model=TorqueMotorModel,
                  goals_in_observation=True,
                  done_active=False):
 
@@ -304,13 +309,12 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         }
 
         self.seed()
-        # Action space
-        self.action_space = None
+
+        # MIMo components
         self.mimo_joints = None
         self.mimo_actuators = None
         self._get_joints()
         self._get_actuators()
-        self._set_action_space()
 
         # Face emotions:
         self.facial_expressions = None
@@ -319,6 +323,11 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         self._env_setup(initial_qpos=initial_qpos)
         self.initial_state = copy.deepcopy(self.sim.get_state())
+
+        # Actuation init
+        self.action_space = None
+        self.actuation_model = actuation_model(self, self.mimo_actuators)
+        self._set_action_space()
 
         self.goal = self._sample_goal()
         self._set_observation_space()
@@ -354,9 +363,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         By default, the actuation space contains only those actuators contained in MIMo.
         """
-        bounds = self.sim.model.actuator_ctrlrange.copy().astype(np.float32)[self.mimo_actuators]
-        low, high = bounds.T
-        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+        self.action_space = self.actuation_model.get_action_space()
 
     def _set_observation_space(self):
         """ Sets the observation space attribute.
@@ -482,6 +489,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self._set_action(action)
         for _ in range(n_frames):
+            self.actuation_model.substep_update()
             self.sim.step()
             self._substep_callback()
 
@@ -550,6 +558,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         did_reset_sim = False
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
+        self.actuation_model.reset()
         self.goal = self._sample_goal()
         obs = self._get_obs()
         return obs
@@ -660,8 +669,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Args:
             action (numpy.ndarray): A numpy array with control values.
         """
-        action = np.clip(action, self.action_space.low, self.action_space.high)
-        self.sim.data.ctrl[self.mimo_actuators] = action
+        self.actuation_model.action(action)
 
     def swap_facial_expression(self, emotion):
         """ Changes MIMos facial texture.
