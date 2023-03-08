@@ -1,7 +1,8 @@
 """ Functions in this model are designed to help transition actuation models for MIMo.
 
 By default, MIMo uses direct torque motors for actuation with the maximum torques corresponding to the maximum voluntary
-isometric torques. A second actuation model exists based on ZITAT ZU PAPIER. This second model more accurately
+isometric torques. A second actuation model exists based on
+`https://arxiv.org/abs/2207.03952 <https://arxiv.org/abs/2207.03952>`_. This second model more accurately
 represents the position and velocity dependent force generating behaviour of real muscles. The second model requires
 several adjustments to the actuation and joint parameters, which can be done using the functions in this module.
 """
