@@ -22,16 +22,6 @@ MIMoEnv
    :show-inheritance:
    :private-members:
 
-MIMoMuscleEnv
--------
-
-.. autoclass:: mimoEnv.envs.mimo_muscle_env.MIMoMuscleEnv
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-
-.. _sec default_data:
 
 Default data fields
 -------------------

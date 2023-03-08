@@ -11,7 +11,11 @@ import mimoEnv.utils as mimo_utils
 class MuscleModel(ActuationModel):
     """ Class for the muscle actuation model.
 
-    TODO: WRITE SOMETHING UP HERE
+    Implementation of the muscle model as seen in
+    `https://arxiv.org/abs/2207.03952 <https://arxiv.org/abs/2207.03952>`_. The muscles are represented by two opposing
+    muscles for each joint. These follow the force-length and force-velocity curves as described in the paper.
+    There are many parameters in this model, two of which were tweaked for MIMo specifically. The function used for
+    this is :func:`~mimoActuation.muscle_testing.calibrate_full`.
     """
     def __init__(self, env, actuators):
         super().__init__(env, actuators)
@@ -193,9 +197,7 @@ class MuscleModel(ActuationModel):
                 self.fmax = 5
 
     def _set_initial_muscle_state(self):
-        """
-        Activity needs to be twice the number of actuated joints.
-        Only works with action space shape if we have adjusted it beforehand.
+        """ Sets activity to zero and recomputes all muscle quantities.
         """
         self.activity = np.zeros(shape=self.action_space.shape)
         self.target_activity = np.zeros(self.action_space.shape)
@@ -217,15 +219,13 @@ class MuscleModel(ActuationModel):
         self.activity = np.clip(self.activity, 0, 1)
 
     def _update_virtual_lengths(self):
-        """
-        Update the muscle lengths from current joint angles.
+        """ Update the muscle lengths from current joint angles.
         """
         self.lce_1 = (self.env.sim.data.qpos[self.mimo_actuated_qpos].flatten() - self.env.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()) * self.moment_1 + self.lce_1_ref
         self.lce_2 = (self.env.sim.data.qpos[self.mimo_actuated_qpos].flatten() - self.env.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()) * self.moment_2 + self.lce_2_ref
 
     def _update_virtual_velocities(self):
-        """
-        Update the muscle lengths from current joint angle velocities.
+        """ Update the muscle lengths from current joint angle velocities.
         """
         self.lce_dot_1 = self.moment_1 * self.env.sim.data.qvel[self.mimo_actuated_qvel].flatten()
         self.lce_dot_2 = self.moment_2 * self.env.sim.data.qvel[self.mimo_actuated_qvel].flatten()
