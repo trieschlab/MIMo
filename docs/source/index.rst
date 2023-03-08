@@ -30,7 +30,9 @@ modalities including touch, vision, proprioception and a vestibular system.
 There are two physical models, which are identical except for the hands and feet. The base version uses
 mitten-like hands with only a single finger. The feet also only have one toe. The v2 version has fully modelled
 five-fingered hands based on the `Adroit hand <https://github.com/vikashplus/Adroit>`_ and feet with two toes.
-Currently there is only a demo environment for the v2 version: :class:`~mimoEnv.envs.dummy.MIMoV2DemoEnv`.
+There is a demo environment for the v2 version available: :class:`~mimoEnv.envs.dummy.MIMoV2DemoEnv`.
+
+We also offer two different actuation models. See the :doc:`Actuation API</api/mimoActuation>` for more details.
 
 The sensory modules can be configured using parameter dictionaries. Defaults exist for all of them, but note that
 the parameters for the sensor modules are specific to the model used. The touch parameters for example expect that

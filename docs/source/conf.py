@@ -20,7 +20,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc.preserve_defaults',  # Do not resolve the names of default arguments
 ]
-autodoc_mock_imports = ["mujoco_py", "cachetools"]
+autodoc_mock_imports = ["mujoco_py"]
 autodoc_member_order = 'bysource'
 # autodoc_class_signature = 'separated' # Moves the class signatures into separate init function docu.
 numpydoc_class_members_toctree = False
