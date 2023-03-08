@@ -11,7 +11,7 @@ letting the simulation settle. This leads to MIMo sagging into a slightly random
 episode. All episodes have a fixed length, there are no goal or failure states.
 
 Reward shaping is employed, such that MIMo is penalised for using muscle inputs and large inputs in particular.
-Additionally he is rewarded each step for the current height of his head.
+Additionally, he is rewarded each step for the current height of his head.
 
 The class with the environment is :class:`~mimoEnv.envs.standup.MIMoStandupEnv` while the path to the scene XML is
 defined in :data:`STANDUP_XML`.
@@ -32,8 +32,8 @@ STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
 SITTING_POSITION = {
     "mimo_location": np.array([-0.103287, 0.00444494, 0.0672742, 0.965518, -0.00942109, -0.207444, 0.157016]),
     "robot:hip_lean1": np.array([-0.0134586]), "robot:hip_rot1": np.array([-0.259285]),
-    "robot:hip_bend1": np.array([0.407198]), "robot:hip_lean2": np.array([-0.0565839]), "robot:hip_rot2": np.array([-0.248653]),
-    "robot:hip_bend2": np.array([0.38224]),
+    "robot:hip_bend1": np.array([0.407198]), "robot:hip_lean2": np.array([-0.0565839]),
+    "robot:hip_rot2": np.array([-0.248653]), "robot:hip_bend2": np.array([0.38224]),
     "robot:head_swivel": np.array([0]), "robot:head_tilt": np.array([0]), "robot:head_tilt_side": np.array([0]),
     "robot:left_eye_horizontal": np.array([0]), "robot:left_eye_vertical": np.array([0]),
     "robot:left_eye_torsional": np.array([0]), "robot:right_eye_horizontal": np.array([0]),
@@ -44,8 +44,8 @@ SITTING_POSITION = {
     "robot:right_hand3": np.array([-0.0568468]), "robot:right_fingers": np.array([-1.4206]),
     "robot:left_shoulder_horizontal": np.array([0.778157]), "robot:left_shoulder_ad_ab": np.array([2.9349]),
     "robot:left_shoulder_rotation": np.array([1.16941]), "robot:left_elbow": np.array([-0.547872]),
-    "robot:left_hand1": np.array([-1.54373]), "robot:left_hand2": np.array([-0.98379]), "robot:left_hand3": np.array([0.225526]),
-    "robot:left_fingers": np.array([-1.27117]),
+    "robot:left_hand1": np.array([-1.54373]), "robot:left_hand2": np.array([-0.98379]),
+    "robot:left_hand3": np.array([0.225526]), "robot:left_fingers": np.array([-1.27117]),
     "robot:right_hip1": np.array([-2.26831]), "robot:right_hip2": np.array([-0.295142]),
     "robot:right_hip3": np.array([-0.313409]), "robot:right_knee": np.array([-2.53125]),
     "robot:right_foot1": np.array([-0.109924]), "robot:right_foot2": np.array([-0.0352949]),

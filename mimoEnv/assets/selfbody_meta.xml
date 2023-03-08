@@ -111,15 +111,15 @@
 		<torque name="proprio:left_toes" site="torque_left_toes"/>
 	</sensor>
 
-    <actuator>
-		<motor class="mimo" name="act:right_shoulder_horizontal" 	joint="robot:right_shoulder_horizontal" gear="1.8" 	forcerange="-1 1"/>
-		<motor class="mimo" name="act:right_shoulder_abduction" 	joint="robot:right_shoulder_ad_ab" 		gear="4" 	forcerange="-.6875 1"/>
-		<motor class="mimo" name="act:right_shoulder_internal" 		joint="robot:right_shoulder_rotation" 	gear="2.5" 	forcerange="-.64 1"/>
-		<motor class="mimo" name="act:right_elbow" 					joint="robot:right_elbow" 				gear="3.6" 	forcerange="-1 .83"/>
-		<motor class="mimo" name="act:right_wrist_rotation" 		joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
-		<motor class="mimo" name="act:right_wrist_flexion" 			joint="robot:right_hand2" 				gear="1.4"	forcerange="-1 .5"/>
-		<motor class="mimo" name="act:right_wrist_ulnar" 			joint="robot:right_hand3" 				gear=".7"	forcerange="-1 1"/>
-		<motor class="mimo" name="act:right_fingers" 				joint="robot:right_fingers" 			gear=".69"	forcerange="-1 .33"/>
+	<actuator>
+		<motor class="mimo"	name="act:right_shoulder_horizontal" 		joint="robot:right_shoulder_horizontal" gear="1.8" 			forcerange="-1 1"		user="1.811 18.80 15.30"/>
+		<motor class="mimo"	name="act:right_shoulder_abduction" 		joint="robot:right_shoulder_ad_ab" 		gear="4" 			forcerange="-.6875 1"	user=".8793 44.17 69.23"/>
+		<motor class="mimo"	name="act:right_shoulder_internal" 			joint="robot:right_shoulder_rotation" 	gear="2.5" 			forcerange="-1 .64"		user="1.498 25.09 17.10"/>
+		<motor class="mimo"	name="act:right_elbow" 						joint="robot:right_elbow" 				gear="3.6" 			forcerange="-1 .83"		user="1.566 35.43 27.04"/>
+		<motor class="mimo"	name="act:right_wrist_rotation" 			joint="robot:right_hand1" 				gear=".7"			forcerange="-1 1"		user="1.513 7.842 7.842"/>
+		<motor class="mimo"	name="act:right_wrist_flexion" 				joint="robot:right_hand2" 				gear="1.24"			forcerange="-1 .57"		user="1.455 13.66 7.874"/>
+		<motor class="mimo"	name="act:right_wrist_ulnar" 				joint="robot:right_hand3" 				gear=".95"			forcerange="-.87 1"		user="2.254 5.155 6.021"/>
+		<motor class="mimo" name="act:right_fingers" 					joint="robot:right_fingers" 			gear=".69"			forcerange="-1 .33" 	user="3.019 6.854 2.551"/>
 	</actuator>
 
 	<equality> <!-- These contraints are used for joint locking during runtime -->

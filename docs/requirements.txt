@@ -1,11 +1,14 @@
-numpy
+numpy<=1.22.0
 gym<=0.20
 matplotlib
 glfw
 scipy
 trimesh
+cachetools
+CacheToolsUtils
 networkx
 rtree
+opencv-python
 sphinx==4.2.0
 sphinx_rtd_theme==1.0.0
 sphinx-automodapi

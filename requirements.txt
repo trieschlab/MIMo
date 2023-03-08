@@ -9,3 +9,4 @@ cachetools
 CacheToolsUtils
 networkx
 rtree
+opencv-python

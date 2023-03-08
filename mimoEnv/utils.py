@@ -24,6 +24,7 @@ MUJOCO_DOF_SIZES = {
     const.JNT_HINGE: 1,
 }
 """ Size of qvel entries for each joint type; free, ball, slide, hinge. 
+
 :meta hide-value:
 """
 
@@ -836,3 +837,69 @@ def plot_forces(points, vectors, limit: float = 1.0, title="", show=True):
         plt.show()
     else:
         return fig, ax
+
+
+# ======================== Mass utils =============================================
+# =================================================================================
+
+def determine_geom_masses(mujoco_model, mujoco_data, body_ids, target_mass):
+    """ Given a list of bodies and a desired target mass, calculate the mass of component geoms assuming identical
+    density. This function takes account of overlap between geoms within each body.
+    """
+    from mimoTouch.sensormeshes import mesh_box, mesh_sphere, mesh_capsule, mesh_cylinder, mesh_ellipsoid
+    mesh_distance = 0.001  # The distance between points on the mesh we use to calculate volume
+    mass = 0
+    volume = 0  # Total volume of the bodies, accounting for overlap
+    volumes = {}  # Overlap of each individual body, accounting for overlap
+    volumes_with_overlap = {}  # Overlap of each individual body, not accounting for overlap, i.e. volume that is a part
+    # of multiple geoms will be counted multiple times.
+    meshes = {}
+    for body_id in body_ids:
+        mass += mujoco_model.body_mass[body_id]
+        body_meshes = []
+        meshes[body_id] = body_meshes
+        for geom_id in get_geoms_for_body(mujoco_model, body_id):
+            geom_type = mujoco_model.geom_type[geom_id]
+            size = mujoco_model.geom_size[geom_id]
+
+            if geom_type == const.GEOM_BOX:
+                mesh = mesh_box(mesh_distance, size)
+            elif geom_type == const.GEOM_SPHERE:
+                mesh = mesh_sphere(mesh_distance, size[0])
+            elif geom_type == const.GEOM_CAPSULE:
+                mesh = mesh_capsule(mesh_distance, 2 * size[1], size[0])
+            elif geom_type == const.GEOM_CYLINDER:
+                # Cylinder size 0 is radius, size 1 is half length
+                mesh = mesh_cylinder(mesh_distance, 2 * size[1], size[0])
+            elif geom_type == const.GEOM_PLANE:
+                RuntimeWarning("Cannot add sensors to plane geoms!")
+                return None
+            elif geom_type == const.GEOM_ELLIPSOID:
+                mesh = mesh_ellipsoid(mesh_distance, size)
+            elif geom_type == const.GEOM_MESH:
+                size = mujoco_model.geom_rbound[geom_id]
+                mesh = mesh_sphere(mesh_distance, size)
+            body_meshes.append(mesh)
+            mesh.vertices = geom_pos_to_body(mujoco_data, mesh.vertices.copy(), geom_id, body_id)
+
+        if len(body_meshes) > 1:
+            volumes[body_id] = body_meshes[0].union(body_meshes[1:]).volume
+            volumes_with_overlap[body_id] = sum([mesh.volume for mesh in body_meshes])
+        else:
+            volumes[body_id] = body_meshes[0].volume
+            volumes_with_overlap[body_id] = body_meshes[0].volume
+
+        volume += volumes[body_id]
+
+    print("Current total mass: {}\n".format(mass))
+    print("Target mass: {}\n".format(target_mass))
+    print("Volume: {}\n".format(volume))
+    print("Final overall density: {}".format(target_mass / volume))
+    print("Body Name\tTarget masses for constituent geoms")
+    for body_id in body_ids:
+        body_name = mujoco_model.body_id2name(body_id)
+        this_body_volume_contribution_ratio = volumes[body_id] / volume
+        this_body_target_mass = this_body_volume_contribution_ratio * target_mass
+        this_body_target_density = this_body_target_mass / volumes_with_overlap[body_id]
+        masses = [mesh.volume * this_body_target_density for mesh in meshes[body_id]]
+        print(body_name, ":", ", ".join(["{:.4e}".format(mass) for mass in masses]))
