@@ -89,7 +89,7 @@ class MuscleModel(ActuationModel):
 
     def substep_update(self):
         """ Update muscle activity and torque.
-        
+
         As activity is time-dependent we update activity and the output torque every time step. The desired
         activity level (input action) is not changed during this."""
         self._compute_muscle_action(update_action=False)
