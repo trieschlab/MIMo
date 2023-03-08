@@ -14,6 +14,8 @@ class MuscleModel(ActuationModel):
     Implementation of the muscle model as seen in
     `https://arxiv.org/abs/2207.03952 <https://arxiv.org/abs/2207.03952>`_. The muscles are represented by two opposing
     muscles for each joint. These follow the force-length and force-velocity curves as described in the paper.
+    Torque is applied in the simulation by setting the gear ratio to the computed output torque and applying a dummy
+    control signal of 1.
     There are many parameters in this model, two of which were tweaked for MIMo specifically. The function used for
     this is :func:`~mimoActuation.muscle_testing.calibrate_full`.
     """
@@ -63,22 +65,49 @@ class MuscleModel(ActuationModel):
         self._set_muscles()
 
     def get_action_space(self):
+        """ Determines the actuation space attribute for the gym environment.
+
+        The actuation space consists of two opposing muscles for each motor in the simulation, each with range [0, 1].
+
+                Returns:
+                    A gym spaces object with the actuation space.
+                """
         action_space = spaces.Box(low=-0.0, high=1.0, shape=(self.env.n_actuators * 2,), dtype=np.float32)
         self.control_input = np.zeros(action_space.shape)  # Set initial control input to avoid NoneType Errors
         return action_space
 
     def action(self, action):
-        self.control_input = action
-        self.env.sim.data.ctrl[self.actuators] = self._compute_muscle_action(action)
+        """ Set the control inputs for the next step.
+
+        Control values are clipped to action space.
+
+        Args:
+            action (numpy.ndarray): A numpy array with control values.
+        """
+        self.control_input = np.clip(action, self.env.action_space.low, self.env.action_space.high)
+        self.env.sim.data.ctrl[self.actuators] = self._compute_muscle_action(self.control_input)
 
     def substep_update(self):
+        """ Update muscle activity and torque.
+        
+        As activity is time-dependent we update activity and the output torque every time step. The desired
+        activity level (input action) is not changed during this."""
         self._compute_muscle_action(update_action=False)
 
     def observations(self):
+        """ Returns muscle quantities for every actuator this time step.
+
+        Included are the control input (i.e. the desired activation level for each muscle), the muscle activation
+        (actual activation levels), the muscle forces (normalized torque factor) and the actual output torque.
+
+        Returns:
+            A flat numpy array with the quantitites described above.
+        """
         torque = self.simulation_torque().flatten()
         return np.concatenate([self.control_input.flatten(), self.muscle_activations.flatten(), self.muscle_forces.flatten(), torque])
 
     def reset(self):
+        """ Set activity to zero and recompute muscle quantities. """
         self._set_initial_muscle_state()
 
     @property

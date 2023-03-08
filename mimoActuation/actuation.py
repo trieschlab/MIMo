@@ -120,6 +120,11 @@ class TorqueMotorModel(ActuationModel):
         self.env.sim.data.ctrl[self.actuators] = self.control_input
 
     def observations(self):
+        """ Control input and output torque for each motor for this time step.
+
+        Returns:
+            A flat numpy array with the control inputs and output torques.
+        """
         torque = self.simulation_torque().flatten()
         return np.concatenate([self.control_input.flatten(), torque])
 
