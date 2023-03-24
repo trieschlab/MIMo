@@ -91,8 +91,7 @@ class SimpleVision(Vision):
         for camera in self.camera_parameters:
             width = self.camera_parameters[camera]["width"]
             height = self.camera_parameters[camera]["height"]
-            imgs[camera] = self.env.render(mode="rgb_array", width=width, height=height, camera_name=camera)
-
+            imgs[camera] = self.env.render(mode="rgb_array", width=width, height=height, camera_name=camera)[0]
         self.sensor_outputs = imgs
         return imgs
 
@@ -113,4 +112,4 @@ class SimpleVision(Vision):
         for camera_name in self.sensor_outputs:
             file_name = camera_name + suffix + ".png"
             matplotlib.image.imsave(os.path.join(
-                directory, file_name), self.sensor_outputs[camera_name])
+                directory, file_name), self.sensor_outputs[camera_name], vmin=0.0, vmax=1.0)

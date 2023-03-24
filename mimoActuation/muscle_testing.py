@@ -509,7 +509,7 @@ def recording_episode(env_name: str, video_dir: str, env_params={}, video_width=
                 action[:] = env.action_space.sample()
         ep_steps += 1
         obs, _, done, _ = env.step(action)
-        img = env.render(mode="rgb_array", width=video_width, height=video_height, camera_name=camera_name)
+        img = env.render(mode="rgb_array", width=video_width, height=video_height, camera_name=camera_name)[0]
         images.append(img)
         if make_joint_plots:
             muscle_data.append(env.collect_data_for_actuators())

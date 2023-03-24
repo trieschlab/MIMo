@@ -808,10 +808,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         There are two modes, 'human' and 'rgb_array'. In 'human' we render to an interactive window, ignoring all other
         parameters. Width and size are determined by the size of the window (which can be resized).
-        In mode 'rgb_array' we return the rendered image as a numpy array. The size of the image is determined by the
-        `width` and `height` parameters. A specific camera can be rendered by providing either its name or its ID. By
-        default, the standard Mujoco free cam is used. The vertical field of view for each camera is defined in the
-        scene xml, with the horizontal field of view determined by the rendering resolution.
+        In mode 'rgb_array' we return the rendered image and a depth image as numpy arrays. The size of the image is
+        determined by the `width` and `height` parameters. A specific camera can be rendered by providing either its
+        name or its ID. By default, the standard Mujoco free cam is used. The vertical field of view for each camera
+        is defined in the scene xml, with the horizontal field of view determined by the rendering resolution.
 
         Args:
             mode (str): One of either 'human' or 'rgb_array'.
@@ -821,7 +821,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             camera_id (int): The ID of the camera that will be rendered. Default None.
 
         Returns:
-            A numpy array with the output image or None if mode is 'human'.
+            A tuple of two numpy array with the RGB and depth images or None if mode is 'human'.
         """
         self._render_callback()
 
@@ -839,10 +839,9 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             self._current_mode = "rgb_array"
 
             self._get_viewer(mode).render(width, height, camera_id)
-            data = self._get_viewer(mode).read_pixels(width, height, depth=False)
+            img, depth = self._get_viewer(mode).read_pixels(width, height, depth=True)
             # original image is upside-down, so flip it
-            return data[::-1, :, :]
-
+            return img[::-1, :, :], depth[::-1, :]
         elif mode == "human":
             # Swap to onscreen context if necessary
             if self._current_mode != "human":
