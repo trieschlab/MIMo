@@ -707,7 +707,7 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         raise NotImplementedError
 
     def reset_model(self):
-        """ This function should reset the simulation state and return initial observations."""
+        """ This function should reset the simulation state and return observations for the post-reset state."""
         raise NotImplementedError
 
     def sample_goal(self):
