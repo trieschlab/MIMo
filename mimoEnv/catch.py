@@ -22,6 +22,8 @@ The available algorithms are `PPO`, `SAC`, `TD3`, `DDPG` and `A2C`.
 import gym
 import time
 import mimoEnv
+from mimoActuation.actuation import TorqueMotorModel
+from mimoActuation.muscle import MuscleModel
 import argparse
 import cv2
 
@@ -101,9 +103,11 @@ def main():
     parser.add_argument('--save_model', default='', type=str,
                         help='Name of model to save')
     parser.add_argument('--action_penalty', action='store_true',
-                        help='Adds a penalty for high-control actions if true.')
+                        help='Adds a penalty for actions if true.')
     parser.add_argument('--render_video', action='store_true',
                         help='Renders a video for each episode during the test run.')
+    parser.add_argument('--use_muscle', action='store_true',
+                        help='Use the muscle actuation model instead of spring-damper model if provided.')
     
     args = parser.parse_args()
     algorithm = args.algorithm
@@ -114,6 +118,8 @@ def main():
     test_for = args.test_for
     action_penalty = args.action_penalty
     render_video = args.render_video
+    use_muscle = args.use_muscle
+    actuation_model = MuscleModel if use_muscle else TorqueMotorModel
 
     if algorithm == 'PPO':
         from stable_baselines3 import PPO as RL
@@ -126,7 +132,7 @@ def main():
     elif algorithm == 'A2C':
         from stable_baselines3 import A2C as RL
 
-    env = gym.make('MIMoCatch-v0', action_penalty=action_penalty)
+    env = gym.make('MIMoCatch-v0', action_penalty=action_penalty, actuation_model=actuation_model)
     _ = env.reset()
 
     # load pretrained model or create new one
