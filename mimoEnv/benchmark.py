@@ -1,6 +1,6 @@
 """ This module contains some functions to benchmark the performance of the simulation.
 
-Classes and functions :cls:`FunctionProfile`, :cls:`StatsProfile` and :func:`get_stats_profile`  from
+Classes and functions :class:`FunctionProfile`, :class:`StatsProfile` and :func:`get_stats_profile`  from
 NAME HERE @ LINK
 """
 

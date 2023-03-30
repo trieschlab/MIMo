@@ -829,7 +829,7 @@ class TrimeshTouch(Touch):
         adjusted forces directly into the output dictionary.
 
         An LRU cache is used to speed up performance of nearest sensor point searches. This cache persists through
-        calls to :meth:`.reset`.
+        calls to :meth:`~mimoEnv.envs.mimo_env.MIMoEnv.reset`.
 
         The following attributes are provided in addition to those of :class:`~mimoTouch.touch.Touch`.
 

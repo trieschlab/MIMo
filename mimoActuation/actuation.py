@@ -14,6 +14,8 @@ class ActuationModel:
     generation by taking the desired control input and altering it before passing it to the simulation.
     Actuation models can define an arbitrary control method, but must compute control inputs for the actual simulation
     motors as defined in the XMLs.
+
+    The key functions are:
     - :meth:`.get_action_space` determines the actuation space attribute for the gym environment. This should have the
       shape of the input to the abstract model motors.
     - :meth:`.action` computes the actual control inputs to the simulation motors from a control input to the abstract

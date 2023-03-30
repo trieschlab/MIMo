@@ -759,8 +759,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Returns:
             float: The reward that corresponds to the provided achieved goal w.r.t. to the desired
             goal. Note that the following should always hold true:
-                ob, reward, done, info = env.step()
-                assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
+                - ob, reward, done, info = env.step()
+                - assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
         """
         raise NotImplementedError
 
