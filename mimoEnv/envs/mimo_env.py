@@ -4,13 +4,11 @@ The abstract base class is :class:`~mimoEnv.envs.mimo_env.MIMoEnv`. Default para
 are provided as well.
 """
 import os
+import copy
 import sys
-import glfw
 import numpy as np
 import mujoco_py
-import copy
 import glfw
-import sys
 
 from gym import spaces, utils
 from gym.envs.robotics import robot_env
@@ -19,6 +17,7 @@ from mimoTouch.touch import TrimeshTouch
 from mimoVision.vision import SimpleVision
 from mimoVestibular.vestibular import SimpleVestibular
 from mimoProprioception.proprio import SimpleProprioception
+from mimoActuation.actuation import ActuationModel, TorqueMotorModel
 import mimoEnv.utils as mimo_utils
 
 
@@ -164,7 +163,7 @@ DEFAULT_VESTIBULAR_PARAMS = {
 
 
 DEFAULT_PROPRIOCEPTION_PARAMS = {
-    "components": ["velocity", "torque", "limits"],
+    "components": ["velocity", "torque", "limits", "actuation"],
     "threshold": .035,
 }
 """ Default parameters for proprioception. Relative joint positions are always included.
@@ -188,7 +187,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     :data:`DEFAULT_VISION_PARAMS`, :data:`DEFAULT_VESTIBULAR_PARAMS`. Passing these to the constructor will enable the
     relevant sensory module.
     Not passing a dictionary disables the relevant module.
-    By default all sensory modalities are disabled and the only sensor outputs are the relative joint positions.
+    By default, all sensory modalities are disabled and the only sensor outputs are the relative joint positions.
 
     Implementing subclasses will have to override the following functions:
     - :meth:`._is_success`, to determine when an episode completes successfully.
@@ -202,13 +201,13 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     Additional functions that may be overridden optionally are:
 
     - :meth:`._is_done`, which determines the `done` return value after each step.
-    - :meth:`._proprio_setup`, :meth:`._touch_setup`, :meth:`._vision_setup`, :meth:`._vestibular_setup`, these
+    - :meth:`.proprio_setup`, :meth:`.touch_setup`, :meth:`.vision_setup`, :meth:`.vestibular_setup`, these
       functions initialize the associated sensor modality. These should be overridden if you want to replace the default
       implementation. Default implementations are :class:`~mimoProprioception.proprio.SimpleProprioception`,
       :class:`~mimoTouch.touch.DiscreteTouch`, :class:`~mimoVision.vision.SimpleVision`,
       :class:`~mimoVestibular.vestibular.SimpleVestibular`.
-    - :meth:`._get_proprio_obs`, :meth:`._get_touch_obs`, :meth:`._get_vision_obs`, :meth:`._get_vestibular_obs`, these
-      functions collect the observations of the associated sensor modality. These allow you to do post processing on
+    - :meth:`.get_proprio_obs`, :meth:`.get_touch_obs`, :meth:`.get_vision_obs`, :meth:`.get_vestibular_obs`, these
+      functions collect the observations of the associated sensor modality. These allow you to do post-processing on
       the output without having to alter the base implementations.
     - :meth:`._reset_sim`, which resets the physical simulation. If you have special conditions on the initial position
       this function should implement/ensure them.
@@ -232,6 +231,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
       Default `None`.
     - `vestibular_params`: The configuration dictionary for the vestibular system. If `None` the module is disabled.
       Default `None`.
+    - `actuation_model`: Class for the actuation model. Default is :class:`~mimoActuation.actuation.TorqueMotorModel`.
+      The class must meet the interface defined by :class:`~mimoActuation.actuation.ActuationModel`.
     - `goals_in_observation`: If `True` the desired and achieved goals are included in the observation dictionary.
       Default `True`.
     - `done_active`: If `True`, :meth:`._is_done` returns `True` if the simulation reaches a success or failure state.
@@ -244,6 +245,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         goal: The desired goal.
         action_space: The action space. See Gym documentation for more.
         observation_space: The observation space. See Gym documentation for more.
+        actuation_model: Reference to the actuation model instance.
         proprio_params: The configuration dictionary for the proprioceptive system.
         proprioception: A reference to the proprioception instance.
         touch_params: The configuration dictionary for the touch system.
@@ -263,12 +265,13 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     def __init__(self,
                  model_path,
-                 initial_qpos={},
+                 initial_qpos=None,
                  n_substeps=2,
                  proprio_params=None,
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
+                 actuation_model=TorqueMotorModel,
                  goals_in_observation=True,
                  done_active=False):
 
@@ -289,7 +292,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         fullpath = os.path.abspath(model_path)
         if not os.path.exists(fullpath):
-            raise IOError("File {} does not exist".format(fullpath))
+            raise IOError(f"File {fullpath} does not exist")
 
         model = mujoco_py.load_model_from_path(fullpath)
         self.n_substeps = n_substeps
@@ -306,22 +309,67 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         }
 
         self.seed()
-        # Action space
-        self.action_space = None
-        self.mimo_actuators = None
-        self._get_actuators()
-        self._set_action_space()
 
-        self._env_setup(initial_qpos=initial_qpos)
-        self.initial_state = copy.deepcopy(self.sim.get_state())
+        # MIMo components
+        self.mimo_joints = None
+        self.mimo_actuators = None
+        self._get_joints()
+        self._get_actuators()
 
         # Face emotions:
         self.facial_expressions = None
         self._head_material_id = None
-        self._set_facial_expressions(EMOTES)
+        self._get_facial_expressions(EMOTES)
+
+        self._env_setup(initial_qpos=initial_qpos)
+        self.initial_state = copy.deepcopy(self.sim.get_state())
+
+        # Actuation init
+        self.action_space = None
+        self.actuation_model = actuation_model(self, self.mimo_actuators)
+        self._set_action_space()
 
         self.goal = self._sample_goal()
+        self._set_observation_space()
 
+    @property
+    def dt(self):
+        """ Time passed during each call to :meth:`.step`"""
+        return self.sim.model.opt.timestep * self.n_substeps
+
+    @property
+    def n_actuators(self):
+        """ The number of actuators for MIMo."""
+        return self.mimo_actuators.shape[0]
+
+    def _get_actuators(self):
+        """ Saves IDs of the actuators associated with MIMo in :attr:`.mimo_actuators`."""
+        actuators = [self.sim.model.actuator_name2id(name)
+                     for name
+                     in self.sim.model.actuator_names
+                     if name.startswith("act:")]
+        self.mimo_actuators = np.asarray(actuators)
+
+    def _get_joints(self):
+        """ Saves the IDs of the joints associated with MIMO in :attr:`.mimo_joints`."""
+        joints = [self.sim.model.joint_name2id(name)
+                  for name
+                  in self.sim.model.joint_names
+                  if name.startswith("robot:")]
+        self.mimo_joints = np.asarray(joints)
+
+    def _set_action_space(self):
+        """ Sets the action space attribute.
+
+        By default, the actuation space contains only those actuators contained in MIMo.
+        """
+        self.action_space = self.actuation_model.get_action_space()
+
+    def _set_observation_space(self):
+        """ Sets the observation space attribute.
+
+        Calls :meth:`._get_obs()` and determines the space using the returned observations.
+        """
         obs = self._get_obs()
         # Observation spaces
         spaces_dict = {
@@ -342,28 +390,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         self.observation_space = spaces.Dict(spaces_dict)
 
-    @property
-    def dt(self):
-        """ Time passed during each call to :meth:`.step`"""
-        return self.sim.model.opt.timestep * self.n_substeps
-
-    @property
-    def n_actuators(self):
-        """ The number of actuators for MIMo."""
-        return self.mimo_actuators.shape[0]
-
-    def _get_actuators(self):
-        """ Returns the names of the actuators associated with MIMo."""
-        actuators = [i for i, name in enumerate(self.sim.model.actuator_names) if name.startswith("act:")]
-        self.mimo_actuators = np.asarray(actuators)
-
-    def _set_action_space(self):
-        bounds = self.sim.model.actuator_ctrlrange.copy().astype(np.float32)[self.mimo_actuators]
-        low, high = bounds.T
-        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
-
-    def _set_facial_expressions(self, emotion_textures):
-        """ Associates facial textures in the model with human readable names for the associated emotions"""
+    def _get_facial_expressions(self, emotion_textures):
+        """ Associates facial textures in the model with human-readable names for the associated emotions"""
         self.facial_expressions = {}
         for emote in emotion_textures:
             tex_name = emotion_textures[emote]
@@ -384,22 +412,35 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
         # observation space and goals are not set yet
 
+        # Implement qpos:
+        self._set_initial_position(initial_qpos)
+
         # Do setups
-        self._proprio_setup(self.proprio_params)
+        self.proprio_setup(self.proprio_params)
         if self.touch_params is not None:
-            self._touch_setup(self.touch_params)
+            self.touch_setup(self.touch_params)
         if self.vision_params is not None:
-            self._vision_setup(self.vision_params)
+            self.vision_setup(self.vision_params)
         if self.vestibular_params is not None:
-            self._vestibular_setup(self.vestibular_params)
+            self.vestibular_setup(self.vestibular_params)
         # Should be able to get all types of sensor outputs here
         # Should be able to produce all control inputs here
 
-        # Implement qpos:
-        for joint_name in initial_qpos:
-            mimo_utils.set_joint_qpos(self.sim.model, self.sim.data, joint_name, initial_qpos[joint_name])
+    def _set_initial_position(self, initial_qpos):
+        """ Sets the initial positions of the joint in the environment.
 
-    def _proprio_setup(self, proprio_params):
+        The input should be a dictionary with joint names as keys and joint positions (in radians as floats) as values.
+        Thin function then sets each listed joint to the corresponding position. Joints not contained in the dictionary
+        are left unaltered.
+
+        Args:
+            initial_qpos: A dictionary with joint names as keys and joint positions (in radians as floats) as values.
+        """
+        if initial_qpos:
+            for joint_name in initial_qpos:
+                mimo_utils.set_joint_qpos(self.sim.model, self.sim.data, joint_name, initial_qpos[joint_name])
+
+    def proprio_setup(self, proprio_params):
         """ Perform the setup and initialization of the proprioceptive system.
 
         This should be overridden if you want to use another implementation!
@@ -409,7 +450,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.proprioception = SimpleProprioception(self, proprio_params)
 
-    def _touch_setup(self, touch_params):
+    def touch_setup(self, touch_params):
         """ Perform the setup and initialization of the touch system.
 
         This should be overridden if you want to use another implementation!
@@ -419,7 +460,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.touch = TrimeshTouch(self, touch_params)
 
-    def _vision_setup(self, vision_params):
+    def vision_setup(self, vision_params):
         """ Perform the setup and initialization of the vision system.
 
         This should be overridden if you want to use another implementation!
@@ -429,7 +470,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         self.vision = SimpleVision(self, vision_params)
 
-    def _vestibular_setup(self, vestibular_params):
+    def vestibular_setup(self, vestibular_params):
         """ Perform the setup and initialization of the vestibular system.
 
         This should be overridden if you want to use another implementation!
@@ -443,11 +484,17 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """ Step simulation forward for n_frames number of steps.
 
         Args:
+<<<<<<< HEAD
             action: The control action for these steps.
             n_frames: The number of simulation substeps to perform
+=======
+            action (np.ndarray): The control input for the actuators.
+            n_frames (int): The number of physics steps to perform.
+>>>>>>> main
         """
         self._set_action(action)
         for _ in range(n_frames):
+            self.actuation_model.substep_update()
             self.sim.step()
             self._substep_callback()
 
@@ -496,12 +543,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         Can be used to enforce additional constraints on the simulation state.
         """
-        pass
 
     def _substep_callback(self):
         """ A custom callback that is called after each simulation substep.
         """
-        pass
 
     def reset(self):
         """ Attempt to reset the simulator and sample a new goal.
@@ -518,14 +563,15 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         did_reset_sim = False
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
+        self.actuation_model.reset()
         self.goal = self._sample_goal()
         obs = self._get_obs()
         return obs
 
     def _reset_sim(self):
-        """Resets a simulation and indicates whether or not it was successful.
+        """Resets a simulation and indicates if it was successful.
 
-        Resets the simulation state and returns whether or not the reset was successful. This is useful if your
+        Resets the simulation state and returns if the reset was successful. This is useful if your
         resetting function has a randomized component that can end up in an illegal state. In this case this function
         will be called again until a valid state is reached.
 
@@ -536,7 +582,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.sim.forward()
         return True
 
-    def _get_proprio_obs(self):
+    def get_proprio_obs(self):
         """ Collects and returns the outputs of the proprioceptive system.
 
         Override this function if you want to make some simple post-processing!
@@ -546,7 +592,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """
         return self.proprioception.get_proprioception_obs()
 
-    def _get_touch_obs(self):
+    def get_touch_obs(self):
         """ Collects and returns the outputs of the touch system.
 
         Override this function if you want to make some simple post-processing!
@@ -557,7 +603,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         touch_obs = self.touch.get_touch_obs()
         return touch_obs
 
-    def _get_vision_obs(self):
+    def get_vision_obs(self):
         """ Collects and returns the outputs of the vision system.
 
         Override this function if you want to make some simple post-processing!
@@ -569,7 +615,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         vision_obs = self.vision.get_vision_obs()
         return vision_obs
 
-    def _get_vestibular_obs(self):
+    def get_vestibular_obs(self):
         """ Collects and returns the outputs of the vestibular system.
 
         Override this function if you want to make some simple post-processing!
@@ -592,22 +638,22 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             dict: A dictionary containing simulation outputs with separate entries for each sensor modality.
         """
         # robot proprioception:
-        proprio_obs = self._get_proprio_obs()
+        proprio_obs = self.get_proprio_obs()
         observation_dict = {
             "observation": proprio_obs,
         }
         # robot touch sensors:
         if self.touch:
-            touch_obs = self._get_touch_obs().ravel()
+            touch_obs = self.get_touch_obs().ravel()
             observation_dict["touch"] = touch_obs
         # robot vision:
         if self.vision:
-            vision_obs = self._get_vision_obs()
+            vision_obs = self.get_vision_obs()
             for sensor in vision_obs:
                 observation_dict[sensor] = vision_obs[sensor]
         # vestibular
         if self.vestibular:
-            vestibular_obs = self._get_vestibular_obs()
+            vestibular_obs = self.get_vestibular_obs()
             observation_dict["vestibular"] = vestibular_obs
 
         if self.goals_in_observation:
@@ -620,16 +666,15 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def _set_action(self, action):
         """ Set the control inputs for the next step.
 
-        Control values are clipped to the control range limits defined the MuJoCo xmls and normalized to be even in
+        Control values are clipped to the control range limits defined the MuJoCo XMLs and normalized to be even in
         both directions, i.e. an input of 0 corresponds to the center of the control range, rather than the default or
-        neutral control position. The control ranges for the MIMo xmls are set up to be symmetrical, such that an input
+        neutral control position. The control ranges for the MIMo XMLs are set up to be symmetrical, such that an input
         of 0 corresponds to no motor torque.
 
         Args:
             action (numpy.ndarray): A numpy array with control values.
         """
-        action = np.clip(action, self.action_space.low, self.action_space.high)
-        self.sim.data.ctrl[self.mimo_actuators] = action
+        self.actuation_model.action(action)
 
     def swap_facial_expression(self, emotion):
         """ Changes MIMos facial texture.
@@ -640,12 +685,12 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Args:
             emotion (str): A valid emotion name.
         """
-        assert emotion in self.facial_expressions, "{} is not a valid facial expression!".format(emotion)
+        assert emotion in self.facial_expressions, f"{emotion} is not a valid facial expression!"
         new_tex_id = self.facial_expressions[emotion]
         self.sim.model.mat_texid[self._head_material_id] = new_tex_id
 
     def _is_success(self, achieved_goal, desired_goal):
-        """ Indicates whether or not the the achieved goal mathes the desired goal.
+        """ Indicates if the achieved goal matches the desired goal.
 
         Args:
             achieved_goal (object): The goal that was achieved during execution.
@@ -671,7 +716,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def _is_done(self, achieved_goal, desired_goal, info):
         """ This function should return `True` if we have reached a success or failure state.
 
-        By default this function always returns `False`. If :attr:`.done_active` is set to `True`, ignores both goal
+        By default, this function always returns `False`. If :attr:`.done_active` is set to `True`, ignores both goal
         parameters and instead returns `True` if either :meth:`._is_success` or :meth:`._is_failure` return True.
         The goal parameters are there to allow this class to be more easily overridden by subclasses, should this be
         required.
@@ -719,8 +764,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Returns:
             float: The reward that corresponds to the provided achieved goal w.r.t. to the desired
             goal. Note that the following should always hold true:
-                ob, reward, done, info = env.step()
-                assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
+                - ob, reward, done, info = env.step()
+                - assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
         """
         raise NotImplementedError
 
@@ -730,9 +775,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """ Handles render contexts.
 
         Args:
-            mode (str): One of "human" or "rgb_array". If "rgb_array" an offscreen render context is used, otherwise we render
-            to an interactive viewer window.
-
+            mode (str): One of "human" or "rgb_array". If "rgb_array" an off-screen render context is used, otherwise we
+            render to an interactive viewer window.
         """
         self.viewer = self._viewers.get(mode)
         if self.viewer is None:
@@ -769,10 +813,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         There are two modes, 'human' and 'rgb_array'. In 'human' we render to an interactive window, ignoring all other
         parameters. Width and size are determined by the size of the window (which can be resized).
-        In mode 'rgb_array' we return the rendered image as a numpy array. The size of the image is determined by the
-        `width` and `height` parameters. A specific camera can be rendered by providing either its name or its ID. By
-        default the standard Mujoco free cam is used. The vertical field of view for each camera is defined in the
-        scene xml, with the horizontal field of view determined by the rendering resolution.
+        In mode 'rgb_array' we return the rendered image and a depth image as numpy arrays. The size of the image is
+        determined by the `width` and `height` parameters. A specific camera can be rendered by providing either its
+        name or its ID. By default, the standard Mujoco free cam is used. The vertical field of view for each camera
+        is defined in the scene xml, with the horizontal field of view determined by the rendering resolution.
 
         Args:
             mode (str): One of either 'human' or 'rgb_array'.
@@ -782,7 +826,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
             camera_id (int): The ID of the camera that will be rendered. Default None.
 
         Returns:
-            A numpy array with the output image or None if mode is 'human'.
+            A tuple of two numpy array with the RGB and depth images or None if mode is 'human'.
         """
         self._render_callback()
 
@@ -790,29 +834,30 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         if camera_name is not None:
             camera_id = self.sim.model.camera_name2id(camera_name)
 
-        # Make sure viewers and contexts are setup before we try to swap to/from nonexisting contexts
+        # Make sure viewers and contexts are set up before we try to swap to/from nonexistent contexts
         self._get_viewer(mode)
 
         if mode == "rgb_array":
-            # Swap to offscreen context if necessary
+            # Swap to off-screen context if necessary
             if self._current_mode != "rgb_array":
                 self._swap_context(self.offscreen_context.window)
             self._current_mode = "rgb_array"
 
             self._get_viewer(mode).render(width, height, camera_id)
-            data = self._get_viewer(mode).read_pixels(width, height, depth=False)
+            img, depth = self._get_viewer(mode).read_pixels(width, height, depth=True)
             # original image is upside-down, so flip it
-            return data[::-1, :, :]
-
+            return img[::-1, :, :], depth[::-1, :]
         elif mode == "human":
             # Swap to onscreen context if necessary
             if self._current_mode != "human":
                 self._swap_context(self.sim._render_context_window.window)
             self._current_mode = "human"
             self._get_viewer(mode).render()
+            return None
+        else:
+            raise ValueError("Invalid render mode!")
 
     def _viewer_setup(self):
         """Initial configuration of the viewer. Can be used to set the camera position,
         for example.
         """
-        pass

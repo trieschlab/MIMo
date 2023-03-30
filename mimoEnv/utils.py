@@ -24,10 +24,7 @@ MUJOCO_DOF_SIZES = {
     const.JNT_HINGE: 1,
 }
 """ Size of qvel entries for each joint type; free, ball, slide, hinge. 
-<<<<<<< HEAD
 
-=======
->>>>>>> main
 :meta hide-value:
 """
 
@@ -190,57 +187,6 @@ def get_child_bodies(sim_model, body_id):
     return children
 
 
-def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
-    """ Sets the joint position for the joint with name joint_name.
-
-    Directly sets the joint to the position provided by `qpos`. Note that the shape of `qpos` must match the joint! A
-    free joint for example has length 7. The sizes for all types can be found in :data:`MUJOCO_JOINT_SIZES`
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        mujoco_data (sim.data): The MuJoCo data object.
-        joint_name (str): The name of the joint.
-        qpos (numpy.ndarray): The new joint position. The shape of the array must match the joint!
-    """
-    joint_id = mujoco_model.joint_name2id(joint_name)
-    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
-    joint_type = mujoco_model.jnt_type[joint_id]
-    n_qpos = MUJOCO_JOINT_SIZES[joint_type]
-    mujoco_data.qpos[joint_qpos_addr:joint_qpos_addr + n_qpos] = qpos
-
-
-def get_joint_qpos_addr(mujoco_model, joint_id):
-    """ Get the indices in the qpos array corresponding to the given joint.
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        joint_id (int): The ID of the joint.
-
-    Returns:
-        A list of indices.
-    """
-    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
-    joint_type = mujoco_model.jnt_type[joint_id]
-    n_qpos = MUJOCO_JOINT_SIZES[joint_type]
-    return range(joint_qpos_addr, joint_qpos_addr + n_qpos)
-
-
-def get_joint_qvel_addr(mujoco_model, joint_id):
-    """ Get the indices in the qvel array corresponding to the given joint.
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        joint_id (int): The ID of the joint.
-
-    Returns:
-        A list of indices.
-    """
-    joint_qvel_addr = mujoco_model.jnt_dofadr[joint_id]
-    joint_type = mujoco_model.jnt_type[joint_id]
-    n_qvel = MUJOCO_DOF_SIZES[joint_type]
-    return range(joint_qvel_addr, joint_qvel_addr + n_qvel)
-
-
 def get_data_for_sensor(mujoco_model, mujoco_data, sensor_name):
     """ Get sensor data from the sensor with the provided name.
 
@@ -345,6 +291,140 @@ def material_name2id(mujoco_model, material_name):
     if mat_id is None:
         raise RuntimeError("Could not find material with name {}".format(material_name))
     return mat_id
+
+
+def equality_name2id(mujoco_model, equality_constraint_name):
+    """ Returns the id for the equality constraint with the given name.
+
+    Constraints in mujoco can be named, but we need the id to be able to do almost anything. This function allows
+    grabbing the id of a constraint with a given name. It uses :func:`~mimoEnv.utils._decode_name` to do this, which is
+    not optimized, so do not use this often.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        equality_constraint_name (str): The name of the constraint.
+
+    Returns:
+        int: The id of the constraint.
+    """
+    const_id = None
+    for i, name_adr in enumerate(mujoco_model.name_eqadr):
+        name = _decode_name(mujoco_model, name_adr)
+        if name == equality_constraint_name:
+            const_id = i
+            break
+    if const_id is None:
+        raise RuntimeError("Could not find equality constraint with name {}".format(equality_constraint_name))
+    return const_id
+
+
+# ======================== Joint manipulation utils ===============================
+# =================================================================================
+
+
+def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
+    """ Sets the joint position for the joint with name joint_name.
+
+    Directly sets the joint to the position provided by `qpos`. Note that the shape of `qpos` must match the joint! A
+    free joint for example has length 7. The sizes for all types can be found in :data:`MUJOCO_JOINT_SIZES`
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_data (sim.data): The MuJoCo data object.
+        joint_name (str): The name of the joint.
+        qpos (numpy.ndarray): The new joint position. The shape of the array must match the joint!
+    """
+    joint_id = mujoco_model.joint_name2id(joint_name)
+    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qpos = MUJOCO_JOINT_SIZES[joint_type]
+    mujoco_data.qpos[joint_qpos_addr:joint_qpos_addr + n_qpos] = qpos
+
+
+def get_joint_qpos_addr(mujoco_model, joint_id):
+    """ Get the indices in the qpos array corresponding to the given joint.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_id (int): The ID of the joint.
+
+    Returns:
+        A list of indices.
+    """
+    joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qpos = MUJOCO_JOINT_SIZES[joint_type]
+    return range(joint_qpos_addr, joint_qpos_addr + n_qpos)
+
+
+def get_joint_qvel_addr(mujoco_model, joint_id):
+    """ Get the indices in the qvel array corresponding to the given joint.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_id (int): The ID of the joint.
+
+    Returns:
+        A list of indices.
+    """
+    joint_qvel_addr = mujoco_model.jnt_dofadr[joint_id]
+    joint_type = mujoco_model.jnt_type[joint_id]
+    n_qvel = MUJOCO_DOF_SIZES[joint_type]
+    return range(joint_qvel_addr, joint_qvel_addr + n_qvel)
+
+
+def set_joint_locking_angle(mujoco_model, joint_name, angle, constraint_id=None):
+    """ Sets the angle from default at which the joint will be locked.
+
+    The angle is in radians, and can be positive or negative. This function does not lock or unlock a joint, merely
+    changes the angle.
+    This function requires that there be a constraint already existing the scene XML. This is the case for MIMo by
+    default, with each joint having a constraint of the same name that is disabled at initialization.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_name (str): The name of the joint.
+        angle (float): The locking angle in radians, as a delta from the model starting value.
+        constraint_id (int): If the ID of the constraint is already known the name search can be bypassed by passing
+            it here.
+    """
+    if constraint_id is None:
+        constraint_id = equality_name2id(mujoco_model, joint_name)
+    mujoco_model.eq_data[constraint_id, 0] = angle
+
+
+def lock_joint(mujoco_model, joint_name, joint_angle=None):
+    """ Locks a joint to a fixed angle.
+
+    This function utilizes MuJoCos equality constraints to achieve the locking effect, requiring that there be a
+    constraint already existing the scene XML. This is the case for MIMo by default, with each joint having a constraint
+    of the same name that is disabled at initialization.
+    In effect this function enables the equality constraint with same name as the argument.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_name (str): The name of the joint.
+        joint_angle (float): The locking angle in radians, as a delta from the model starting value. The angle that the
+            joint will be locked to can be set separately using :func:`~mimoEnv.utils.set_joint_locking_angle`. By
+            default joints are locked into the value they have in the scene xml.
+    """
+    constraint_id = equality_name2id(mujoco_model, joint_name)
+    if joint_angle is not None:
+        set_joint_locking_angle(mujoco_model, joint_name, joint_angle, constraint_id=constraint_id)
+    mujoco_model.eq_active[constraint_id] = True
+
+
+def unlock_joint(mujoco_model, joint_name):
+    """ Unlocks a given joint.
+
+    See :func:`~mimoEnv.utils.lock_joint`.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        joint_name (str): The name of the joint.
+    """
+    constraint_id = equality_name2id(mujoco_model, joint_name)
+    mujoco_model.eq_active[constraint_id] = False
 
 
 # ======================== Mujoco frame utils =====================================
@@ -757,3 +837,69 @@ def plot_forces(points, vectors, limit: float = 1.0, title="", show=True):
         plt.show()
     else:
         return fig, ax
+
+
+# ======================== Mass utils =============================================
+# =================================================================================
+
+def determine_geom_masses(mujoco_model, mujoco_data, body_ids, target_mass):
+    """ Given a list of bodies and a desired target mass, calculate the mass of component geoms assuming identical
+    density. This function takes account of overlap between geoms within each body.
+    """
+    from mimoTouch.sensormeshes import mesh_box, mesh_sphere, mesh_capsule, mesh_cylinder, mesh_ellipsoid
+    mesh_distance = 0.001  # The distance between points on the mesh we use to calculate volume
+    mass = 0
+    volume = 0  # Total volume of the bodies, accounting for overlap
+    volumes = {}  # Overlap of each individual body, accounting for overlap
+    volumes_with_overlap = {}  # Overlap of each individual body, not accounting for overlap, i.e. volume that is a part
+    # of multiple geoms will be counted multiple times.
+    meshes = {}
+    for body_id in body_ids:
+        mass += mujoco_model.body_mass[body_id]
+        body_meshes = []
+        meshes[body_id] = body_meshes
+        for geom_id in get_geoms_for_body(mujoco_model, body_id):
+            geom_type = mujoco_model.geom_type[geom_id]
+            size = mujoco_model.geom_size[geom_id]
+
+            if geom_type == const.GEOM_BOX:
+                mesh = mesh_box(mesh_distance, size)
+            elif geom_type == const.GEOM_SPHERE:
+                mesh = mesh_sphere(mesh_distance, size[0])
+            elif geom_type == const.GEOM_CAPSULE:
+                mesh = mesh_capsule(mesh_distance, 2 * size[1], size[0])
+            elif geom_type == const.GEOM_CYLINDER:
+                # Cylinder size 0 is radius, size 1 is half length
+                mesh = mesh_cylinder(mesh_distance, 2 * size[1], size[0])
+            elif geom_type == const.GEOM_PLANE:
+                RuntimeWarning("Cannot add sensors to plane geoms!")
+                return None
+            elif geom_type == const.GEOM_ELLIPSOID:
+                mesh = mesh_ellipsoid(mesh_distance, size)
+            elif geom_type == const.GEOM_MESH:
+                size = mujoco_model.geom_rbound[geom_id]
+                mesh = mesh_sphere(mesh_distance, size)
+            body_meshes.append(mesh)
+            mesh.vertices = geom_pos_to_body(mujoco_data, mesh.vertices.copy(), geom_id, body_id)
+
+        if len(body_meshes) > 1:
+            volumes[body_id] = body_meshes[0].union(body_meshes[1:]).volume
+            volumes_with_overlap[body_id] = sum([mesh.volume for mesh in body_meshes])
+        else:
+            volumes[body_id] = body_meshes[0].volume
+            volumes_with_overlap[body_id] = body_meshes[0].volume
+
+        volume += volumes[body_id]
+
+    print("Current total mass: {}\n".format(mass))
+    print("Target mass: {}\n".format(target_mass))
+    print("Volume: {}\n".format(volume))
+    print("Final overall density: {}".format(target_mass / volume))
+    print("Body Name\tTarget masses for constituent geoms")
+    for body_id in body_ids:
+        body_name = mujoco_model.body_id2name(body_id)
+        this_body_volume_contribution_ratio = volumes[body_id] / volume
+        this_body_target_mass = this_body_volume_contribution_ratio * target_mass
+        this_body_target_density = this_body_target_mass / volumes_with_overlap[body_id]
+        masses = [mesh.volume * this_body_target_density for mesh in meshes[body_id]]
+        print(body_name, ":", ", ".join(["{:.4e}".format(mass) for mass in masses]))

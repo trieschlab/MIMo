@@ -13,6 +13,9 @@ MIMo is a platform for the research of the cognitive development of infants. It 
 First install mujoco 2.10 and mujoco-py 2.1 following their instructions.
 Then clone this repository, install other dependencies with `pip install -r requirements.txt` and finally run `pip install -e .`
 
+> **Note**
+> A version using gym 0.26.2 and mujoco instead of mujoco-py is available on the branch migrate/mujoco_binds. Stable Baselines does not support that version of gym yet and so the demo scripts do not work on that branch.
+
 ## The MIMo environment
 
 The main class of the codebase is `MIMoEnv`. It is an openAI gym style environment, implementing all the relevant gym interfaces. It is the base class that is subclassed by all the experiment specific environments. It takes a MuJoCo XML and a series of parameter dictionaries for the sensory modalities and builds all the specific attributes, such as the observation space, from these initial inputs.

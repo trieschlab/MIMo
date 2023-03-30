@@ -18,7 +18,7 @@ import numpy as np
 import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
-from mimoEnv.envs.mimo_muscle_env import MIMoMuscleEnv
+from mimoActuation.muscle import MuscleModel
 import mimoEnv.utils as env_utils
 
 
@@ -75,6 +75,7 @@ class MIMoCatchEnv(MIMoEnv):
                  touch_params=TOUCH_PARAMS,
                  vision_params=None,
                  vestibular_params=None,
+                 actuation_model=MuscleModel,
                  goals_in_observation=False,
                  done_active=True,
                  action_penalty=False):
@@ -86,6 +87,7 @@ class MIMoCatchEnv(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
+                         actuation_model=actuation_model,
                          goals_in_observation=goals_in_observation,
                          done_active=done_active)
 
@@ -128,8 +130,10 @@ class MIMoCatchEnv(MIMoEnv):
             reward = -1
 
         if self.action_penalty:
-            # TODO: Use motor torque instead of just control input
-            reward -= 0.5 * np.square(self.sim.data.ctrl).sum() / self.action_space.shape[0]
+            actuator_gear = self.sim.model.actuator_gear[self.mimo_actuators, 0]
+            control_input = self.sim.data.ctrl[self.mimo_actuators]
+            torque = control_input*actuator_gear
+            reward -= 0.5 * (torque).sum() / self.action_space.shape[0]
 
         if self._is_success(achieved_goal, desired_goal):
             reward = 500

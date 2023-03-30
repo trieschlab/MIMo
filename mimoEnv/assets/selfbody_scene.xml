@@ -4,7 +4,7 @@
 
     <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
 
-    <size nconmax="1000" njmax="5000" nstack="10000000" nuser_cam="3"/>
+    <size nconmax="1000" njmax="5000" nstack="10000000"/>
 
     <visual>
         <map force="0.1" zfar="30" znear="0.005"/>
@@ -35,12 +35,9 @@
 	<!-- Import everything except the kinematic tree -->
 	<include file="selfbody_meta.xml"></include>
 
-	<!--
 	<equality>
-		<weld body1="hip" relpose="0 0 -0.2 0 0 0 0"/>
-		<weld body1="head" relpose="0 0 -0.3 0 0 0 0"/>
+		<weld body1="mimo_location"/>
 	</equality>
-	-->
 
     <worldbody>
         <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
@@ -49,7 +46,7 @@
         <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
 	
 		<!-- The location and orientation of the base model can be set using this body -->
-		<body name="mimo_location" pos="0 0 .35" euler="0 0 0">
+		<body name="mimo_location" pos="0.0579584 -0.00157173 0.0566738" quat="0.892294 -0.0284863 -0.450353 -0.0135029">
 			<freejoint name="mimo_location"/>
 			<include file="mimo/MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>

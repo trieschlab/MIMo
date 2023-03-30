@@ -2,7 +2,7 @@
 
     <compiler inertiafromgeom="true" angle="degree"/>
 
-    <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
+    <option timestep="0.005" gravity="0 0 0" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
 
     <size nconmax="1000" njmax="5000" nstack="10000000"/>
 
@@ -41,22 +41,17 @@
 
         <light directional="false" diffuse=".4 .4 .4" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="false"/>
         <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 0 5.0" dir="0 0 -1"/>
-		
-		<body name="test_object1" pos="1 0.3 0.7">
-			<freejoint/>
-			<geom type="box" material="matgeom" size="0.1 0.1 0.1" pos="0 0 0" condim="6"/>
-		</body>
-		
-		<body name="test_object2" pos="1 -0.3 0.7">
-			<freejoint/>
-			<geom type="sphere" material="matgeom" size="0.1" pos="0 0 0" condim="6" solimp="0.99 0.995 0.001 0.5 2" solref="-20000 -20"/>
-		</body>
 
 		<!-- The location and orientation of the base model can be set using this body -->
 		<body name="mimo_location" pos="0 0 .4" euler="0 0 0">
 			<freejoint name="mimo_orientation"/>
 			<include file="mimo/MIMo_model.xml"></include> <!-- Import the actual model-->
 		</body>
-		
+
     </worldbody>
+
+    <equality>
+		<weld body1="hip"/>
+	</equality>
+
 </mujoco>
