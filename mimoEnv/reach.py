@@ -25,7 +25,7 @@ import mimoEnv
 import argparse
 
 
-def test(env, test_for=1000, model=None):
+def test(env, test_for=1000, model=None, no_render=False):
     """ Testing function to view the behaviour of a model.
 
     Args:
@@ -37,16 +37,27 @@ def test(env, test_for=1000, model=None):
     """
     env.seed(42)
     obs = env.reset()
+    episode_idx = 0
+    episode_t = 0
     for idx in range(test_for):
+        episode_t += 1
         if model is None:
             action = env.action_space.sample()
         else:
             action, _ = model.predict(obs)
-        obs, _, done, _ = env.step(action)
-        env.render()
+        obs, _, done, info = env.step(action)
+        if not no_render:
+            env.render()
         if done:
+            success = info['is_success']
+            if success:
+                print(f'Episode {episode_idx} completed in {episode_t} timesteps.')
+            else:
+                print(f'Episode {episode_idx} terminated without completion.')
             time.sleep(1)
             obs = env.reset()
+            episode_idx += 1
+            episode_t = 0
     env.reset()
 
 
@@ -65,6 +76,7 @@ def main():
     - ``--load_model``: The model to load. Note that this only takes suffixes, i.e. an input of `my_model` tries to
       load `models/reach_my_model`.
     - ``--save_model``: The name under which we save. Like above this is a suffix.
+    - ``--no_render``: Prevent rendering when testing.
     """
 
     env = gym.make('MIMoReach-v0')
@@ -84,6 +96,8 @@ def main():
                         help='Name of model to load')
     parser.add_argument('--save_model', default='', type=str,
                         help='Name of model to save')
+    parser.add_argument('--no_render', action='store_true',
+                        help='Prevent rendering when testing')                        
     
     args = parser.parse_args()
     algorithm = args.algorithm
@@ -92,6 +106,7 @@ def main():
     save_every = args.save_every
     train_for = args.train_for
     test_for = args.test_for
+    no_render = args.no_render
 
     if algorithm == 'PPO':
         from stable_baselines3 import PPO as RL
@@ -121,7 +136,7 @@ def main():
         model.learn(total_timesteps=train_for_iter, reset_num_timesteps=False)
         model.save("models/reach" + save_model + "_" + str(counter))
     
-    test(env, model=model, test_for=test_for)
+    test(env, model=model, test_for=test_for, no_render=no_render)
 
 
 if __name__ == '__main__':

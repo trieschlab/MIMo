@@ -29,6 +29,19 @@ REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
 :meta hide-value:
 """
 
+RANDOM_INITIAL_QPOS = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 1.3766, 0, 0, 0, 0],
+    [0, 2.6581, 0, 0, 0, 0],
+    [0, 2.6581, 1.169, -1.88918, 0, 0],
+    [0, 0.9805, -1.728, -1.88918, 0, 0],
+    [0, 1.1203, 1.169, -1.88918, 0, 0],
+    [0, 0.2815, -0.293985, -2.548, 0, 0],
+    [0, 1.3533, -1.728, -0.980014, -1.11541, 0.59997],
+    [0, -0.068, -1.728, -2.19224, -1.571, -1.2953],
+    [2.059, 0.3514, -0.931325, -0.993191, -0.61269, -0.782645],
+]
+
 
 class MIMoReachEnv(MIMoEnv):
     """ MIMo reaches for an object.
@@ -139,15 +152,10 @@ class MIMoReachEnv(MIMoEnv):
         self.sim.set_state(self.initial_state)
         self.sim.forward()
 
-        # perform 10 random actions
-        for _ in range(10):
-            action = self.action_space.sample()
-            self._set_action(action)
-            self.sim.step()
-            self._step_callback()
-
-        # reset target in random initial position and velocities as zero
+        # reset MIMo's right arm in random initial position, and target in random position
         qpos = self.sim.data.qpos
+        qpos[22:28] = RANDOM_INITIAL_QPOS[np.random.randint(0, len(RANDOM_INITIAL_QPOS))]
+
         qpos[[-7, -6, -5]] = np.array([
             self.initial_state.qpos[-7] + self.np_random.uniform(low=-0.1, high=0, size=1)[0],
             self.initial_state.qpos[-6] + self.np_random.uniform(low=-0.2, high=0.1, size=1)[0],
@@ -161,6 +169,14 @@ class MIMoReachEnv(MIMoEnv):
 
         self.sim.set_state(new_state)
         self.sim.forward()
+
+        # perform 10 random actions
+        for _ in range(10):
+            action = self.action_space.sample()
+            self._set_action(action)
+            self.sim.step()
+            self._step_callback()
+
         self.target_init_pos = copy.deepcopy(self.sim.data.get_body_xpos('target'))
         return True
 
