@@ -43,18 +43,26 @@ def test(env, test_for=1000, model=None, render_video=False):
     images = []
     im_counter = 0
 
+    episode_idx = 0
+    episode_rew = 0
+
     for idx in range(test_for):
         if model is None:
-            print("No model, taking random actions")
+            #print("No model, taking random actions")
             action = env.action_space.sample()
         else:
             action, _ = model.predict(obs)
-        obs, _, done, _ = env.step(action)
+        obs, rew, done, info = env.step(action)
+        episode_rew += rew
         #env.render()
         if render_video:
             img = env.render(mode="rgb_array")
             images.append(img)
         if done:
+            print(f'Episode {episode_idx} finished with {episode_rew} total reward.')
+            episode_idx += 1
+            episode_rew = 0
+
             time.sleep(1)
             obs = env.reset()
             if render_video:
@@ -95,7 +103,7 @@ def main():
                         help='Total timesteps of testing of trained policy')               
     parser.add_argument('--save_every', default=100000, type=int,
                         help='Number of timesteps between model saves')
-    parser.add_argument('--algorithm', default=None, type=str, required=True,
+    parser.add_argument('--algorithm', default=None, type=str, #required=True,
                         choices=['PPO', 'SAC', 'TD3', 'DDPG', 'A2C', 'HER'],
                         help='RL algorithm from Stable Baselines3')
     parser.add_argument('--load_model', default=False, type=str,

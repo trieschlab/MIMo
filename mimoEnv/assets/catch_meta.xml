@@ -167,6 +167,11 @@
 	</sensor>
 
     <actuator>
+		<motor class="mimo"	name="act:right_shoulder_horizontal" 		joint="robot:right_shoulder_horizontal" gear="1.8" 			forcerange="-1 1"		user="1.811 18.80 15.30"/>
+		<motor class="mimo"	name="act:right_shoulder_abduction" 		joint="robot:right_shoulder_ad_ab" 		gear="4" 			forcerange="-.6875 1"	user=".8793 44.17 69.23"/>
+		<motor class="mimo"	name="act:right_shoulder_internal" 			joint="robot:right_shoulder_rotation" 	gear="2.5" 			forcerange="-1 .64"		user="1.498 25.09 17.10"/>
+		<motor class="mimo"	name="act:right_elbow" 						joint="robot:right_elbow" 				gear="3.6" 			forcerange="-1 .83"		user="1.566 35.43 27.04"/>
+
 		<motor class="mimo"	name="act:right_wrist_rotation" 			joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
 		<motor class="mimo"	name="act:right_wrist_flexion" 				joint="robot:right_hand2" 				gear="1.24"	forcerange="-1 .57"/>
 		<motor class="mimo"	name="act:right_wrist_ulnar" 				joint="robot:right_hand3" 				gear=".95"	forcerange="-.87 1"/>

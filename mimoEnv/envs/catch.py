@@ -28,11 +28,10 @@ CATCH_XML = os.path.join(SCENE_DIRECTORY, "catch_scene.xml")
 :meta hide-value:
 """
 
+CATCH_QPOS = [1.69914, 0.798988, -1.59909, -0.398988, -1.39559, -0.161245, 0.00425208, 0.004363, -0.349076, 0.293694, 0.265508, -0.0362148, -0.185892, 0.228343, 0.206076, -0.0276941, -0.349067, 0.331875, 0.299292] # 22, 22+19
 
 TOUCH_PARAMS = {
     "scales": {
-        "right_upper_arm": 0.024,
-        "right_lower_arm": 0.024,
         "right_hand": 0.007,
         "right_ffdistal": 0.002,
         "right_mfdistal": 0.002,
@@ -124,6 +123,8 @@ class MIMoCatchEnv(MIMoEnv):
         Returns:
             float: The reward as described above.
         """
+
+        '''
         if self._currently_in_contact():
             reward = 0
         else:
@@ -137,6 +138,12 @@ class MIMoCatchEnv(MIMoEnv):
 
         if self._is_success(achieved_goal, desired_goal):
             reward = 500
+        '''
+
+        hand_pos = self.sim.data.get_body_xpos('right_hand')
+        target_pos = self.sim.data.get_body_xpos('target')
+        reward = 1 if (target_pos[2] > 0.55) else -1    # 0.55 is the hand's initial height
+
         return reward
 
     def _is_success(self, achieved_goal, desired_goal):
@@ -192,6 +199,9 @@ class MIMoCatchEnv(MIMoEnv):
 
         self.sim.set_state(self.initial_state)
 
+        # Place right hand under ball
+        self.sim.data.qpos[22:41] = CATCH_QPOS
+
         # Randomize ball position
         random_shift = np.random.uniform(low=-self.random_limits, high=self.random_limits)
         self.sim.data.qpos[self.target_joint_qpos] += random_shift
@@ -199,6 +209,8 @@ class MIMoCatchEnv(MIMoEnv):
 
         self.sim.forward()
 
+
+        '''
         # perform 50 steps (.5 secs) with gravity off to settle arm
         gravity = self.sim.model.opt.gravity[2]
         self.sim.model.opt.gravity[2] = 0
@@ -210,6 +222,7 @@ class MIMoCatchEnv(MIMoEnv):
 
         # Reset gravity
         self.sim.model.opt.gravity[2] = gravity
+        '''
 
         # reset target in random initial position and velocities as zero
         self.sim.forward()
