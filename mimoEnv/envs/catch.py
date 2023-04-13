@@ -69,7 +69,7 @@ class MIMoCatchEnv(MIMoEnv):
     def __init__(self,
                  model_path=CATCH_XML,
                  initial_qpos={},
-                 n_substeps=2,
+                 n_substeps=1,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=TOUCH_PARAMS,
                  vision_params=None,
@@ -103,7 +103,7 @@ class MIMoCatchEnv(MIMoEnv):
         print("Action penalty: ", self.action_penalty)
 
         # Info required to randomize ball position
-        self.random_limits = np.array([0.01, 0.01, 0.08, 0, 0, 0, 0])
+        self.random_limits = np.array([0.01, 0.01, 0.05, 0, 0, 0, 0])
         target_joint = "target_joint"
         self.target_joint_id = self.sim.model.joint_name2id(target_joint)
         self.target_joint_qpos = env_utils.get_joint_qpos_addr(self.sim.model, self.target_joint_id)
@@ -126,10 +126,12 @@ class MIMoCatchEnv(MIMoEnv):
 
         '''
         if self._currently_in_contact():
-            reward = 0
+            reward = 1
         else:
-            reward = -1
+            reward = 0
+        '''
 
+        '''
         if self.action_penalty:
             actuator_gear = self.sim.model.actuator_gear[self.mimo_actuators, 0]
             control_input = self.sim.data.ctrl[self.mimo_actuators]
@@ -140,9 +142,32 @@ class MIMoCatchEnv(MIMoEnv):
             reward = 500
         '''
 
-        hand_pos = self.sim.data.get_body_xpos('right_hand')
-        target_pos = self.sim.data.get_body_xpos('target')
-        reward = 1 if (target_pos[2] > 0.55) else -1    # 0.55 is the hand's initial height
+        reward = 0
+        
+        # Positive reward for contact with the target
+        for i in range(self.sim.data.ncon):
+            contact = self.sim.data.contact[i]
+            # Is this a contact between us and the target object?
+            if (contact.geom1 in self.target_geoms or contact.geom2 in self.target_geoms) \
+                    and (contact.geom1 in self.own_geoms or contact.geom2 in self.own_geoms):
+
+                # Check that contact is active
+                forces = np.zeros(6, dtype=np.float64)
+                mujoco_py.functions.mj_contactForce(self.sim.model, self.sim.data, i, forces)
+                if abs(forces[0]) < 1e-9:  # Contact probably inactive
+                    continue
+                else:
+                    reward += 1
+
+        # Negative reward for metabolic cost
+        if self.action_penalty:
+            actuator_gear = self.sim.model.actuator_gear[self.mimo_actuators, 0]
+            control_input = self.sim.data.ctrl[self.mimo_actuators]
+            torque = control_input*actuator_gear
+            reward -= np.abs(torque).sum() / self.action_space.shape[0]
+
+        if info['is_failure'] == True:
+            reward -= 100
 
         return reward
 
@@ -169,7 +194,9 @@ class MIMoCatchEnv(MIMoEnv):
         Returns:
             bool: `False`
         """
-        return False
+        hand_pos = self.sim.data.get_body_xpos('right_hand')
+        target_pos = self.sim.data.get_body_xpos('target')
+        return (target_pos[2] < (hand_pos[2] - 0.05)) or (np.linalg.norm(target_pos-hand_pos)>0.15)
 
     def _sample_goal(self):
         """ Dummy function. Returns an empty array.
@@ -230,6 +257,28 @@ class MIMoCatchEnv(MIMoEnv):
 
     def _step_callback(self):
         self.steps += 1
+
+        # fix right arm position under target
+        self.sim.data.qpos[22:26] = CATCH_QPOS[:4]
+
+        # manually set head and eye positions to look at target
+        target_pos = self.sim.data.get_body_xpos('target')
+        head_pos = self.sim.data.get_body_xpos('head')
+        head_target_dif = target_pos - head_pos
+        head_target_dist = np.linalg.norm(head_target_dif)
+        head_target_dif[2] = head_target_dif[2] - 0.067375  # extra difference to eyes height in head
+        half_eyes_dist = 0.0245  # horizontal distance between eyes / 2
+        eyes_target_dist = head_target_dist - 0.07  # remove distance from head center to eyes
+        self.sim.data.qpos[13] = np.arctan(head_target_dif[1] / head_target_dif[0])  # head - horizontal
+        self.sim.data.qpos[14] = np.arctan(-head_target_dif[2] / head_target_dif[0])  # head - vertical
+        self.sim.data.qpos[15] = 0  # head - side tild
+        self.sim.data.qpos[16] = np.arctan(-half_eyes_dist / eyes_target_dist)  # left eye -  horizontal
+        self.sim.data.qpos[17] = 0  # left eye - vertical
+        self.sim.data.qpos[17] = 0  # left eye - torsional
+        self.sim.data.qpos[19] = np.arctan(-half_eyes_dist / eyes_target_dist)  # right eye - horizontal
+        self.sim.data.qpos[20] = 0  # right eye - vertical
+        self.sim.data.qpos[21] = 0  # right eye - torsional
+
         self.in_contact_past[self.steps % 100] = self._in_contact()
         pass
 

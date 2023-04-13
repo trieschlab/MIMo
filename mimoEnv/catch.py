@@ -56,8 +56,11 @@ def test(env, test_for=1000, model=None, render_video=False):
         episode_rew += rew
         #env.render()
         if render_video:
+            env.render()
+            '''
             img = env.render(mode="rgb_array")
             images.append(img)
+            '''
         if done:
             print(f'Episode {episode_idx} finished with {episode_rew} total reward.')
             episode_idx += 1
@@ -65,6 +68,7 @@ def test(env, test_for=1000, model=None, render_video=False):
 
             time.sleep(1)
             obs = env.reset()
+            '''
             if render_video:
                 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
                 video = cv2.VideoWriter('catch_{}.avi'.format(im_counter), fourcc, 50, (500, 500))
@@ -75,6 +79,7 @@ def test(env, test_for=1000, model=None, render_video=False):
 
                 images = []
                 im_counter += 1
+            '''
 
     env.reset()
 
@@ -147,9 +152,9 @@ def main():
     if algorithm is None:
         model = None
     elif load_model:
-        model = RL.load(load_model, env)
+        model = RL.load("models/catch/" + load_model, env)
     else:
-        model = RL("MultiInputPolicy", env, tensorboard_log="models/tensorboard_logs/" + save_model, verbose=1)
+        model = RL("MultiInputPolicy", env, tensorboard_log="models/tensorboard_logs/catch/" + save_model, verbose=1)
 
     # train model
     counter = 0
@@ -158,7 +163,7 @@ def main():
         train_for_iter = min(train_for, save_every)
         train_for = train_for - train_for_iter
         model = model.learn(total_timesteps=train_for_iter, reset_num_timesteps=False)
-        model.save("models/catch/" + save_model + "/model_" + str(counter))
+        model.save("models/catch/" + save_model + str(counter))
     
     test(env, model=model, test_for=test_for, render_video=render_video)
 

@@ -17,7 +17,7 @@
 
     <compiler inertiafromgeom="true" angle="degree"/>
 
-    <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
+    <option timestep="0.002" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="10.0"/>
 
     <size nconmax="1000" njmax="5000" nstack="10000000" nuser_cam="3"/>
 
@@ -28,8 +28,8 @@
         <global offwidth="800" offheight="800"/>
     </visual>
 
-    <default>
-        <geom material="matgeom" condim="3" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
+    <default> 
+        <geom material="matgeom" condim="6" solimp="0.99 0.99 0.01" solref="0.001 1" />
     </default>
 
     <asset>
@@ -52,7 +52,6 @@
 
     <equality>
         <weld body1="upper_body"/>
-        <weld body1="head"/>
         <weld body1="lower_body"/>
         <weld body1="left_hand"/>
         <weld body1="left_foot"/>
@@ -83,11 +82,10 @@
 			<include file="mimo/MIMo_modelv2.xml"></include> <!-- Import the actual model-->
 		</body>
 
-        <body name="target" pos="0.24 -0.04 .8">
+        <body name="target" pos="0.24 -0.05 .65">
             <freejoint name="target_joint"/>
-			<geom mass=".5" type="sphere" material="matgeom" size="0.025" pos="0 0 0" condim="6"/>
+			<geom mass=".05" type="sphere" material="matgeom" size="0.025" pos="0 0 0" condim="6"/>
 		</body>
-		
-
     </worldbody>
+
 </mujoco>
