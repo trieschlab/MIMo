@@ -52,7 +52,7 @@ def test(env, test_for=1000, model=None, render_video=False):
         obs, _, done, _ = env.step(action)
         #env.render()
         if render_video:
-            img = env.render(mode="rgb_array")
+            img = env.render(mode="rgb_array")[0]
             images.append(img)
         if done:
             time.sleep(1)

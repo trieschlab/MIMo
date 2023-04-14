@@ -14,7 +14,6 @@ import numpy as np
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_VISION_PARAMS, DEFAULT_VESTIBULAR_PARAMS, \
     DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS, DEFAULT_TOUCH_PARAMS_V2
-from mimoEnv.envs.mimo_muscle_env import MIMoMuscleEnv
 from mimoTouch.touch import TrimeshTouch
 from mimoActuation.muscle import MuscleModel
 import mimoEnv.utils as env_utils

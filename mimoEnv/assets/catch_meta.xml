@@ -15,10 +15,13 @@
 
 <mujoco model="MIMo">
 
+	<!-- We use the first three user values on actuators to store the muscle model parameters. The first is VMAX, the next two are FMAX.-->
+	<size nuser_actuator="3" />
+
 	<default>
 		<default class="mimo">
-        	<joint limited="true" damping="1" stiffness="1" armature="0.001" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
-        	<geom condim="3" material="skin" density="985" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
+        	<joint limited="true" damping=".1" stiffness=".1" armature="0.001" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
+        	<geom condim="3" material="skin" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
         	<motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
     	</default>
 	</default>
@@ -51,12 +54,14 @@
 		<material name="eye_right" texture="tex_eye_right" texuniform="true" specular=".0" shininess=".0"/>
 
     </asset>
-	
+
 	<!-- Internal contacts should not have friction to reduce "getting stuck" on ourselves-->
 	<contact>
 		<pair geom1="lb" geom2="ub1" condim="1"/>
+		<exclude body1="left_eye" body2="upper_body"/>
+		<exclude body1="right_eye" body2="upper_body"/>
 	</contact>
-	
+
 	<tendon>
 		<fixed class="mimo" name="hip_bend" limited="true" range="-.01 .01">
 			<joint joint="robot:hip_bend1" coef="1"/>
@@ -95,48 +100,6 @@
 			<joint joint="robot:head_swivel" coef="1"/>
 			<joint joint="robot:head_tilt" coef="-1"/>
 		</fixed>
-
-		<fixed class="mimo" name="left_ff_couple" limited="true" range="-1.5 1.5" stiffness=".0619" springlength="0">
-			<joint joint="robot:left_ff_middle" coef=".9"/>
-			<joint joint="robot:left_ff_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="left_mf_couple" limited="true" range="-1.5 1.5" stiffness=".117" springlength="0">
-			<joint joint="robot:left_mf_middle" coef=".9"/>
-			<joint joint="robot:left_mf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="left_rf_couple" limited="true" range="-1.5 1.5" stiffness=".078" springlength="0">
-			<joint joint="robot:left_rf_middle" coef=".9"/>
-			<joint joint="robot:left_rf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="left_lf_couple" limited="true" range="-1.5 1.5" stiffness=".0196" springlength="0">
-			<joint joint="robot:left_lf_middle" coef=".9"/>
-			<joint joint="robot:left_lf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="left_th_couple" limited="true" range="-1.5 1.5" stiffness=".378" springlength="0">
-			<joint joint="robot:left_th_middle" coef=".9"/>
-			<joint joint="robot:left_th_distal" coef="-1"/>
-		</fixed>
-
-		<fixed class="mimo" name="right_ff_couple" limited="true" range="-1.5 1.5" stiffness=".0619" springlength="0">
-			<joint joint="robot:right_ff_middle" coef=".9"/>
-			<joint joint="robot:right_ff_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="right_mf_couple" limited="true" range="-1.5 1.5" stiffness=".117" springlength="0">
-			<joint joint="robot:right_mf_middle" coef=".9"/>
-			<joint joint="robot:right_mf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="right_rf_couple" limited="true" range="-1.5 1.5" stiffness=".078" springlength="0">
-			<joint joint="robot:right_rf_middle" coef=".9"/>
-			<joint joint="robot:right_rf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="right_lf_couple" limited="true" range="-1.5 1.5" stiffness=".0196" springlength="0">
-			<joint joint="robot:right_lf_middle" coef=".9"/>
-			<joint joint="robot:right_lf_distal" coef="-1"/>
-		</fixed>
-		<fixed class="mimo" name="right_th_couple" limited="true" range="-1.5 1.5" stiffness=".378" springlength="0">
-			<joint joint="robot:right_th_middle" coef=".9"/>
-			<joint joint="robot:right_th_distal" coef="-1"/>
-		</fixed>
 	</tendon>
 	
 	<sensor>
@@ -167,33 +130,37 @@
 	</sensor>
 
     <actuator>
-		<motor class="mimo"	name="act:right_wrist_rotation" 			joint="robot:right_hand1" 				gear=".7"	forcerange="-1 1"/>
-		<motor class="mimo"	name="act:right_wrist_flexion" 				joint="robot:right_hand2" 				gear="1.24"	forcerange="-1 .57"/>
-		<motor class="mimo"	name="act:right_wrist_ulnar" 				joint="robot:right_hand3" 				gear=".95"	forcerange="-.87 1"/>
+		<motor class="mimo"	name="act:right_wrist_rotation" 			joint="robot:right_hand1" 				gear=".7"			forcerange="-1 1"		user="1.513 7.842 7.842"/>
+		<motor class="mimo"	name="act:right_wrist_flexion" 				joint="robot:right_hand2" 				gear="1.24"			forcerange="-1 .57"		user="1.455 13.66 7.874"/>
+		<motor class="mimo"	name="act:right_wrist_ulnar" 				joint="robot:right_hand3" 				gear=".95"			forcerange="-.87 1"		user="2.254 5.155 6.021"/>
 
-		<motor class="mimo"	name="act:right_ff_side" gear=".005" 		joint="robot:right_ff_side" forcerange="-1 1"/>
-		<motor class="mimo"	name="act:right_ff_knuckle" gear=".0619" 	joint="robot:right_ff_knuckle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_ff_middle" gear=".03611" 	joint="robot:right_ff_middle" forcerange="-.345 1"/>
+		<motor class="mimo"	name="act:right_ff_side" 			 		joint="robot:right_ff_side" 			gear=".05"			forcerange="-1 1"		user="6.217 .1556 .1556"/>
+		<motor class="mimo"	name="act:right_ff_knuckle" 			 	joint="robot:right_ff_knuckle"			gear=".0619"		forcerange="-.345 1"	user="4.368 .1422 .4378"/>
+		<motor class="mimo"	name="act:right_ff_middle" 				 	joint="robot:right_ff_middle"			gear=".02063"		forcerange="-.345 1"	user="3.493 .04684 .1339"/>
+		<motor class="mimo"	name="act:right_ff_distal" 				 	joint="robot:right_ff_distal"			gear=".01548"		forcerange="-.345 1"	user="2.539 .03054 .07747"/>
 
-		<motor class="mimo"	name="act:right_mf_side" gear=".005" 		joint="robot:right_mf_side" forcerange="-1 1"/>
-		<motor class="mimo"	name="act:right_mf_knuckle" gear=".117" 	joint="robot:right_mf_knuckle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_mf_middle" gear=".06825" 	joint="robot:right_mf_middle" forcerange="-.345 1"/>
+		<motor class="mimo"	name="act:right_mf_side" 			 		joint="robot:right_mf_side" 			gear=".05"			forcerange="-1 1"		user="5.375 .1556 .1556"/>
+		<motor class="mimo"	name="act:right_mf_knuckle" 			 	joint="robot:right_mf_knuckle"			gear=".117"			forcerange="-.345 1"	user="4.325 .2687 .8275"/>
+		<motor class="mimo"	name="act:right_mf_middle" 			 		joint="robot:right_mf_middle"			gear=".039"			forcerange="-.345 1"	user="3.375 .08855 .2532"/>
+		<motor class="mimo"	name="act:right_mf_distal" 				 	joint="robot:right_mf_distal"			gear=".02925"		forcerange="-.345 1"	user="2.577 .05771 .1464"/>
 
-		<motor class="mimo"	name="act:right_rf_side" gear=".005" 		joint="robot:right_rf_side" forcerange="-1 1"/>
-		<motor class="mimo"	name="act:right_rf_knuckle" gear=".078" 	joint="robot:right_rf_knuckle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_rf_middle" gear=".0455" 	joint="robot:right_rf_middle" forcerange="-.345 1"/>
+		<motor class="mimo"	name="act:right_rf_side"  					joint="robot:right_rf_side" 			gear=".05"			forcerange="-1 1"		user="4.984 .1556 .1556"/>
+		<motor class="mimo"	name="act:right_rf_knuckle" 			 	joint="robot:right_rf_knuckle"			gear=".078"			forcerange="-.345 1"	user="2.817 .1791 .5517"/>
+		<motor class="mimo"	name="act:right_rf_middle" 			 		joint="robot:right_rf_middle" 			gear=".026"			forcerange="-.345 1"	user="3.007 .05903 .1688"/>
+		<motor class="mimo"	name="act:right_rf_distal" 				 	joint="robot:right_rf_distal" 			gear=".0195"		forcerange="-.345 1"	user="2.313 .03847 .09759"/>
 
-		<motor class="mimo"	name="act:right_lf_side" gear=".005" 		joint="robot:right_lf_side" forcerange="-1 1"/>
-		<motor class="mimo"	name="act:right_lf_meta" gear=".064" 		joint="robot:right_lf_meta" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_lf_knuckle" gear=".0196" 	joint="robot:right_lf_knuckle" forcerange="-.345 1"/>
-		<motor class="mimo"	name="act:right_lf_middle" gear=".01143" 	joint="robot:right_lf_middle" forcerange="-.345 1"/>
+		<motor class="mimo"	name="act:right_lf_side" 					joint="robot:right_lf_side" 			gear=".05" 			forcerange="-1 1"		user="5.282 .1556 .1556"/>
+		<motor class="mimo"	name="act:right_lf_meta" 					joint="robot:right_lf_meta" 			gear=".064" 		forcerange="-.345 1"	user="6.855 .07962 .1508"/>
+		<motor class="mimo"	name="act:right_lf_knuckle" 			 	joint="robot:right_lf_knuckle" 			gear=".0196"		forcerange="-.345 1"	user="2.337 .04502 .1386"/>
+		<motor class="mimo"	name="act:right_lf_middle" 				 	joint="robot:right_lf_middle" 			gear=".00653"		forcerange="-.345 1"	user="2.566 .01483 .04239"/>
+		<motor class="mimo"	name="act:right_lf_distal" 				 	joint="robot:right_lf_distal" 			gear=".00490"		forcerange="-.345 1"	user="2.001 .009666 .02452"/>
 
-		<motor class="mimo"	name="act:right_thumb_side" gear=".373" 	joint="robot:right_th_swivel" forcerange="-.3 1"/>
-		<motor class="mimo"	name="act:right_thumb_add" gear=".134" 		joint="robot:right_th_adduction" forcerange="-1 1"/>
-		<motor class="mimo"	name="act:right_thumb_rotation" gear=".1" 	joint="robot:right_th_rot" forcerange="-1 1"/>
-		<motor class="mimo"	name="act:right_thumb_pivot" gear=".1" 		joint="robot:right_th_pivot" forcerange="-1 1"/>
-		<motor class="mimo"	name="act:right_thumb_middle" gear=".2205" 	joint="robot:right_th_middle" forcerange="-.345 1"/>
-
+		<motor class="mimo"	name="act:right_thumb_side" 			 	joint="robot:right_th_swivel" 			gear=".373"			forcerange="-.345 1"	user="3.491 1.117 2.604"/>
+		<motor class="mimo"	name="act:right_thumb_add" 					joint="robot:right_th_adduction" 		gear=".134" 		forcerange="-1 1"		user="5.646 .4969 .5024"/>
+		<motor class="mimo"	name="act:right_thumb_rotation" 		 	joint="robot:right_th_rot" 				gear=".1"			forcerange="-1 1"		user="6.506 .2741 .2871"/>
+		<motor class="mimo"	name="act:right_thumb_pivot" 				joint="robot:right_th_pivot" 			gear=".1" 			forcerange="-1 1"		user="9.055 .1868 .1868"/>
+		<motor class="mimo"	name="act:right_thumb_middle" 			 	joint="robot:right_th_middle" 			gear=".126"			forcerange="-.345 1"	user="3.877 .2433 .7065"/>
+		<motor class="mimo"	name="act:right_thumb_distal" 			 	joint="robot:right_th_distal" 			gear=".0945"		forcerange="-.345 1"	user="3.392 .2053 .4959"/>
 	</actuator>
 	
 </mujoco>

@@ -484,13 +484,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """ Step simulation forward for n_frames number of steps.
 
         Args:
-<<<<<<< HEAD
-            action: The control action for these steps.
-            n_frames: The number of simulation substeps to perform
-=======
             action (np.ndarray): The control input for the actuators.
             n_frames (int): The number of physics steps to perform.
->>>>>>> main
         """
         self._set_action(action)
         for _ in range(n_frames):

@@ -79,7 +79,7 @@
 
         <body name="target" pos="0.24 -0.04 .8">
             <freejoint name="target_joint"/>
-			<geom mass=".5" type="sphere" material="matgeom" size="0.025" pos="0 0 0" condim="6"/>
+			<geom mass=".5" type="sphere" material="matgeom" size="0.025" pos="0 0 0" condim="6" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
 		</body>
 		
 
