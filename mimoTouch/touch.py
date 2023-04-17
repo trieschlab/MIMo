@@ -24,6 +24,7 @@ import CacheToolsUtils as ctu
 from matplotlib import pyplot as plt
 
 import mimoEnv.utils as env_utils
+import utils
 from mimoEnv.utils import rotate_vector_transpose, rotate_vector, EPS
 from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spread_points_cylinder, \
                                    spread_points_capsule
@@ -962,7 +963,7 @@ class TrimeshTouch(Touch):
                     continue
                 # If our vertices are contained in the other mesh, make them inactive
                 # TODO: This has weird inconcistencies, check those
-                contained = other_mesh.contains(mesh.vertices)
+                contained = contains(mesh.vertices, other_mesh)
                 mask = np.logical_and(mask, np.invert(contained))
             active_vertices.append(mask)
             sensor_counts.append(np.count_nonzero(mask))
@@ -1835,3 +1836,22 @@ class TrimeshTouch(Touch):
         # Go through all bodies and note their child bodies
         subtree = env_utils.get_child_bodies(self.m_model, body_id)
         self.plot_force_bodies(body_ids=subtree, title=title, focus="first")
+
+_rng = np.random.default_rng()
+_vectors = utils.normalize_vectors(_rng.normal(size=(10,3)))
+
+def contains(points, mesh, directions=_vectors, tol=1e-10):
+    contains = np.zeros(points.shape[0], dtype=bool)
+    for i in range(directions.shape[0]):
+        direction = np.tile(directions[i], (points.shape[0], 1))
+        origins = points - direction * tol
+        intersections, ray_indices, _ = mesh.ray.intersects_location(
+            ray_origins=origins,
+            ray_directions=direction,
+        )
+        ray_hits = np.bincount(ray_indices, minlength=points.shape[0])
+
+        contained = np.mod(ray_hits, 2) == 1
+        contains = np.logical_or(contains, contained)
+
+    return contains
