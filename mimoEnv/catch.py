@@ -141,7 +141,7 @@ def main():
     elif load_model:
         model = RL.load(load_model, env)
     else:
-        model = RL("MultiInputPolicy", env, tensorboard_log="models/tensorboard_logs/" + save_model, verbose=1)
+        model = RL("MultiInputPolicy", env, tensorboard_log="models/tensorboard_logs/" + save_model, verbose=1, learning_rate=5e-5)
 
     # train model
     counter = 0

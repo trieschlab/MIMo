@@ -109,6 +109,11 @@ class MIMoCatchEnv(MIMoEnv):
         self.target_joint_id = self.sim.model.joint_name2id(target_joint)
         self.target_joint_qpos = env_utils.get_joint_qpos_addr(self.sim.model, self.target_joint_id)
         self.target_joint_qvel = env_utils.get_joint_qvel_addr(self.sim.model, self.target_joint_id)
+        # To randomize ball weight:
+        #   Adjust body_mass and call self.sim.set_constant
+        #   Manually recompute inertia for ball of given mass (check current inertias first)
+        # To randomize ball size:
+        #   Change geom_size and geom_rbound (check current first)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
@@ -124,19 +129,21 @@ class MIMoCatchEnv(MIMoEnv):
         Returns:
             float: The reward as described above.
         """
+        reward = 0
         if self._currently_in_contact():
-            reward = 0
-        else:
-            reward = -1
+            reward += 1
 
         if self.action_penalty:
             actuator_gear = self.sim.model.actuator_gear[self.mimo_actuators, 0]
             control_input = self.sim.data.ctrl[self.mimo_actuators]
             torque = control_input*actuator_gear
-            reward -= 0.5 * (torque).sum() / self.action_space.shape[0]
+            reward -= 0.1 * np.abs(torque).sum()
 
-        if self._is_success(achieved_goal, desired_goal):
-            reward = 500
+        if info['is_failure']:
+            reward -= 100
+        if info['is_success']:
+            reward += 100
+
         return reward
 
     def _is_success(self, achieved_goal, desired_goal):
@@ -153,7 +160,7 @@ class MIMoCatchEnv(MIMoEnv):
         return all(self.in_contact_past)
 
     def _is_failure(self, achieved_goal, desired_goal):
-        """ Dummy function. Always returns `False`.
+        """ Returns `False` if the ball drops below MIMo's hand.
 
         Args:
             achieved_goal (object): This parameter is ignored.
@@ -162,7 +169,9 @@ class MIMoCatchEnv(MIMoEnv):
         Returns:
             bool: `False`
         """
-        return False
+        hand_pos = self.sim.data.get_body_xpos('right_hand')
+        target_pos = self.sim.data.get_body_xpos('target')
+        return (target_pos[2] < (hand_pos[2] - 0.1)) or (np.linalg.norm(target_pos-hand_pos) > 0.5)
 
     def _sample_goal(self):
         """ Dummy function. Returns an empty array.
@@ -202,14 +211,17 @@ class MIMoCatchEnv(MIMoEnv):
         # perform 50 steps (.5 secs) with gravity off to settle arm
         gravity = self.sim.model.opt.gravity[2]
         self.sim.model.opt.gravity[2] = 0
+        self.actuation_model.reset()
+        action = np.zeros(self.action_space.shape)
+        self._set_action(action)
         for _ in range(50):
-            action = np.zeros(self.action_space.shape)
-            self._set_action(action)
             self.sim.step()
-            self._step_callback()
 
         # Reset gravity
         self.sim.model.opt.gravity[2] = gravity
+
+        self._step_callback()
+        self.steps = 0
 
         # reset target in random initial position and velocities as zero
         self.sim.forward()
@@ -217,7 +229,32 @@ class MIMoCatchEnv(MIMoEnv):
 
     def _step_callback(self):
         self.steps += 1
+
         self.in_contact_past[self.steps % 100] = self._in_contact()
+
+        # manually set head and eye positions to look at target
+        target_pos = self.sim.data.get_body_xpos('target')
+        head_pos = self.sim.data.get_body_xpos('head')
+        head_target_dif = target_pos - head_pos
+        head_target_dist = np.linalg.norm(head_target_dif)
+        head_target_dif[2] = head_target_dif[2] - 0.067375  # extra difference to eye height in head
+        half_eyes_dist = 0.0245  # horizontal distance between eyes / 2
+        eyes_target_dist = head_target_dist - 0.07  # remove distance from head center to eyes
+        env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:head_swivel",
+                                 np.arctan(head_target_dif[1] / head_target_dif[0]))
+        env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:head_tilt",
+                                 np.arctan(-head_target_dif[2] / head_target_dif[0]))
+        env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:head_tilt_side", 0)
+
+        env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:left_eye_horizontal",
+                                 np.arctan(-half_eyes_dist / eyes_target_dist))
+        env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:left_eye_vertical", 0)
+        env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:left_eye_torsional", 0)
+
+        env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:right_eye_horizontal",
+                                 np.arctan(-half_eyes_dist / eyes_target_dist))
+        env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:right_eye_vertical", 0)
+        env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:right_eye_torsional", 0)
         pass
 
     def _in_contact(self):

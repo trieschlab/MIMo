@@ -5,7 +5,7 @@ functions that returned fixed values. This allows for testing the model without 
 The second class :class:`~mimoEnv.envs.dummy.MIMoShowroomEnv` is identical to the first, but changes the default
 parameters to load the showroom scene instead.
 
-Finally there is a demo class for the v2 version of MIMo using five-fingered hands and feet with two toes each in
+Finally, there is a demo class for the v2 version of MIMo using five-fingered hands and feet with two toes each in
 :class:`~mimoEnv.envs.dummy.MIMoV2DemoEnv`.
 """
 

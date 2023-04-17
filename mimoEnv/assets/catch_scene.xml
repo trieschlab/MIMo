@@ -52,7 +52,6 @@
 
     <equality>
         <weld body1="upper_body"/>
-        <weld body1="head"/>
         <weld body1="lower_body"/>
         <weld body1="left_hand"/>
         <weld body1="left_foot"/>
