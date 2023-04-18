@@ -14,6 +14,8 @@ The class with the environment is :class:`~mimoEnv.envs.reach.MIMoReachEnv` whil
 in :data:`REACH_XML`.
 """
 import os
+import random
+
 import numpy as np
 import mujoco_py
 
@@ -104,16 +106,15 @@ class MIMoCatchEnv(MIMoEnv):
         print("Action penalty: ", self.action_penalty)
 
         # Info required to randomize ball position
-        self.random_limits = np.array([0.01, 0.01, 0.08, 0, 0, 0, 0])
         target_joint = "target_joint"
         self.target_joint_id = self.sim.model.joint_name2id(target_joint)
         self.target_joint_qpos = env_utils.get_joint_qpos_addr(self.sim.model, self.target_joint_id)
         self.target_joint_qvel = env_utils.get_joint_qvel_addr(self.sim.model, self.target_joint_id)
-        # To randomize ball weight:
-        #   Adjust body_mass and call self.sim.set_constant
-        #   Manually recompute inertia for ball of given mass (check current inertias first)
-        # To randomize ball size:
-        #   Change geom_size and geom_rbound (check current first)
+        # Target ball randomization limits.
+        self.position_limits = np.array([0.01, 0.01, 0.08, 0, 0, 0, 0])
+        self.size_limits = [0.005, 0.025]
+        self.mass_limits = [0.05, 0.5]
+        # Also change ball bouncy-ness
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
@@ -202,9 +203,22 @@ class MIMoCatchEnv(MIMoEnv):
         self.sim.set_state(self.initial_state)
 
         # Randomize ball position
-        random_shift = np.random.uniform(low=-self.random_limits, high=self.random_limits)
+        random_shift = np.random.uniform(low=-self.position_limits, high=self.position_limits)
         self.sim.data.qpos[self.target_joint_qpos] += random_shift
         self.sim.data.qvel[self.target_joint_qvel] = np.zeros(self.sim.data.qvel[self.target_joint_qvel].shape)
+
+        # Randomize ball size
+        target_geom = self.target_geoms[0]  # Target_geoms is a list with a single entry
+        size = random.uniform(self.size_limits[0], self.size_limits[1])
+        self.sim.model.geom_size[target_geom][0] = size
+        self.sim.model.geom_rbound[target_geom] = size
+
+        # Randomize ball mass
+        mass = random.uniform(self.mass_limits[0], self.mass_limits[1])
+        self.sim.model.body_mass[self.target_body] = mass
+        inertia = 2 * mass * size * size / 5
+        self.sim.model.body_inertia[self.target_body] = np.asarray([inertia, inertia, inertia])
+        self.sim.set_constants()  # Recompute derived mujoco quantities
 
         self.sim.forward()
 
