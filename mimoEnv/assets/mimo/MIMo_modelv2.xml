@@ -190,14 +190,14 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 							</body>
 							<!-- Thumb -->
 							<body name="right_thbase" pos="0.0123 -0.00423 -0.01602" euler="0 80 30">
-								<joint name="robot:right_th_swivel" type="hinge" pos="0 0 0" axis="1 -1 0" range="-10 110" springref="40" stiffness="0.003" damping="0.001" armature="0.0001"/>
+								<joint name="robot:right_th_swivel" type="hinge" pos="0 0 0" axis="3 -5 -1" range="-10 110" springref="40" stiffness="0.003" damping="0.001" armature="0.0001"/>
 								<joint name="robot:right_th_adduction" type="hinge" pos="0 0 0" axis="1 2 0" range="-60 0" springref="-35" stiffness="0.004" damping="0.001" armature="0.0001"/>
-								<joint name="robot:right_th_rot" type="hinge" pos="0 0 0" axis="0 0 1" range="-20 25" springref="0" stiffness="0.001" damping="0.001" armature="0.0001"/>
+								<!--<joint name="robot:right_th_rot" type="hinge" pos="0 0 0" axis="0 0 1" range="-1 1" springref="0" stiffness="0.001" damping="0.001" armature="0.0001"/>-->
 								<site name="torque_right_th_base" type="sphere" size="0.002" pos="0 0 0" group="4"/>
 								<geom type="capsule" pos="0 0 .01027" size=".00736 .01027" mass=".005463" condim="6" contype="16" conaffinity="7"/>
 								<!--Hub-->
 								<body name="right_thhub" pos="0 0 0.02125">
-									<joint name="robot:right_th_pivot" type="hinge" pos="0 0 0" axis="1 0 0" range="-15 15" springref="0" stiffness="0.002" damping="0.001" armature="0.0001"/>
+									<joint name="robot:right_th_pivot" type="hinge" pos="0 0 0" axis="1 0 0" range="-10 10" springref="0" stiffness="0.002" damping="0.001" armature="0.0001"/>
 									<joint name="robot:right_th_middle" type="hinge" pos="0 0 0" axis="0 -1 0" range="0 90" springref="30" stiffness="0.004" damping="0.001" armature="0.0001"/>
 									<site name="torque_right_th_hub" type="sphere" size="0.002" pos="0 0 0" group="4"/>
 									<geom type="capsule" pos="0 0 .0085" size=".00638 .00697" mass=".003021" condim="6"/>
@@ -319,14 +319,14 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 							</body>
 							<!-- Thumb -->
 							<body name="left_thbase" pos="0.0123 0.00423 -0.01602" euler="0 80 -30">
-								<joint name="robot:left_th_swivel" type="hinge" pos="0 0 0" axis="-1 -1 0" range="-10 110" springref="40" stiffness="0.003" damping="0.001" armature="0.0001"/>
+								<joint name="robot:left_th_swivel" type="hinge" pos="0 0 0" axis="-3 -5 1" range="-10 110" springref="40" stiffness="0.003" damping="0.001" armature="0.0001"/>
 								<joint name="robot:left_th_adduction" type="hinge" pos="0 0 0" axis="-1 2 0" range="-60 0" springref="-35" stiffness="0.004" damping="0.001" armature="0.0001"/>
-								<joint name="robot:left_th_rot" type="hinge" pos="0 0 0" axis="0 0 -1" range="-20 25" springref="0" stiffness="0.001" damping="0.001" armature="0.0001"/>
+								<!--<joint name="robot:left_th_rot" type="hinge" pos="0 0 0" axis="0 0 -1" range="-20 25" springref="0" stiffness="0.001" damping="0.001" armature="0.0001"/> -->
 								<site name="torque_left_th_base" type="sphere" size="0.002" pos="0 0 0" group="4"/>
 								<geom type="capsule" pos="0 0 .01027" size=".00736 .01027" mass=".005463" condim="6" contype="4" conaffinity="25"/>
 								<!--Hub-->
 								<body name="left_thhub" pos="0 0 0.02125">
-									<joint name="robot:left_th_pivot" type="hinge" pos="0 0 0" axis="-1 0 0" range="-15 15" springref="0" stiffness="0.002" damping="0.001" armature="0.0001"/>
+									<joint name="robot:left_th_pivot" type="hinge" pos="0 0 0" axis="-1 0 0" range="-10 10" springref="0" stiffness="0.002" damping="0.001" armature="0.0001"/>
 									<joint name="robot:left_th_middle" type="hinge" pos="0 0 0" axis="0 -1 0" range="0 90" springref="30" stiffness="0.004" damping="0.001" armature="0.0001"/>
 									<site name="torque_left_th_hub" type="sphere" size="0.002" pos="0 0 0" group="4"/>
 									<geom type="capsule" pos="0 0 .0085" size=".00638 .00697" mass=".003021" condim="6"/>

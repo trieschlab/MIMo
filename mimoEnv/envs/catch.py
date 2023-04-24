@@ -82,6 +82,13 @@ class MIMoCatchEnv(MIMoEnv):
                  done_active=True,
                  action_penalty=False):
 
+        # Target ball randomization limits.
+        self.position_limits = np.array([0.01, 0.01, 0.08, 0, 0, 0, 0])
+        self.size_limits = [0.005, 0.025]
+        self.ball_size = 0.025
+        self.mass_limits = [0.05, 0.5]
+        self.ball_mass = 0.5
+
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
                          n_substeps=n_substeps,
@@ -110,10 +117,7 @@ class MIMoCatchEnv(MIMoEnv):
         self.target_joint_id = self.sim.model.joint_name2id(target_joint)
         self.target_joint_qpos = env_utils.get_joint_qpos_addr(self.sim.model, self.target_joint_id)
         self.target_joint_qvel = env_utils.get_joint_qvel_addr(self.sim.model, self.target_joint_id)
-        # Target ball randomization limits.
-        self.position_limits = np.array([0.01, 0.01, 0.08, 0, 0, 0, 0])
-        self.size_limits = [0.005, 0.025]
-        self.mass_limits = [0.05, 0.5]
+
         # Also change ball bouncy-ness
 
     def compute_reward(self, achieved_goal, desired_goal, info):
@@ -135,10 +139,8 @@ class MIMoCatchEnv(MIMoEnv):
             reward += 1
 
         if self.action_penalty:
-            actuator_gear = self.sim.model.actuator_gear[self.mimo_actuators, 0]
-            control_input = self.sim.data.ctrl[self.mimo_actuators]
-            torque = control_input*actuator_gear
-            reward -= 0.1 * np.abs(torque).sum()
+            cost = self.actuation_model.cost() / self.n_actuators
+            reward -= 10*cost
 
         if info['is_failure']:
             reward -= 100
@@ -146,6 +148,11 @@ class MIMoCatchEnv(MIMoEnv):
             reward += 100
 
         return reward
+
+    def _get_obs(self):
+        obs = super()._get_obs()
+        obs["observation"] = np.append(obs["observation"], self.ball_size)
+        return obs
 
     def _is_success(self, achieved_goal, desired_goal):
         """ Returns true if MIMo touches the object continuously for 1 second.
@@ -209,14 +216,14 @@ class MIMoCatchEnv(MIMoEnv):
 
         # Randomize ball size
         target_geom = self.target_geoms[0]  # Target_geoms is a list with a single entry
-        size = random.uniform(self.size_limits[0], self.size_limits[1])
-        self.sim.model.geom_size[target_geom][0] = size
-        self.sim.model.geom_rbound[target_geom] = size
+        self.ball_size = random.uniform(self.size_limits[0], self.size_limits[1])
+        self.sim.model.geom_size[target_geom][0] = self.ball_size
+        self.sim.model.geom_rbound[target_geom] = self.ball_size
 
         # Randomize ball mass
-        mass = random.uniform(self.mass_limits[0], self.mass_limits[1])
-        self.sim.model.body_mass[self.target_body] = mass
-        inertia = 2 * mass * size * size / 5
+        self.ball_mass = random.uniform(self.mass_limits[0], self.mass_limits[1])
+        self.sim.model.body_mass[self.target_body] = self.ball_mass
+        inertia = 2 * self.ball_mass * self.ball_size * self.ball_size / 5
         self.sim.model.body_inertia[self.target_body] = np.asarray([inertia, inertia, inertia])
         self.sim.set_constants()  # Recompute derived mujoco quantities
 
@@ -244,7 +251,7 @@ class MIMoCatchEnv(MIMoEnv):
     def _step_callback(self):
         self.steps += 1
 
-        self.in_contact_past[self.steps % 100] = self._in_contact()
+        self.in_contact_past[self.steps % self.steps_in_contact_for_success] = self._in_contact()
 
         # manually set head and eye positions to look at target
         target_pos = self.sim.data.get_body_xpos('target')
@@ -291,7 +298,7 @@ class MIMoCatchEnv(MIMoEnv):
         return in_contact
 
     def _currently_in_contact(self):
-        return self.in_contact_past[self.steps % 100]
+        return self.in_contact_past[self.steps % self.steps_in_contact_for_success]
 
     def _viewer_setup(self):
         """Initial configuration of the viewer. Can be used to set the camera position,

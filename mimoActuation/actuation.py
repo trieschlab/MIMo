@@ -24,6 +24,9 @@ class ActuationModel:
     - :meth:`.observations` should return any actuation-related quantities that could reasonably be used as
       observations for the gym environment. Note that these will only actually be included if the proprioception
       module is appropriately configured.
+    - :meth:`.cost` should return the cost of the current activations. This can represent the metabolic cost or an
+      action penalty. This function is not used by default, but environments may use it as they wish, for example during
+      reward calculation.
     - :meth:`.reset` should reset whatever internal quantities the model uses to the value at the start of the
       simulation.
 
@@ -66,6 +69,17 @@ class ActuationModel:
 
         Returns:
             A flat numpy array with these quantities.
+        """
+        raise NotImplementedError
+
+    def cost(self):
+        """ Returns the "cost" of the current action.
+
+        This function may be used as an action penalty. Implementations should try to keep this biologically accurate,
+        keeping in mind how accurate the implementations actuation model is in the first place.
+
+        Returns:
+            The cost as a float.
         """
         raise NotImplementedError
 
@@ -129,6 +143,14 @@ class TorqueMotorModel(ActuationModel):
         """
         torque = self.simulation_torque().flatten()
         return np.concatenate([self.control_input.flatten(), torque])
+
+    def cost(self):
+        """ The cost is the sum of the absolute values of the current torque outputs.
+
+        Returns:
+            The cost as a float.
+        """
+        return 0.2 * np.abs(self.simulation_torque()).sum()
 
     def simulation_torque(self):
         """ Computes the currently applied torque for each motor in the simulation.

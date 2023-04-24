@@ -60,7 +60,7 @@
         <joint joint1="robot:right_shoulder_ad_ab" polycoef=".8 0 0 0 0"/>
         <joint joint1="robot:right_shoulder_rotation" polycoef="-1.6 0 0 0 0"/>
         <joint joint1="robot:right_elbow" polycoef="-0.4 0 0 0 0"/>
-        <joint joint1="robot:right_hand1" polycoef="-1.4 0 0 0 0"/>
+        <!--<joint joint1="robot:right_hand1" polycoef="-1.4 0 0 0 0"/>-->
     </equality>
 
     <worldbody>

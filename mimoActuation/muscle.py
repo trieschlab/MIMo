@@ -106,6 +106,18 @@ class MuscleModel(ActuationModel):
         torque = self.simulation_torque().flatten()
         return np.concatenate([self.control_input.flatten(), self.muscle_activations.flatten(), self.muscle_forces.flatten(), torque])
 
+    def cost(self):
+        """ Approximates the metabolic cost of muscle activations.
+
+        Currently, it is the sum of the square of the per-muscle torque.
+
+        Returns:
+            The cost as a float.
+        """
+        per_muscle_cost = np.concatenate([self.moment_1 * self.force_muscles_1 * self.fmax[:self.env.n_actuators],
+                                          self.moment_2 * self.force_muscles_2 * self.fmax[self.env.n_actuators:]])
+        return np.square(np.abs(per_muscle_cost)).sum() / 2
+
     def reset(self):
         """ Set activity to zero and recompute muscle quantities. """
         self._set_initial_muscle_state()
