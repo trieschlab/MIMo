@@ -105,7 +105,8 @@ class MuscleModel(ActuationModel):
     def cost(self):
         """ Approximates the metabolic cost of muscle activations.
 
-        Currently, it is given by TODO: EQUATION HERE.
+        Currently, it is given by :math:`\\sum_{i=1}^n \\frac{m_{a_i}^2 * f_{max_i}}{n \\sum_{i=1}^n f_{max_i}}`, where
+        :math:`m_{a_i}` is the activation of muscle :math:`i` and :math:`n` is the number of muscles in the model.
 
         Returns:
             The cost as a float.
