@@ -82,12 +82,20 @@ class MIMoCatchEnv(MIMoEnv):
                  done_active=True,
                  action_penalty=False):
 
+        self.jitter = False
+        self.use_position_inaccuracy = False
+
         # Target ball randomization limits.
         self.position_limits = np.array([0.01, 0.01, 0.08, 0, 0, 0, 0])
-        self.size_limits = [0.005, 0.025]
+        self.position_inaccuracy_limits = np.asarray([0.005, 0.005, 0.005])
+        self.position_offset = np.zeros((3,))
+        self.size_limits = [0.005, 0.025] # [.005, .025]
         self.ball_size = 0.025
-        self.mass_limits = [0.05, 0.5]
+        self.mass_limits = [0.05, 0.5] # [.05, .5]
         self.ball_mass = 0.5
+
+        self.jitter_period = 0
+        self.jitter_array = 1.0
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
@@ -118,8 +126,6 @@ class MIMoCatchEnv(MIMoEnv):
         self.target_joint_qpos = env_utils.get_joint_qpos_addr(self.sim.model, self.target_joint_id)
         self.target_joint_qvel = env_utils.get_joint_qvel_addr(self.sim.model, self.target_joint_id)
 
-        # Also change ball bouncy-ness
-
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
 
@@ -135,12 +141,14 @@ class MIMoCatchEnv(MIMoEnv):
             float: The reward as described above.
         """
         reward = 0
+
+        # Positive reward for contact with the target
         if self._currently_in_contact():
             reward += 1
 
         if self.action_penalty:
-            cost = self.actuation_model.cost() / self.n_actuators
-            reward -= 10*cost
+            cost = self.actuation_model.cost()
+            reward -= 40*cost
 
         if info['is_failure']:
             reward -= 100
@@ -148,6 +156,12 @@ class MIMoCatchEnv(MIMoEnv):
             reward += 100
 
         return reward
+
+    def do_simulation(self, action, n_frames):
+        """ Implementation that adds jitter to the actions. """
+        # Implement the jitter
+        action = np.clip(action * self.jitter_array, 0, 1)
+        super().do_simulation(action, n_frames)
 
     def _get_obs(self):
         obs = super()._get_obs()
@@ -206,8 +220,12 @@ class MIMoCatchEnv(MIMoEnv):
         Returns:
             bool: `True`
         """
-
         self.sim.set_state(self.initial_state)
+        # Lock shoulder and elbow joint
+        #env_utils.lock_joint(self.sim.model, "robot:right_shoulder_horizontal")
+        #env_utils.lock_joint(self.sim.model, "robot:right_shoulder_ad_ab")
+        #env_utils.lock_joint(self.sim.model, "robot:right_shoulder_rotation")
+        #env_utils.lock_joint(self.sim.model, "robot:right_elbow")
 
         # Randomize ball position
         random_shift = np.random.uniform(low=-self.position_limits, high=self.position_limits)
@@ -227,6 +245,11 @@ class MIMoCatchEnv(MIMoEnv):
         self.sim.model.body_inertia[self.target_body] = np.asarray([inertia, inertia, inertia])
         self.sim.set_constants()  # Recompute derived mujoco quantities
 
+        # Randomize ball offset
+        if self.use_position_inaccuracy:
+            self.position_offset = np.random.uniform(low=-self.position_inaccuracy_limits,
+                                                     high=self.position_inaccuracy_limits)
+
         self.sim.forward()
 
         # perform 50 steps (.5 secs) with gravity off to settle arm
@@ -241,6 +264,12 @@ class MIMoCatchEnv(MIMoEnv):
         # Reset gravity
         self.sim.model.opt.gravity[2] = gravity
 
+        # Unlock joint
+        #env_utils.unlock_joint(self.sim.model, "robot:right_shoulder_horizontal")
+        #env_utils.unlock_joint(self.sim.model, "robot:right_shoulder_ad_ab")
+        #env_utils.unlock_joint(self.sim.model, "robot:right_shoulder_rotation")
+        #env_utils.unlock_joint(self.sim.model, "robot:right_elbow")
+
         self._step_callback()
         self.steps = 0
 
@@ -254,7 +283,7 @@ class MIMoCatchEnv(MIMoEnv):
         self.in_contact_past[self.steps % self.steps_in_contact_for_success] = self._in_contact()
 
         # manually set head and eye positions to look at target
-        target_pos = self.sim.data.get_body_xpos('target')
+        target_pos = self.sim.data.get_body_xpos('target') + self.position_offset
         head_pos = self.sim.data.get_body_xpos('head')
         head_target_dif = target_pos - head_pos
         head_target_dist = np.linalg.norm(head_target_dif)
@@ -276,7 +305,13 @@ class MIMoCatchEnv(MIMoEnv):
                                  np.arctan(-half_eyes_dist / eyes_target_dist))
         env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:right_eye_vertical", 0)
         env_utils.set_joint_qpos(self.sim.model, self.sim.data, "robot:right_eye_torsional", 0)
-        pass
+
+        if self.jitter:
+            if self.jitter_period <= 0:
+                self.jitter_period = int(random.uniform(10, 51))
+                self.jitter_array = np.random.uniform(0.8, 1.2, self.action_space.shape)
+            else:
+                self.jitter_period -= 1
 
     def _in_contact(self):
         in_contact = False
@@ -296,6 +331,22 @@ class MIMoCatchEnv(MIMoEnv):
                     in_contact = True
                     break
         return in_contact
+
+    def body_contact_reward(self, reward):
+        # Positive reward for contact with the target
+        for i in range(self.sim.data.ncon):
+            # Max seems to be 9
+            contact = self.sim.data.contact[i]
+            # Is this a contact between us and the target object?
+            if (contact.geom1 in self.target_geoms or contact.geom2 in self.target_geoms) \
+                    and (contact.geom1 in self.own_geoms or contact.geom2 in self.own_geoms):
+
+                # Check that contact is active
+                forces = np.zeros(6, dtype=np.float64)
+                mujoco_py.functions.mj_contactForce(self.sim.model, self.sim.data, i, forces)
+                if abs(forces[0]) > 1e-9:  # Contact active
+                    reward += 1
+        return reward / 10
 
     def _currently_in_contact(self):
         return self.in_contact_past[self.steps % self.steps_in_contact_for_success]

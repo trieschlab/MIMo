@@ -75,8 +75,7 @@ class ActuationModel:
     def cost(self):
         """ Returns the "cost" of the current action.
 
-        This function may be used as an action penalty. Implementations should try to keep this biologically accurate,
-        keeping in mind how accurate the implementations actuation model is in the first place.
+        This function may be used as an action penalty.
 
         Returns:
             The cost as a float.
@@ -105,6 +104,7 @@ class TorqueMotorModel(ActuationModel):
     def __init__(self, env, actuators):
         super().__init__(env, actuators)
         self.control_input = None
+        self.max_torque = self.env.sim.model.actuator_gear[self.actuators, 0]
 
     def get_action_space(self):
         """ Determines the actuation space attribute for the gym environment.
@@ -145,12 +145,15 @@ class TorqueMotorModel(ActuationModel):
         return np.concatenate([self.control_input.flatten(), torque])
 
     def cost(self):
-        """ The cost is the sum of the absolute values of the current torque outputs.
+        """ Provides a cost function for current motor usage.
+
+        The cost is given by TODO.
 
         Returns:
             The cost as a float.
         """
-        return 0.2 * np.abs(self.simulation_torque()).sum()
+        per_actuator_cost = self.control_input * self.control_input * self.max_torque
+        return np.abs(per_actuator_cost).sum() / (self.env.n_actuators * self.max_torque.sum())
 
     def simulation_torque(self):
         """ Computes the currently applied torque for each motor in the simulation.

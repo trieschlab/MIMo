@@ -56,11 +56,15 @@
         <weld body1="left_hand"/>
         <weld body1="left_foot"/>
         <weld body1="right_foot"/>
-        <joint joint1="robot:right_shoulder_horizontal" polycoef="1.7 0 0 0 0"/>
-        <joint joint1="robot:right_shoulder_ad_ab" polycoef=".8 0 0 0 0"/>
-        <joint joint1="robot:right_shoulder_rotation" polycoef="-1.6 0 0 0 0"/>
-        <joint joint1="robot:right_elbow" polycoef="-0.4 0 0 0 0"/>
-        <!--<joint joint1="robot:right_hand1" polycoef="-1.4 0 0 0 0"/>-->
+        <joint name="robot:right_shoulder_horizontal" joint1="robot:right_shoulder_horizontal" polycoef="1.7 0 0 0 0"/>
+        <joint name="robot:right_shoulder_ad_ab" joint1="robot:right_shoulder_ad_ab" polycoef=".8 0 0 0 0"/>
+        <joint name="robot:right_shoulder_rotation" joint1="robot:right_shoulder_rotation" polycoef="-1.6 0 0 0 0"/>
+        <joint name="robot:right_elbow" joint1="robot:right_elbow" polycoef="-0.4 0 0 0 0"/>
+        <joint joint1="robot:right_th_swivel" polycoef="0 0 0 0 0"/>
+        <joint joint1="robot:right_th_adduction" polycoef="-0.9 0 0 0 0"/>
+        <joint joint1="robot:right_th_pivot" polycoef="0 0 0 0 0"/>
+        <joint joint1="robot:right_th_middle" polycoef="0.4 0 0 0 0"/>
+        <joint joint1="robot:right_th_distal" polycoef="0.3 0 0 0 0"/>
     </equality>
 
     <worldbody>

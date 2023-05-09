@@ -95,28 +95,23 @@ class MuscleModel(ActuationModel):
         self._compute_muscle_action(update_action=False)
 
     def observations(self):
-        """ Returns muscle quantities for every actuator this time step.
-
-        Included are the control input (i.e. the desired activation level for each muscle), the muscle activation
-        (actual activation levels), the muscle forces (normalized torque factor) and the actual output torque.
+        """ Returns muscle activations and forces for every actuator.
 
         Returns:
-            A flat numpy array with the quantitites described above.
+            A flat numpy array with the quantities described above.
         """
-        torque = self.simulation_torque().flatten()
-        return np.concatenate([self.control_input.flatten(), self.muscle_activations.flatten(), self.muscle_forces.flatten(), torque])
+        return np.concatenate([self.muscle_activations.flatten(), self.muscle_forces.flatten() * self.fmax])
 
     def cost(self):
         """ Approximates the metabolic cost of muscle activations.
 
-        Currently, it is the sum of the square of the per-muscle torque.
+        Currently, it is given by TODO: EQUATION HERE.
 
         Returns:
             The cost as a float.
         """
-        per_muscle_cost = np.concatenate([self.moment_1 * self.force_muscles_1 * self.fmax[:self.env.n_actuators],
-                                          self.moment_2 * self.force_muscles_2 * self.fmax[self.env.n_actuators:]])
-        return np.square(np.abs(per_muscle_cost)).sum() / 2
+        per_muscle_cost = self.activity * self.activity * self.fmax
+        return np.abs(per_muscle_cost).sum() / (2 * self.env.n_actuators * self.fmax.sum())
 
     def reset(self):
         """ Set activity to zero and recompute muscle quantities. """
