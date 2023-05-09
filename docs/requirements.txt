@@ -1,3 +1,4 @@
+setuptools<=59.2.0  # maybe required for docs at the moment
 numpy<=1.22.0
 gym<=0.20
 matplotlib
