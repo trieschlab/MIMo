@@ -147,7 +147,9 @@ class TorqueMotorModel(ActuationModel):
     def cost(self):
         """ Provides a cost function for current motor usage.
 
-        The cost is given by TODO.
+        The cost is given by given by :math:`\\sum_{i=1}^n \\frac{u_i^2 * T_{max_i}}{n \\sum_{i=1}^n T_{max_i}}`, where
+        :math:`u_i` and :math:`T_{max_i}` are the control signal and maximum motor torque of motor
+        :math:`i`, respectively, and :math:`n` is the number of motors in the model.
 
         Returns:
             The cost as a float.
