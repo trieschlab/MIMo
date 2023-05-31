@@ -8,6 +8,7 @@ Actuation Models
    
    mimoActuation.actuation.ActuationModel
    mimoActuation.actuation.TorqueMotorModel
+   mimoActuation.actuation.PositionalModel
    mimoActuation.muscle.MuscleModel
    mimoActuation.muscle_testing
 

@@ -1,7 +1,14 @@
+"""This module defines the actuation model interface and provides two implementations.
+
+The interface is defined as an abstract class in :class:`~mimoActuation.actuation.ActuationModel`.
+The spring-damper model is defined in :class:`~mimoActuation.actuation.TorqueMotorModel`.
+A second implementation using direct positional control is :class:`~mimoActuation.actuation.PositionalModel`.
+"""
 import numpy
 import numpy as np
 from gym import spaces
 
+from mimoEnv.utils import set_joint_locking_angle
 
 class ActuationModel:
     """ Abstract base class for MIMo's actuation model.
@@ -95,7 +102,7 @@ class TorqueMotorModel(ActuationModel):
     def get_action_space(self):
         """ Determines the actuation space attribute for the gym environment.
 
-        The actuation space directly corresponds the control range of the simulations motors. Unless modified, this
+        The actuation space directly corresponds to the control range of the simulations motors. Unless modified, this
         will be [-1, 1] for all motors.
 
         Returns:
@@ -139,6 +146,75 @@ class TorqueMotorModel(ActuationModel):
         actuator_gear = self.env.sim.model.actuator_gear[self.actuators, 0]
         control_input = self.env.sim.data.ctrl[self.actuators]
         return actuator_gear * control_input
+
+    def reset(self):
+        """ Reset actuation model to the initial state.
+        """
+        self.action(numpy.zeros_like(self.control_input))
+
+
+class PositionalModel(ActuationModel):
+    """ This model allows posing MIMo or moving his joints along pre-determined trajectories .
+
+    The 'action' input represents desired joint positions. MIMo will be locked into these at each timestep. Unlike the
+    other actuation models this doesn't use the MuJoCo actuators in the scene but instead adjusts the equality
+    constraints used to lock each joint into position. To determine which joints should be included we use the joints
+    associated with the actuators in the 'actuators' parameter. Note that this requires that there is an equality
+    constraint in the XMLs for each actuated joint. This is true for MIMo by default.
+
+    In addition to the attributes from the base actuation class, there is one extra attribute:
+    Attributes:
+        control_input: Contains the current control input.
+        actuated_joints: Contains an array of joint IDs associated with the actuators.
+        constraints: Contains an array of constraint IDs belonging to the joints in 'actuated_joints'."""
+
+    def __int__(self, env, actuators):
+        super().__init__(env, actuators)
+        self.control_input = None
+        self.actuated_joints = self.env.sim.model.actuator_trnid[actuators, 0]
+        self.constraints = self.get_constraints()
+
+    def get_constraints(self):
+        constraints = []
+        # Iterate over all constraints, check that they belong to an actuated joint and are type 'joint'
+        for i in range(self.env.sim.model.neq):
+            if self.env.sim.model.eq_type[i] == 2 and self.env.sim.model.eq_obj1ed[i] in self.actuated_joints:
+                self.env.sim.model.eq_active[i] = True
+                constraints.append(i)
+        return numpy.asarray(constraints)
+
+    def get_action_space(self):
+        """ Determines the actuation space attribute for the gym environment.
+
+        The actuation space directly corresponds to the range of motion of the joints in radians.
+
+        Returns:
+            A gym spaces object with the actuation space.
+        """
+        bounds = self.env.sim.model.jnt_range.copy().astype(np.float32)[self.actuated_joints]
+        low, high = bounds.T
+        action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+        self.control_input = np.zeros(action_space.shape)  # Set initial control input to avoid NoneType Errors
+        return action_space
+
+    def action(self, action):
+        """ Locks the joints into the positions provided by 'action'.
+
+        Control values are clipped to the joint range of motion.
+
+        Args:
+            action (numpy.ndarray): A numpy array with desired joint positions.
+        """
+        self.control_input = np.clip(action, self.env.action_space.low, self.env.action_space.high)
+        set_joint_locking_angle(self.env.sim.model, "", angle=self.control_input, constraint_id=self.constraints)
+
+    def observations(self):
+        """ Returns the current control input, i.e. the locked positions.
+
+        Returns:
+            A flat numpy array with the control input.
+        """
+        return self.control_input.flatten()
 
     def reset(self):
         """ Reset actuation model to the initial state.

@@ -384,9 +384,9 @@ def set_joint_locking_angle(mujoco_model, joint_name, angle, constraint_id=None)
     Args:
         mujoco_model (sim.model): The MuJoCo model object.
         joint_name (str): The name of the joint.
-        angle (float): The locking angle in radians, as a delta from the model starting value.
-        constraint_id (int): If the ID of the constraint is already known the name search can be bypassed by passing
-            it here.
+        angle (float|ndarray): The locking angle(s) in radians, as a delta from the model starting value.
+        constraint_id (int|ndarray): If the ID(s) of the constraint is already known the name search can be bypassed by
+            passing it here.
     """
     if constraint_id is None:
         constraint_id = equality_name2id(mujoco_model, joint_name)
