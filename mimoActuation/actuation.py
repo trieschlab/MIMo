@@ -167,8 +167,7 @@ class PositionalModel(ActuationModel):
         control_input: Contains the current control input.
         actuated_joints: Contains an array of joint IDs associated with the actuators.
         constraints: Contains an array of constraint IDs belonging to the joints in 'actuated_joints'."""
-
-    def __int__(self, env, actuators):
+    def __init__(self, env, actuators):
         super().__init__(env, actuators)
         self.control_input = None
         self.actuated_joints = self.env.sim.model.actuator_trnid[actuators, 0]
@@ -178,7 +177,7 @@ class PositionalModel(ActuationModel):
         constraints = []
         # Iterate over all constraints, check that they belong to an actuated joint and are type 'joint'
         for i in range(self.env.sim.model.neq):
-            if self.env.sim.model.eq_type[i] == 2 and self.env.sim.model.eq_obj1ed[i] in self.actuated_joints:
+            if self.env.sim.model.eq_type[i] == 2 and self.env.sim.model.eq_obj1id[i] in self.actuated_joints:
                 self.env.sim.model.eq_active[i] = True
                 constraints.append(i)
         return numpy.asarray(constraints)
