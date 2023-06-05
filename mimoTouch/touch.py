@@ -1771,7 +1771,7 @@ class TrimeshTouch(Touch):
             focus: Coordinates are moved into a consistent reference frame. This parameter determines that reference
                 frame. Must be one of ``["world", "first"]``.
             show_contact_points: If ``True`` the actual contact points are also plotted. Note that these are corrected
-                for intersecting bodies. Default True.
+                for intersecting bodies. Default ``True``.
         """
         assert len(body_ids) > 0 or len(body_names) > 0
         assert focus in ["world", "first"]
@@ -1820,7 +1820,7 @@ class TrimeshTouch(Touch):
                                    color="y", s=15, depthshade=True, alpha=0.8)
         plt.show()
 
-    def plot_force_body_subtree(self, body_id: int = None, body_name: str = None, title=""):
+    def plot_force_body_subtree(self, body_id: int = None, body_name: str = None, title="", show_contact_points=False):
         """ Plot the sensor output for the kinematic subtree with the given body at its root.
 
         Given a body, collects all descendent bodies in the kinematic tree and  plot the positions and outputs of their
@@ -1831,11 +1831,12 @@ class TrimeshTouch(Touch):
             body_id: The ID of the root body for the subtree.
             body_name: The names of the root bodies. This is ignored if an ID is provided!
             title: The title of the plot.
+            show_contact_points: If ``True``, the actual rigid body contact points are also plotted. Default ``False``.
         """
         body_id = env_utils.get_body_id(self.m_model, body_id=body_id, body_name=body_name)
         # Go through all bodies and note their child bodies
         subtree = env_utils.get_child_bodies(self.m_model, body_id)
-        self.plot_force_bodies(body_ids=subtree, title=title, focus="first")
+        self.plot_force_bodies(body_ids=subtree, title=title, focus="world", show_contact_points=show_contact_points)
 
 _rng = np.random.default_rng()
 _vectors = utils.normalize_vectors(_rng.normal(size=(10,3)))

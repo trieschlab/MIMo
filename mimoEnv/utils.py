@@ -30,7 +30,7 @@ MUJOCO_DOF_SIZES = {
 
 
 def rotate_vector(vector, rot_matrix):
-    """ Rotates the vectors with the the rotation matrix.
+    """ Rotates the vectors with the rotation matrix.
 
     The vector can be a 1d vector or a multidimensional array of vectors, as long as the final dimension has length 3.
     Convention for mujoco matrices: Use rotate_vector to convert from special frame to global, rotate_vector_transpose
@@ -801,8 +801,8 @@ def plot_points(points, limit: float = 1.0, title="", show=True):
 def plot_forces(points, vectors, limit: float = 1.0, title="", show=True):
     """ Plots an array of points and vectors pointing from those points.
 
-    points and vectors must have the same shape. For each point there is a vector, the direction and size of which is
-    determined by the `vectors` argument, starting from that point.
+    The arrays 'points' and 'vectors' must have the same shape. For each point there is a vector, plotted as arrows,
+    the direction and size of which is determined by the `vectors` argument, starting from that point.
 
     Args:
         points (numpy.ndarray): An array containing the points. Shape should be (n, 3) for n points.
