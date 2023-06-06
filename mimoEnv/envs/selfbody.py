@@ -93,7 +93,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
     Attributes and parameters are mostly identical to the base class, but there are two changes.
     The constructor takes two arguments less, ``goals_in_observation`` and ``done_active``, which are both permanently
     set to `True`.
-    Finally there are two extra attributes for handling the goal state. The :attr:`.goal` attribute stores the target
+    Finally, there are two extra attributes for handling the goal state. The :attr:`.goal` attribute stores the target
     geom in a one hot encoding, while :attr:`.target_geom` and :attr:`.target_body` store the geom and its associated
     body as an index. For more information on geoms and bodies please see the MuJoCo documentation.
 
@@ -147,7 +147,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
         Returns:
             numpy.ndarray: The target geom in a one hot encoding.
         """
-        # randomly select geom as target (except for 2 latest geoms that correspong to fingers)
+        # randomly select geom as target (except for 2 latest geoms that correspond to fingers)
         active_geom_codes = list(self.touch.sensor_outputs.keys())
         target_geom_idx = np.random.randint(len(active_geom_codes) - 2)
         self.target_geom = active_geom_codes[int(target_geom_idx)]
@@ -163,7 +163,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
     def _is_success(self, achieved_goal, desired_goal):
         """ We have succeeded when we have a touch sensation on the goal body.
 
-        We ignore the :attr:`.goal` attribute in this for performance reasons and determine the the success condition
+        We ignore the :attr:`.goal` attribute in this for performance reasons and determine the success condition
         using :attr:`.target_geom` instead. This allows us to save a number of array operations each step.
 
         Args:

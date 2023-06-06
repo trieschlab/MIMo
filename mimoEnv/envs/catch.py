@@ -9,9 +9,6 @@ An episode is completed successfully if MIMo holds onto the ball continously for
 
 There is a small negative reward for each step without touching the ball, a larger positive reward for each step in
 contact with the ball and then a large fixed reward on success.
-
-The class with the environment is :class:`~mimoEnv.envs.reach.MIMoReachEnv` while the path to the scene XML is defined
-in :data:`REACH_XML`.
 """
 import os
 import random
@@ -56,18 +53,20 @@ TOUCH_PARAMS = {
     "touch_function": "force_vector",
     "response_function": "spread_linear",
 }
+""" Touch parameters for the catch environment. Only the right arm is equipped with sensors.
 
+:meta hide-value:
+"""
 
 class MIMoCatchEnv(MIMoEnv):
-    """ MIMo reaches for an object.
+    """ MIMo tries to catch a falling ball.
 
-    Attributes and parameters are the same as in the base class, but the default arguments are adapted for the scenario.
-
-    Due to the goal condition we do not use the :attr:`.goal` attribute or the interfaces associated with it. Instead,
-    the reward and success conditions are computed directly from the model state, while
-    :meth:`~mimoEnv.envs.reach.MIMoReachEnv._sample_goal` and
-    :meth:`~mimoEnv.envs.reach.MIMoReachEnv._get_achieved_goal` are dummy functions.
-
+    MIMo is tasked with catching a falling ball and holding onto it for one second. MIMo's head and eyes automatically
+    track the ball. The position of the ball is slightly randomized each episode.
+    The constructor takes two additional arguments, ``jitter`` and ``position_inaccurate``, which are ``False`` by
+    default. If ``jitter`` is set to ``True`` the input actions are multiplied with a perturbation array which is
+    randomized every 10-50 time steps. If ``position_inaccurate`` is set to ``True``, the position tracked by the head
+    is offset by a small random distance from the true position of the ball.
     """
     def __init__(self,
                  model_path=CATCH_XML,
@@ -80,10 +79,12 @@ class MIMoCatchEnv(MIMoEnv):
                  actuation_model=MuscleModel,
                  goals_in_observation=False,
                  done_active=True,
-                 action_penalty=False):
+                 action_penalty=False,
+                 jitter = False,
+                 position_inaccurate = False,):
 
-        self.jitter = False
-        self.use_position_inaccuracy = False
+        self.jitter = jitter
+        self.use_position_inaccuracy = position_inaccurate
 
         # Target ball randomization limits.
         self.position_limits = np.array([0.01, 0.01, 0.08, 0, 0, 0, 0])
@@ -129,8 +130,9 @@ class MIMoCatchEnv(MIMoEnv):
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
 
-        Fixed negative reward for each step not in contact, fixed positive for each step in contact?
-        Maybe add success and a large fixed rewards for continuous contact for n steps?
+        MIMo is rewarded for each time step in contact with the target. Completing an episode successfully awards +100,
+        while failing leads to a -100 penalty. Additionally, there is an action penalty based on the cost function of
+        the actuation model.
 
         Args:
             achieved_goal (object): This parameter is ignored.
@@ -164,6 +166,7 @@ class MIMoCatchEnv(MIMoEnv):
         super().do_simulation(action, n_frames)
 
     def _get_obs(self):
+        """ Adds the size of the ball to the observations."""
         obs = super()._get_obs()
         obs["observation"] = np.append(obs["observation"], self.ball_size)
         return obs
@@ -278,6 +281,8 @@ class MIMoCatchEnv(MIMoEnv):
         return True
 
     def _step_callback(self):
+        """ Checks if MIMo is touching the ball and performs head tracking.
+        """
         self.steps += 1
 
         self.in_contact_past[self.steps % self.steps_in_contact_for_success] = self._in_contact()
@@ -314,6 +319,13 @@ class MIMoCatchEnv(MIMoEnv):
                 self.jitter_period -= 1
 
     def _in_contact(self):
+        """ Check if MIMo is currently touching the target ball.
+
+        This function performs the actual contact check and is called during :meth:`.step_callback`.
+
+        Returns:
+            ``True`` if MIMo is currently touching the ball, ``False`` otherwise..
+        """
         in_contact = False
         # Go over all contacts
         for i in range(self.sim.data.ncon):
@@ -332,7 +344,13 @@ class MIMoCatchEnv(MIMoEnv):
                     break
         return in_contact
 
-    def body_contact_reward(self, reward):
+    def body_contact_reward(self):
+        """ Reward function that provides higher rewards the more geoms are touching the target.
+
+        Returns:
+            float: The reward component as described above.
+        """
+        reward = 0
         # Positive reward for contact with the target
         for i in range(self.sim.data.ncon):
             # Max seems to be 9
@@ -349,11 +367,18 @@ class MIMoCatchEnv(MIMoEnv):
         return reward / 10
 
     def _currently_in_contact(self):
+        """ Check if MIMo is currently touching the ball.
+
+        Unlike :meth:`._in_contact` this function does not perform the check itself, instead checking the array of past
+        contacts for the current time step. The output of this function will not be accurate if called before
+        :meth:`._in_contact`!
+
+        Returns:
+            ``True`` if MIMo is currently touching the ball, ``False`` otherwise."""
         return self.in_contact_past[self.steps % self.steps_in_contact_for_success]
 
     def _viewer_setup(self):
-        """Initial configuration of the viewer. Can be used to set the camera position,
-        for example.
+        """Initial configuration of the viewer. Sets the camera position to look at MIMos outstretched hand.
         """
         self.viewer.cam.trackbodyid = 0  # id of the body to track
         self.viewer.cam.distance = .5  # how much you "zoom in", model.stat.extent is the max limits of the arena smaller is closer
