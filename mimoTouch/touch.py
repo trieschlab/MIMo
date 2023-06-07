@@ -24,7 +24,6 @@ import CacheToolsUtils as ctu
 from matplotlib import pyplot as plt
 
 import mimoEnv.utils as env_utils
-import utils
 from mimoEnv.utils import rotate_vector_transpose, rotate_vector, EPS
 from mimoTouch.sensorpoints import spread_points_box, spread_points_sphere, spread_points_cylinder, \
                                    spread_points_capsule
@@ -1943,7 +1942,7 @@ class TrimeshTouch(Touch):
         return fig, ax
 
 _rng = np.random.default_rng()
-_vectors = utils.normalize_vectors(_rng.normal(size=(10,3)))
+_vectors = env_utils.normalize_vectors(_rng.normal(size=(10,3)))
 
 def _contains(points, mesh, directions=_vectors, tol=1e-10):
     """ Check whether points are inside a mesh.
