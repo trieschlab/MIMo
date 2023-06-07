@@ -45,7 +45,7 @@ def mesh_box(resolution: float, sizes: np.array):
 
     faces = []
     points = []
-    # Generate all the vertices. This will duplicate vertices at the edges/corners but we will fix that later
+    # Generate all the vertices. This will duplicate vertices at the edges/corners, which we correct later.
     points.extend([(x_coords[0], y, z) for y in y_coords for z in z_coords])
     points.extend([(x_coords[-1], y, z) for y in y_coords for z in z_coords])
     for y in range(1, n_divisions[1]):
@@ -87,7 +87,6 @@ def mesh_box(resolution: float, sizes: np.array):
     mesh = trimesh.Trimesh(vertices=np.asarray(points), faces=np.asarray(faces))
     mesh.merge_vertices()  # Merge vertices to turn our 6 disconnected surfaces into a single mesh
     mesh.fix_normals()
-
     return mesh
 
 
@@ -107,7 +106,7 @@ def mesh_sphere(resolution: float, radius: float):
         A :class:`trimesh.Trimesh` object containing the mesh.
 
     """
-    # If resolution would lead to very small number of sensor points, instead have single point at center of sphere
+    # If a low resolution leads to very small number of sensor points, instead have single point at center of sphere
     points = mimoTouch.sensorpoints.spread_points_sphere(resolution=resolution, radius=radius)
     mesh = trimesh.points.PointCloud(points)
     if points.shape[0] == 1:
@@ -116,11 +115,11 @@ def mesh_sphere(resolution: float, radius: float):
         return mesh.convex_hull
 
 
-def mesh_ellipsoid(resolution: float, radii):
+def mesh_ellipsoid(resolution: float, radii: np.ndarray):
     """ Spreads a mesh over the surface of an ellipsoid.
 
     Spreads points over the surface of an ellipsoid. This is done by spreading points over a sphere and then projecting
-    them onto the ellipsoid. Finally the points are turned into a watertight mesh by taking the convex hull over the
+    them onto the ellipsoid. Finally, the points are turned into a watertight mesh by taking the convex hull over the
     points. Since the points are projected the distance between points varies more strongly the less spherical the
     ellipsoid gets. If the ellipsoid is too small for the resolution a single point at the center is returned instead.
     The ellipsoid is centered on (0,0,0).
@@ -269,12 +268,12 @@ def mesh_capsule(resolution: float, length: float, radius: float):
     The capsule is centered on (0,0,0) with the longitudinal axis aligned with the z-axis.
 
     Args:
-        resolution: Approximate distance between neighbouring points on the surface.
-        length: The length of the cylindrical section.
-        radius: The radius of the cylinder and hemispheres.
+        resolution (float): Approximate distance between neighbouring points on the surface.
+        length (float): The length of the cylindrical section.
+        radius (float): The radius of the cylinder and hemispheres.
 
     Returns:
-        A :class:`trimesh.Trimesh` object containing the mesh.
+        trimesh.Trimesh: The created mesh.
 
     """
     # Number of subdivisions around circumference

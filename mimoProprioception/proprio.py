@@ -130,8 +130,7 @@ class SimpleProprioception(Proprioception):
         entries.
 
         Returns:
-            A numpy array containing the concatenation of all enabled outputs.
-
+            np.ndarray: A numpy array containing the concatenation of all enabled outputs.
         """
         self.sensor_outputs = {}
         robot_qpos = self.env.sim.data.qpos[self.joint_qpos].flatten()

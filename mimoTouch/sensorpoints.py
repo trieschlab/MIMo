@@ -13,7 +13,7 @@ from mimoEnv.utils import EPS, normalize_vectors
 #       Take mujoco mesh and do intersections there?
 #       Maybe mujoco raycast methods can be used here, if we can exclude other objects?
 
-def spread_points_box(resolution: float, sizes: np.array, return_normals=False):
+def spread_points_box(resolution: float, sizes: np.array, return_normals: bool = False):
     """ Spreads points over the surface of a box.
 
     Spreads points over the surface of a box such that the points are spaced at approximately `resolution` distance to
@@ -114,7 +114,7 @@ def spread_points_box(resolution: float, sizes: np.array, return_normals=False):
         return points, normals
 
 
-def spread_points_sphere(resolution: float, radius: float, return_normals=False):
+def spread_points_sphere(resolution: float, radius: float, return_normals: bool = False):
     """ Spreads points over the surface of a sphere.
 
     Spreads points over the surface of a sphere such that the points are spaced at approximately `resolution` distance to
@@ -132,7 +132,7 @@ def spread_points_sphere(resolution: float, radius: float, return_normals=False)
         A second numpy array containing the normal vectors, if `return_normals` is `True`.
 
     """
-    # If resolution would lead to very small number of sensor points, instead have single point at center of sphere
+    # If a low resolution leads to very small number of sensor points, instead have single point at center of sphere
     if resolution > radius:
         if return_normals:
             return np.zeros((1, 3), dtype=np.float64), np.array([0, 0, 1])
@@ -161,7 +161,7 @@ def spread_points_sphere(resolution: float, radius: float, return_normals=False)
 
 
 # TODO: Proper points instead of spherical projection
-def spread_points_ellipsoid(resolution: float, radii, return_normals=False):
+def spread_points_ellipsoid(resolution: float, radii: np.ndarray, return_normals: bool = False):
     """ Spreads points over the surface of an ellipsoid.
 
     Spreads points over the surface of an ellipsoid. This is done by spreading points over a sphere and then projecting
@@ -249,7 +249,7 @@ def _spread_points_pipe(resolution: float, length: float, radius: float):
     return np.asarray(points), np.asarray(normals)
 
 
-def spread_points_pipe(resolution: float, length: float, radius: float, return_normals=False):
+def spread_points_pipe(resolution: float, length: float, radius: float, return_normals: bool = False):
     """ Spreads points over the surface of a pipe.
 
     Spreads points over the surface of a pipe, with no caps, such that the distance between points is approximately
@@ -275,7 +275,7 @@ def spread_points_pipe(resolution: float, length: float, radius: float, return_n
         return points
 
 
-def spread_points_cylinder(resolution: float, length: float, radius: float, return_normals=False):
+def spread_points_cylinder(resolution: float, length: float, radius: float, return_normals: bool = False):
     """ Spreads points over the surface of a cylinder.
 
     Spreads points over the surface of a cylinder, such that the distance between points is approximately `resolution`.
@@ -353,7 +353,7 @@ def spread_points_cylinder(resolution: float, length: float, radius: float, retu
         return points
 
 
-def spread_points_capsule(resolution: float, length: float, radius: float, return_normals=False):
+def spread_points_capsule(resolution: float, length: float, radius: float, return_normals: bool = False):
     """ Spreads points over the surface of a capsule.
 
     A capsule is a cylinder with a hemisphere capping each end. Spreads points over the surface of a capsule, such that

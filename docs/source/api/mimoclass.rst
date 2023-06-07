@@ -23,6 +23,8 @@ MIMoEnv
    :private-members:
 
 
+.. _sec default_data:
+
 Default data fields
 -------------------
 

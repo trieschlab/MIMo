@@ -7,12 +7,18 @@ A simple implementation treating each eye as a single camera is in :class:`~mimo
 
 import os
 import matplotlib
+from typing import Dict
+import numpy as np
 
 
 class Vision:
     """ Abstract base class for vision.
 
     This class defines the functions that all implementing classes must provide.
+    The constructor takes two arguments: `env`, which is the environment we are working with, and `camera_parameters`,
+    which can be used to supply implementation specific parameters.
+
+    There is only one function that implementations must provide:
     :meth:`.get_vision_obs` should produce the vision outputs that will be returned to the environment. These outputs
     should also be stored in :attr:`.sensor_outputs`.
 
@@ -24,7 +30,6 @@ class Vision:
             implementation. This should be populated by :meth:`.get_vision_obs`
 
     """
-
     def __init__(self, env, camera_parameters):
         self.env = env
         self.camera_parameters = camera_parameters
@@ -38,7 +43,7 @@ class Vision:
         always be a dictionary containing images as values.
 
         Returns:
-            A dictionary of numpy arrays with the output images.
+            Dict[str, np.ndarray]: A dictionary of numpy arrays with the output images.
 
         """
         raise NotImplementedError
@@ -48,7 +53,8 @@ class SimpleVision(Vision):
     """ A simple vision system with one camera for each output.
 
     The output is simply one RGB image for each camera in the configuration. The constructor takes two arguments: `env`,
-    which is the environment we are working with, and `camera_parameters`.
+    which is the environment we are working with, and `camera_parameters`, which provides the configuration for the
+    vision system.
     The parameter `camera_parameters` should be a dictionary with the following structure::
 
         {
@@ -80,12 +86,12 @@ class SimpleVision(Vision):
         """ Produces the current vision output.
 
         This function renders each camera with the resolution as defined in :attr:`.camera_parameters` using an
-        offscreen render context. The images are stored in :attr:`.sensor_outputs` under the name of the associated
+        offscreen render context. The images are also stored in :attr:`.sensor_outputs` under the name of the associated
         camera.
 
         Returns:
-            A dictionary of numpy arrays. Keys are camera names and the values are the corresponding images.
-
+            Dict[str, np.ndarray]: A dictionary with camera names as keys and the corresponding rendered images as
+            values.
         """
         imgs = {}
         for camera in self.camera_parameters:
@@ -95,16 +101,15 @@ class SimpleVision(Vision):
         self.sensor_outputs = imgs
         return imgs
 
-    def save_obs_to_file(self, directory: str, suffix: str = ""):
+    def save_obs_to_file(self, directory, suffix=""):
         """ Saves the output images to file.
 
         Everytime this function is called all images in :attr:`.sensor_outputs` are saved to separate files in
         `directory`. The filename is determined by the camera name and `suffix`. Saving large images takes a long time!
 
         Args:
-            directory: The output directory. It will be created if it does not already exist.
-            suffix: Optional file suffix. Useful for a step counter.
-
+            directory (str): The output directory. It will be created if it does not already exist.
+            suffix (str): Optional file suffix. Useful for a step counter. Empty by default.
         """
         os.makedirs(directory, exist_ok=True)
         if self.sensor_outputs is None or len(self.sensor_outputs) == 0:
