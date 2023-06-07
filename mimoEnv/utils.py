@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from mujoco_py.generated import const
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 EPS = 1e-10
 
@@ -779,7 +779,8 @@ def plot_points(points, limit=1.0, title="", show=True):
             instead.
 
     Returns:
-        The figure and axis objects if `show` is ``False``, ``None`` otherwise.
+        Tuple[plt.Figure, plt.Axes]|None: A tuple (fig, ax) containing the pyplot figure and axis objects if `show` is
+        ``False``, ``None`` otherwise.
     """
     xs = points[:, 0]
     ys = points[:, 1]
@@ -815,7 +816,8 @@ def plot_forces(points, vectors, limit=1.0, title="", show=True):
             instead.
 
     Returns:
-        A tuple (fig, ax) containing the pyplot figure and axis objects if `show` is ``False``, ``None`` otherwise.
+        Tuple[plt.Figure, plt.Axes]|None: A tuple (fig, ax) containing the pyplot figure and axis objects if `show` is
+        ``False``, ``None`` otherwise.
     """
     xs = points[:, 0]
     ys = points[:, 1]

@@ -1,22 +1,24 @@
 """ Training script for the catch scenario.
 
-This script allows simple training and testing of RL algorithms in the Reach environment with a command line interface.
+This script allows simple training and testing of RL algorithms in the Catch environment with a command line interface.
 A selection of RL algorithms from the Stable Baselines3 library can be selected.
 Interactive rendering is disabled during training to speed up computation, but enabled during testing, so the behaviour
 of the model can be observed directly.
+Note that unlike the other demo environments, this one is based on the full hand version of MIMo and takes a while
+longer to train as a result.
 
-Trained models are saved automatically into the `models` directory and prefixed with `reach`, i.e. if you name your
-model `my_model`, it will be saved as `models/reach_my_model`.
+Trained models are saved automatically into the "models/catch" directory, i.e. if you name your model "my_model", it
+will be saved as "models/catch/my_model".
 
-To train a given algorithm for some number of timesteps::
+To train a given algorithm for some number of time steps::
 
-    python reach.py --train_for=200000 --test_for=1000 --algorithm=PPO --save_model=<model_suffix>
+    python catch.py --train_for=200000 --test_for=1000 --algorithm=PPO --save_model=<model_suffix>
 
 To review a trained model::
 
-    python reach.py --test_for=1000 --load_model=<your_model_suffix>
+    python catch.py --test_for=1000 --load_model=<your_model_suffix>
 
-The available algorithms are `PPO`, `SAC`, `TD3`, `DDPG` and `A2C`.
+The available algorithms are ``PPO, SAC, TD3, DDPG, A2C``.
 """
 
 import gym
@@ -36,7 +38,7 @@ def test(env, test_for=1000, model=None, render_video=False):
             environment, but action and observation spaces must match.
         test_for (int): The number of timesteps the testing runs in total. This will be broken into multiple episodes
             if necessary.
-        model:  The stable baselines model object. If ``None`` we take random actions instead.
+        model:  The stable baselines model object. If ``None`` we take random actions instead. Default ``None``.
     """
     env.seed(42)
     obs = env.reset()
@@ -83,9 +85,14 @@ def main():
       in which case we save once when training completes. Default 100000.
     - ``--algorithm``: The algorithm to train. This argument must be provided if you train. Must be one of
       ``PPO, SAC, TD3, DDPG, A2C, HER``.
-    - ``--load_model``: The model to load. Note that this only takes suffixes, i.e. an input of `my_model` tries to
-      load `models/reach_my_model`.
+    - ``--load_model``: The path to the model to load.
     - ``--save_model``: The name under which we save. Like above this is a suffix.
+    - ``--use_muscles``: This flag switches between actuation models. By default, the spring-damper model is used. If
+        this flag is set, the muscle model is used instead.
+    - ``--action_penalty``: The environment is set up with an optional action penalty. Setting this flag enables this
+        penalty.
+    - ``--render_video``: If this flag is set, each testing episode is recorded and saved as a video in the current
+        working directory.
     """
 
     parser = argparse.ArgumentParser()
@@ -141,7 +148,8 @@ def main():
     elif load_model:
         model = RL.load(load_model, env)
     else:
-        model = RL("MultiInputPolicy", env, tensorboard_log="models/tensorboard_logs/" + save_model, verbose=1, learning_rate=5e-5, buffer_size=100000)
+        model = RL("MultiInputPolicy", env, tensorboard_log="models/tensorboard_logs/" + save_model, verbose=1)
+        # Parameters for paper were: learning_rate=5e-5 for both PPO and SAC, additionally buffer_size=100000 for SAC
 
     # train model
     counter = 0

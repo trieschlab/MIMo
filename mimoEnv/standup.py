@@ -5,10 +5,10 @@ interface. A selection of RL algorithms from the Stable Baselines3 library can b
 Interactive rendering is disabled during training to speed up computation, but enabled during testing, so the behaviour
 of the model can be observed directly.
 
-Trained models are saved automatically into the `models` directory and prefixed with `standup`, i.e. if you name your
-model `my_model`, it will be saved as `models/standup_my_model`.
+Trained models are saved automatically into the "models/standup" directory, i.e. if you name your model "my_model", it
+will be saved as "models/standup/my_model".
 
-To train a given algorithm for some number of timesteps::
+To train a given algorithm for some number of time steps::
 
     python standup.py --train_for=200000 --test_for=1000 --algorithm=PPO --save_model=<model_suffix>
 
@@ -16,7 +16,7 @@ To review a trained model::
 
     python standup.py --test_for=1000 --load_model=<your_model_suffix>
 
-The available algorithms are `PPO`, `SAC`, `TD3`, `DDPG` and `A2C`.
+The available algorithms are ``PPO, SAC, TD3, DDPG, A2C``.
 """
 
 import gym
@@ -31,9 +31,9 @@ def test(env, test_for=1000, model=None):
     Args:
         env (gym.Env): The environment on which the model should be tested. This does not have to be the same training
             environment, but action and observation spaces must match.
-        test_for (int): The number of timesteps the testing runs in total. This will be broken into multiple episodes
-            if necessary.
-        model:  The stable baselines model object. If ``None`` we take random actions instead.
+        test_for (int): The number of time steps the testing runs in total. This will be broken into multiple episodes
+            if necessary. Default 1000.
+        model:  The stable baselines model object. If ``None`` we take random actions instead. Default ``None``.
     """
     obs = env.reset()
     for _ in range(test_for):
@@ -61,8 +61,8 @@ def main():
       in which case we save once when training completes. Default 100000.
     - ``--algorithm``: The algorithm to train. This argument must be provided if you train. Must be one of
       ``PPO, SAC, TD3, DDPG, A2C, HER``.
-    - ``--load_model``: The model to load. Note that this only takes suffixes, i.e. an input of `my_model` tries to
-      load `models/standup_my_model`.
+    - ``--load_model``: The model to load. Note that this only takes suffixes, i.e. an input of "my_model" tries to
+      load "models/standup_my_model".
     - ``--save_model``: The name under which we save. Like above this is a suffix.
     """
 
@@ -118,7 +118,7 @@ def main():
         train_for_iter = min(train_for, save_every)
         train_for = train_for - train_for_iter
         model.learn(total_timesteps=train_for_iter, reset_num_timesteps=False)
-        model.save("models/standup" + save_model + "_" + str(counter))
+        model.save("models/standup/" + save_model + "/model_" + str(counter))
 
     test(env, model=model, test_for=test_for)
 
