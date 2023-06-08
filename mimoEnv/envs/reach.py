@@ -39,7 +39,6 @@ class MIMoReachEnv(MIMoEnv):
     the reward and success conditions are computed directly from the model state, while
     :meth:`~mimoEnv.envs.reach.MIMoReachEnv._sample_goal` and
     :meth:`~mimoEnv.envs.reach.MIMoReachEnv._get_achieved_goal` are dummy functions.
-
     """
     def __init__(self,
                  model_path=REACH_XML,
@@ -92,7 +91,7 @@ class MIMoReachEnv(MIMoEnv):
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `True` if the ball is knocked out of position.
+            bool: ``True`` if the ball is knocked out of position.
         """
         target_pos = self.sim.data.get_body_xpos('target')
         success = (np.linalg.norm(target_pos - self.target_init_pos) > 0.01)
@@ -106,7 +105,7 @@ class MIMoReachEnv(MIMoEnv):
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `False`
+            bool: ``False``.
         """
         return False
 
@@ -133,7 +132,7 @@ class MIMoReachEnv(MIMoEnv):
         limited such that MIMo can always reach the ball.
 
         Returns:
-            bool: `True`
+            bool: ``True``.
         """
 
         self.sim.set_state(self.initial_state)

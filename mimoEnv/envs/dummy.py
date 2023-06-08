@@ -16,6 +16,7 @@ from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_VISION_PARAM
     DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_TOUCH_PARAMS, DEFAULT_TOUCH_PARAMS_V2
 from mimoTouch.touch import TrimeshTouch
 from mimoActuation.muscle import MuscleModel
+from mimoActuation.actuation import TorqueMotorModel
 import mimoEnv.utils as env_utils
 
 
@@ -71,6 +72,7 @@ class MIMoDummyEnv(MIMoEnv):
                  touch_params=DEFAULT_TOUCH_PARAMS,
                  vision_params=DEFAULT_VISION_PARAMS,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
+                 actuation_model=TorqueMotorModel,
                  goals_in_observation=False,
                  done_active=True,
                  show_sensors=False,
@@ -86,6 +88,7 @@ class MIMoDummyEnv(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
+                         actuation_model=actuation_model,
                          goals_in_observation=goals_in_observation,
                          done_active=done_active)
 

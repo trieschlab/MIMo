@@ -79,7 +79,7 @@ class MuscleModel(ActuationModel):
     def action(self, action):
         """ Set the control inputs for the next step.
 
-        Control values are clipped to action space.
+        Input values are clipped to the action space.
 
         Args:
             action (numpy.ndarray): A numpy array with control values.
@@ -296,7 +296,7 @@ class MuscleModel(ActuationModel):
         self.env.sim.model.actuator_gear[self.actuators, 0] = self.joint_torque.copy()
 
     def _compute_muscle_action(self, action=None, update_action=True):
-        """ Take in the muscle action, compute all virtual quantities and apply the correct torques.
+        """ Take in the muscle action, compute all virtual quantities and set the correct torques.
 
         All-in-one function that updates muscle activity and computes muscle torques given current simulation state.
 

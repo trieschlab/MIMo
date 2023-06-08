@@ -7,16 +7,17 @@ import os
 import copy
 import sys
 import numpy as np
+from typing import List, Dict, Tuple, Type
 import mujoco_py
 import glfw
 
 from gym import spaces, utils
 from gym.envs.robotics import robot_env
 
-from mimoTouch.touch import TrimeshTouch
-from mimoVision.vision import SimpleVision
-from mimoVestibular.vestibular import SimpleVestibular
-from mimoProprioception.proprio import SimpleProprioception
+from mimoTouch.touch import TrimeshTouch, Touch
+from mimoVision.vision import SimpleVision, Vision
+from mimoVestibular.vestibular import SimpleVestibular, Vestibular
+from mimoProprioception.proprio import SimpleProprioception, Proprioception
 from mimoActuation.actuation import ActuationModel, TorqueMotorModel
 import mimoEnv.utils as mimo_utils
 
@@ -200,7 +201,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     returning fixed values.
     Additional functions that may be overridden optionally are:
 
-    - :meth:`._is_done`, which determines the `done` return value after each step.
+    - :meth:`._is_done`, which determines the 'done' return value after each step.
     - :meth:`.proprio_setup`, :meth:`.touch_setup`, :meth:`.vision_setup`, :meth:`.vestibular_setup`, these
       functions initialize the associated sensor modality. These should be overridden if you want to replace the default
       implementation. Default implementations are :class:`~mimoProprioception.proprio.SimpleProprioception`,
@@ -216,53 +217,51 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     These functions come with default implementations that should handle most scenarios.
 
-    The constructor takes the following arguments:
-
-    - `model_path`: The path to the scene xml. Required.
-    - `initial_qpos`: A dictionary of the initial joint positions. Keys are the joint names. Only required if the
-      initial position varies from that defined the XMLs.
-    - `n_substeps`: The number of physics substeps for each simulation step. The duration of each physics step is set
-      in the scene XML.
-    - `proprio_params`: The configuration dictionary for the proprioceptive system. If `None` the module is disabled.
-      Default `None`.
-    - `touch_params`: The configuration dictionary for the touch system. If `None` the module is disabled.
-      Default `None`.
-    - `vision_params`: The configuration dictionary for the vision system. If `None` the module is disabled.
-      Default `None`.
-    - `vestibular_params`: The configuration dictionary for the vestibular system. If `None` the module is disabled.
-      Default `None`.
-    - `actuation_model`: Class for the actuation model. Default is :class:`~mimoActuation.actuation.TorqueMotorModel`.
-      The class must meet the interface defined by :class:`~mimoActuation.actuation.ActuationModel`.
-    - `goals_in_observation`: If `True` the desired and achieved goals are included in the observation dictionary.
-      Default `True`.
-    - `done_active`: If `True`, :meth:`._is_done` returns `True` if the simulation reaches a success or failure state.
-      If `False`, :meth:`._is_done` always returns `False` and the function calling :meth:`.step` has to figure out when
-      to stop or reset the simulation on its own.
+    Args:
+        model_path (str): The path to the scene xml.
+        initial_qpos (Dict[str, float]|None): A dictionary of the initial joint positions. Keys are the joint names,
+            with joint positions in radians as values. ``None`` by default.
+        n_substeps (int): The number of physics substeps for each simulation step. The duration of each physics step
+            is set in the scene XML. Default 2.
+        proprio_params (Dict|None): The configuration dictionary for the proprioceptive system. If ``None`` the module
+            is disabled. Default ``None``.
+        touch_params (Dict|None): The configuration dictionary for the touch system. If ``None`` the module is disabled.
+            Default ``None``.
+        vision_params (Dict|None): The configuration dictionary for the vision system. If ``None`` the module is
+            disabled. Default ``None``.
+        vestibular_params (Dict|None): The configuration dictionary for the vestibular system. If ``None`` the module is
+            disabled. Default ``None``.
+        actuation_model (Type[ActuationModel]): Class for the actuation model. Default is
+            :class:`~mimoActuation.actuation.TorqueMotorModel`. Note that this must be a class, not an instance.
+        goals_in_observation (bool): If ``True`` the desired and achieved goals are included in the observation
+            dictionary. Default ``True``.
+        done_active (bool): If ``True``, :meth:`._is_done` returns ``True`` if the simulation reaches a success or
+            failure state. If ``False``, :meth:`._is_done` always returns ``False`` and the function calling
+            :meth:`.step` has to figure out when to stop or reset the simulation on its own.
 
     Attributes:
-        sim: The MuJoCo simulation object.
-        initial_state: A copy of the simulation state at the start of the simulation.
-        goal: The desired goal.
-        action_space: The action space. See Gym documentation for more.
-        observation_space: The observation space. See Gym documentation for more.
-        actuation_model: Reference to the actuation model instance.
-        proprio_params: The configuration dictionary for the proprioceptive system.
-        proprioception: A reference to the proprioception instance.
-        touch_params: The configuration dictionary for the touch system.
-        touch: A reference to the touch instance.
-        vision_params: The configuration dictionary for the vision system.
-        vision: A reference to the vision instance.
+        sim (mujoco_py.MjSim): The MuJoCo simulation object.
+        initial_state (mujoco_py.MjSimState): A copy of the simulation state at the start of the simulation.
+        goal (object): The desired goal.
+        action_space (gym.spaces.Space): The action space. See Gym documentation for more.
+        observation_space (gym.spaces.Space): The observation space. See Gym documentation for more.
+        actuation_model (ActuationModel): Reference to the actuation model instance.
+        proprio_params (Dict): The configuration dictionary for the proprioceptive system.
+        touch_params (Dict): The configuration dictionary for the touch system.
+        vision_params (Dict): The configuration dictionary for the vision system.
         vestibular_params: The configuration dictionary for the vestibular system.
-        vestibular: A reference to the vestibular instance.
-        facial_expressions: A dictionary linking emotions with their associated facial textures. The keys of this
-            dictionary are valid inputs for :meth:`.swap_facial_expression`
-        goals_in_observation: If `True` the desired and achieved goals are included in the observation dictionary.
-            Default `True`.
-        done_active: If `True`, :meth:`._is_done` returns `True` if the simulation reaches a success or failure state.
-            If `False`, :meth:`._is_done` always returns `False` and the function calling :meth:`.step` has to figure
-            out when to stop or reset the simulation on its own.
+        proprioception (Proprioception): A reference to the proprioception instance.
+        touch (Touch): A reference to the touch instance.
+        vision (Vision): A reference to the vision instance.
+        vestibular (Vestibular): A reference to the vestibular instance.
+        facial_expressions (Dict[str, int]): A dictionary linking emotions with their associated facial textures. The
+            keys of this dictionary are valid inputs for :meth:`.swap_facial_expression`.
+        goals_in_observation (bool): If ``True`` the desired and achieved goals are included in the observation
+            dictionary. Default ``True``.
+        done_active (bool): If ``True``, :meth:`._is_done` returns ``True`` if the simulation reaches a success or
+            failure state. If ``False``, :meth:`._is_done` always returns ``False` and the function calling
+            :meth:`.step` has to figure out when to stop or reset the simulation on its own.
     """
-
     def __init__(self,
                  model_path,
                  initial_qpos=None,
@@ -274,7 +273,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
                  actuation_model=TorqueMotorModel,
                  goals_in_observation=True,
                  done_active=False):
-
         utils.EzPickle.__init__(**locals())
 
         self.proprio_params = proprio_params
@@ -334,12 +332,14 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
     @property
     def dt(self):
-        """ Time passed during each call to :meth:`.step`"""
+        """ Time passed during each call to :meth:`.step`.
+        """
         return self.sim.model.opt.timestep * self.n_substeps
 
     @property
-    def n_actuators(self):
-        """ The number of actuators for MIMo."""
+    def n_actuators(self) -> int:
+        """ The number of actuators for MIMo.
+        """
         return self.mimo_actuators.shape[0]
 
     def _get_actuators(self):
@@ -361,7 +361,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def _set_action_space(self):
         """ Sets the action space attribute.
 
-        By default, the actuation space contains only those actuators contained in MIMo.
+        By default, the actuation space contains only MIMos actuators.
         """
         self.action_space = self.actuation_model.get_action_space()
 
@@ -391,7 +391,12 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.observation_space = spaces.Dict(spaces_dict)
 
     def _get_facial_expressions(self, emotion_textures):
-        """ Associates facial textures in the model with human-readable names for the associated emotions"""
+        """ Associates facial textures in the model with human-readable names for the associated emotions.
+
+        Args:
+            emotion_textures (Dict[str, str]): A dictionary with names for emotions as keys and the XML names of the
+                associated facial textures as values.
+        """
         self.facial_expressions = {}
         for emote in emotion_textures:
             tex_name = emotion_textures[emote]
@@ -404,15 +409,17 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """ This function initializes all the sensory components of the model.
 
         Calls the setup functions for all the sensory components and sets the initial positions of the joints according
-        to the qpos dictionary.
+        to the constructor arguments.
 
         Args:
-            initial_qpos (dict): A dictionary with the intial joint position for each joint. Keys are the joint names.
+            initial_qpos (dict[str, float]): A dictionary with the initial joint positions for each joint. Keys are
+                joint names with joint positions in radians as values. Joints that are missing will be left in their
+                default positions.
         """
         # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
         # observation space and goals are not set yet
 
-        # Implement qpos:
+        # Set qpos:
         self._set_initial_position(initial_qpos)
 
         # Do setups
@@ -424,17 +431,17 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         if self.vestibular_params is not None:
             self.vestibular_setup(self.vestibular_params)
         # Should be able to get all types of sensor outputs here
-        # Should be able to produce all control inputs here
 
     def _set_initial_position(self, initial_qpos):
-        """ Sets the initial positions of the joint in the environment.
+        """ Sets the initial positions for joints in the environment.
 
         The input should be a dictionary with joint names as keys and joint positions (in radians as floats) as values.
         Thin function then sets each listed joint to the corresponding position. Joints not contained in the dictionary
         are left unaltered.
 
         Args:
-            initial_qpos: A dictionary with joint names as keys and joint positions (in radians as floats) as values.
+            initial_qpos (dict[str, float]): A dictionary with joint names as keys and joint positions (in radians as
+                floats) as values.
         """
         if initial_qpos:
             for joint_name in initial_qpos:
@@ -481,7 +488,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         self.vestibular = SimpleVestibular(self, vestibular_params)
 
     def do_simulation(self, action, n_frames):
-        """ Step simulation forward for n_frames number of steps.
+        """ Step simulation forward for `n_frames` number of steps.
 
         Args:
             action (np.ndarray): The control input for the actuators.
@@ -496,18 +503,19 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def step(self, action):
         """ The step function for the simulation.
 
-        This function takes a simulation step, collects the observations, computes the reward and finally determines if
-        we are done with this episode or not. :meth:`._get_obs` collects the observations, :meth:`.compute_reward`
-        calculates the reward.`:meth:`._is_done` is called to determine if we are done with the episode and
-        :meth:`._step_callback` can be used for extra functions each step, such as incrementing a step counter.
+        This function takes a simulation step with the given control inputs, collects the observations, computes the
+        reward and finally determines if we are done with this episode or not. :meth:`._get_obs` collects the
+        observations, :meth:`.compute_reward` calculates the reward.`:meth:`._is_done` is called to determine if we are
+        done with the episode and :meth:`._step_callback` can be used for extra functions each step, such as
+        incrementing a step counter.
 
         Args:
             action (numpy.ndarray): A numpy array with the control inputs for this step. The shape must match the action
                 space!
 
         Returns:
-            A tuple `(observations, reward, done, info)` as described above, with info containing extra information,
-            such as whether we reached a success state specifically.
+            Tuple[Dict, float, bool, Dict]: A tuple `(observations, reward, done, info)` as described above, with info
+            containing extra information, such as whether we reached a success state specifically.
         """
         self.do_simulation(action, self.n_substeps)
         self._step_callback()
@@ -552,7 +560,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         valid state is reached.
 
         Returns:
-            dict: The observations after reset.
+            Dict: The observations after reset.
         """
         #
         did_reset_sim = False
@@ -604,8 +612,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         Override this function if you want to make some simple post-processing!
 
         Returns:
-            dict: A dictionary with one entry for each separate image. In the default implementation each eye renders
-            one image, so each eye gets one entry.
+            dict[str, np.ndarray]: A dictionary with one entry for each separate image. In the default implementation
+            each eye renders one image, so each eye gets one entry.
         """
         vision_obs = self.vision.get_vision_obs()
         return vision_obs
@@ -627,10 +635,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         This function should return all simulation outputs relevant to whatever learning algorithm you wish to use. We
         always return proprioceptive information in the 'observation' entry, and this information always includes
         relative joint positions. Other sensory modalities get their own entries, if they are enabled. If
-        :attr:`.goals_in_observation` is set to `True`, the achieved and desired goal are also included.
+        :attr:`.goals_in_observation` is set to ``True``, the achieved and desired goal are also included.
 
         Returns:
-            dict: A dictionary containing simulation outputs with separate entries for each sensor modality.
+            Dict: A dictionary containing simulation outputs with separate entries for each sensor modality.
         """
         # robot proprioception:
         proprio_obs = self.get_proprio_obs()
@@ -659,12 +667,10 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         return observation_dict
 
     def _set_action(self, action):
-        """ Set the control inputs for the next step.
+        """ Set the action for the next step.
 
-        Control values are clipped to the control range limits defined the MuJoCo XMLs and normalized to be even in
-        both directions, i.e. an input of 0 corresponds to the center of the control range, rather than the default or
-        neutral control position. The control ranges for the MIMo XMLs are set up to be symmetrical, such that an input
-        of 0 corresponds to no motor torque.
+        Calls the actuation models function :meth:`mimoActuation.actuation.ActuationModel.action`. What exactly happens
+        depends on the specific implementation.
 
         Args:
             action (numpy.ndarray): A numpy array with control values.
@@ -675,7 +681,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         """ Changes MIMos facial texture.
 
         Valid emotion names are in :attr:`.facial_expression`, which links readable emotion names to their associated
-        texture ids
+        texture ids.
 
         Args:
             emotion (str): A valid emotion name.
@@ -709,10 +715,11 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         raise NotImplementedError
 
     def _is_done(self, achieved_goal, desired_goal, info):
-        """ This function should return `True` if we have reached a success or failure state.
+        """ This function should return ``True`` if we have reached a success or failure state.
 
-        By default, this function always returns `False`. If :attr:`.done_active` is set to `True`, ignores both goal
-        parameters and instead returns `True` if either :meth:`._is_success` or :meth:`._is_failure` return True.
+        By default, this function always returns ``False``. If :attr:`.done_active` is set to ``True``, ignores both
+        goal parameters and instead returns ``True`` if either :meth:`._is_success` or :meth:`._is_failure` return
+        ``True``.
         The goal parameters are there to allow this class to be more easily overridden by subclasses, should this be
         required.
 
@@ -731,7 +738,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         Returns:
             object: The desired end state.
-
         """
         raise NotImplementedError
 
@@ -740,7 +746,6 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         Returns:
             object: The achieved end state.
-
         """
         raise NotImplementedError
 
@@ -749,7 +754,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         This externalizes the reward function and makes it dependent on a desired goal and the one that was achieved.
         If you wish to include additional rewards that are independent of the goal, you can include the necessary values
-        to derive it in 'info' and compute it accordingly.
+        to derive it in `info` and compute it accordingly.
 
         Args:
             achieved_goal (object): the goal that was achieved during execution
@@ -771,7 +776,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
 
         Args:
             mode (str): One of "human" or "rgb_array". If "rgb_array" an off-screen render context is used, otherwise we
-            render to an interactive viewer window.
+                render to an interactive viewer window.
         """
         self.viewer = self._viewers.get(mode)
         if self.viewer is None:
@@ -788,7 +793,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         return self.viewer
 
     def _swap_context(self, window):
-        """ Swaps the current render context to 'window'
+        """ Swaps the current render context.
 
         Args:
             window: The new render context.
@@ -806,19 +811,19 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     def render(self, mode="human", width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name=None, camera_id=None):
         """ General rendering function for cameras or interactive environment.
 
-        There are two modes, 'human' and 'rgb_array'. In 'human' we render to an interactive window, ignoring all other
+        There are two modes, "human" and "rgb_array". In "human" we render to an interactive window, ignoring all other
         parameters. Width and size are determined by the size of the window (which can be resized).
-        In mode 'rgb_array' we return the rendered image and a depth image as numpy arrays. The size of the image is
+        In mode "rgb_array" we return the rendered image and a depth image as numpy arrays. The size of the image is
         determined by the `width` and `height` parameters. A specific camera can be rendered by providing either its
         name or its ID. By default, the standard Mujoco free cam is used. The vertical field of view for each camera
         is defined in the scene xml, with the horizontal field of view determined by the rendering resolution.
 
         Args:
-            mode (str): One of either 'human' or 'rgb_array'.
-            width (int): The width of the output image
-            height (int): The height of the output image
-            camera_name (str): The name of the camera that will be rendered. Default None.
-            camera_id (int): The ID of the camera that will be rendered. Default None.
+            mode (str): One of either "human" or "rgb_array".
+            width (int): The width of the output image.
+            height (int): The height of the output image.
+            camera_name (str|None): The name of the camera that will be rendered. Default ``None``.
+            camera_id (int|None): The ID of the camera that will be rendered. Default ``None``.
 
         Returns:
             A tuple of two numpy array with the RGB and depth images or None if mode is 'human'.

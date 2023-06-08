@@ -11,7 +11,7 @@ import gym
 import time
 import copy
 import gc
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
@@ -107,13 +107,13 @@ def benchmark(configurations, output_file):
     modalities: touch, vision, proprioception and vestibular.
 
     Args:
-        configurations: A list of tuples storing configurations to be benchmarked. Each tuple has four entries:
+        configurations (List[Tuple[str, str, Dict, int]]): A list of tuples storing configurations to be benchmarked.
+            Each tuple has four entries:
             An arbitrary name for the entry, the name of the gym environment that will be run, a dictionary with
             parameters for the environment, and finally the duration of the run in simulation seconds.
             Note that the parameter dictionary can be empty if you wish to use the default parameters for the
             environment.
-        output_file: Runtime results are written to this file.
-
+        output_file (str): Runtime results are written to this file.
     """
     results_file = os.path.abspath(output_file)
     profile_dir = os.path.dirname(results_file)
@@ -203,6 +203,14 @@ def benchmark(configurations, output_file):
 
 
 def load_benchmark_file(file_name) -> Dict:
+    """ Loads a benchmark file in the format as produced by :func:`.benchmark` into a dictionary.
+
+    Args:
+        file_name (str): The input benchmark file.
+
+    Returns:
+        Dict[str, float]: The dictionary with loaded benchmark data.
+    """
     # Assumes that the first column is a name/label for each run
     with open(file_name, "rt", encoding="utf8") as f:
         data = {}
@@ -219,12 +227,12 @@ def load_benchmark_file(file_name) -> Dict:
 
 
 def make_stacked_bar_chart(data, labels: List[str], colors: Dict[str, str], ylabel, figsize=(6, 5), legend_loc="upper left"):
-    """
+    """ Makes a stacked bar chart.
 
     Args:
-        data: A dictionary of dictionaries with data for each stacked bar. High level dictionary has data for each full
-              bar as values and the label for the associated bars as the keys. Low level dictionary contains the data
-              for each stack in a particular bar with each component in the stack as a separate entry.
+        data: A dictionary of dictionaries with data for each stacked bar. High level dictionary stores the label for
+            each bar as keys and the associated data dictionary as values. Low level dictionary contains the data
+            for each stack with component labels as keys.
         labels: A list with the labels for each stack component. This also selects which components are plotted
                 at all. The `colors` parameter must have an entry for every label.
         colors: A dictionary with colors for each stack component.
@@ -234,7 +242,6 @@ def make_stacked_bar_chart(data, labels: List[str], colors: Dict[str, str], ylab
 
     Returns:
         A tuple (fig, ax) with the plotted chart
-
     """
     fig, ax = plt.subplots(figsize=figsize, dpi=200)
 
@@ -273,18 +280,18 @@ def make_stacked_bar_chart(data, labels: List[str], colors: Dict[str, str], ylab
     return fig, ax
 
 
-def plot_benchmarks(file_name, list_of_runs, output_file, label_list=None, color_dict=None, label_dict=None, figsize=(6, 5)):
+def plot_benchmarks(file_name, list_of_runs, output_file, label_list=None, color_dict=None, figsize=(6, 5)):
     """ Create benchmark plots.
 
-    Plots are stacked bar charts.
+    Loads data from a benchmark file and creates a stacked bar chart from the loaded data. Which runs are plotted can
+    be selected with `list_of_runs`
 
     Args:
-        file_name: The file containing the benchmark data.
-        list_of_runs: A list with the configuration names that will be plotted side by side.
-        output_file: Output image file.
-        label_list: A list of the components of each run that will be plotted.
-        color_dict: A dictionary with the colors for each component listed above.
-        label_dict: A dictionary to customize labels printed on the graph.
+        file_name (str): The file containing the benchmark data.
+        list_of_runs (List[str]): A list with the configuration names that will be plotted side by side.
+        output_file (str): Output image file.
+        label_list (List[str]): A list of the runtime components that will be plotted.
+        color_dict (Dict[str, str]): A dictionary with the colors for each component listed above.
     """
     data = load_benchmark_file(file_name)
 
@@ -336,6 +343,12 @@ def run_paper_benchmarks():
 
 
 def make_paper_plot(file_name, output_file):
+    """ Creates the sensor benchmarking plot from the paper.
+
+    Args:
+        file_name (str): Input benchmark file.
+        output_file (str): Output image file.
+    """
     data = load_benchmark_file(file_name)
 
     label_list = ["Init.", "Physics", "Touch", "Vision", "Proprioception", "Vestibular", "Other"]

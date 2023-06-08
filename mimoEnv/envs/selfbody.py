@@ -189,8 +189,8 @@ class MIMoSelfBodyEnv(MIMoEnv):
         - Otherwise the reward is -1.
 
         Args:
-            achieved_goal (dict): This parameter is ignored.
-            desired_goal (dict): This parameter is ignored.
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
             info (dict): This parameter is ignored.
 
         Returns:
@@ -217,22 +217,11 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
         return reward
 
-    def _step_callback(self):
-        """ Manually reset position excluding arm each step.
-
-        This restores the body to the sitting position if it deviated.
-        Avoids some physics issues that would sometimes occur with welds.
-        """
-        # Manually set body to sitting position (except for the right arm joints)
-        #for body_name in SITTING_POSITION:
-        #    env_utils.set_joint_qpos(self.sim.model, self.sim.data, body_name, SITTING_POSITION[body_name])
-        pass
-
     def _reset_sim(self):
         """ Reset to the initial sitting position.
 
         Returns:
-            bool: `True`
+            bool: Always returns ``True``.
         """
         # set qpos as new initial position and velocity as zero
         qpos = self.init_sitting_qpos
@@ -248,14 +237,14 @@ class MIMoSelfBodyEnv(MIMoEnv):
         return True
 
     def _is_failure(self, achieved_goal, desired_goal):
-        """ Dummy function that always returns False.
+        """ Dummy function that always returns ``False``.
 
         Args:
             achieved_goal (object): This parameter is ignored.
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `False`
+            bool: ``False``
         """
         return False
 
