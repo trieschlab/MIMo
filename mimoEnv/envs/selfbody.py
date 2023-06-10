@@ -23,6 +23,7 @@ import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS, SCENE_DIRECTORY
 import mimoEnv.utils as env_utils
+from mimoActuation.actuation import TorqueMotorModel
 
 
 TOUCH_PARAMS = {
@@ -91,8 +92,8 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
     MIMo is tasked with touching a given part of his body using his right arm.
     Attributes and parameters are mostly identical to the base class, but there are two changes.
-    The constructor takes two arguments less, ``goals_in_observation`` and ``done_active``, which are both permanently
-    set to `True`.
+    The constructor takes two arguments less, `goals_in_observation` and `done_active`, which are both permanently
+    set to ``True``.
     Finally, there are two extra attributes for handling the goal state. The :attr:`.goal` attribute stores the target
     geom in a one hot encoding, while :attr:`.target_geom` and :attr:`.target_body` store the geom and its associated
     body as an index. For more information on geoms and bodies please see the MuJoCo documentation.
@@ -111,6 +112,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
                  touch_params=TOUCH_PARAMS,
                  vision_params=None,
                  vestibular_params=None,
+                 actuation_model=TorqueMotorModel,
                  ):
 
         self.target_geom = 0  # The geom on MIMo we are trying to touch
@@ -124,6 +126,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
+                         actuation_model=actuation_model,
                          goals_in_observation=True,
                          done_active=True)
 
@@ -244,7 +247,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: ``False``
+            bool: ``False``.
         """
         return False
 

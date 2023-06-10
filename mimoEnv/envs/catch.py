@@ -5,7 +5,8 @@ The task is for him to catch the falling ball.
 MIMo is fixed in position and can only move his right hand.
 Sensory input consists of the full proprioceptive inputs and touch input.
 
-An episode is completed successfully if MIMo holds onto the ball continously for 1 second. There are no failure states.
+An episode is completed successfully if MIMo holds onto the ball continuously for 1 second. An episode fails when the
+ball drops some distance below MIMos hand or is bounced into the distance.
 
 There is a small negative reward for each step without touching the ball, a larger positive reward for each step in
 contact with the ball and then a large fixed reward on success.
@@ -63,10 +64,15 @@ class MIMoCatchEnv(MIMoEnv):
 
     MIMo is tasked with catching a falling ball and holding onto it for one second. MIMo's head and eyes automatically
     track the ball. The position of the ball is slightly randomized each episode.
-    The constructor takes two additional arguments, ``jitter`` and ``position_inaccurate``, which are ``False`` by
-    default. If ``jitter`` is set to ``True`` the input actions are multiplied with a perturbation array which is
-    randomized every 10-50 time steps. If ``position_inaccurate`` is set to ``True``, the position tracked by the head
-    is offset by a small random distance from the true position of the ball.
+    The constructor takes three additional arguments over the base environment.
+
+    Args:
+        action_penalty (bool): If ``True``, an action penalty based on the cost function of the actuation model is
+            applied to the reward. Default ``True``.
+        jitter (bool): If ``True``, the input actions are multiplied with a perturbation array which is randomized
+            every 10-50 time steps. Default ``False``.
+        position_inaccurate (bool): If ``True``, the position tracked by the head is offset by a small random distance
+            from the true position of the ball. Default ``False``.
     """
     def __init__(self,
                  model_path=CATCH_XML,
@@ -79,7 +85,7 @@ class MIMoCatchEnv(MIMoEnv):
                  actuation_model=MuscleModel,
                  goals_in_observation=False,
                  done_active=True,
-                 action_penalty=False,
+                 action_penalty=True,
                  jitter = False,
                  position_inaccurate = False,):
 
@@ -166,7 +172,11 @@ class MIMoCatchEnv(MIMoEnv):
         super().do_simulation(action, n_frames)
 
     def _get_obs(self):
-        """ Adds the size of the ball to the observations."""
+        """ Adds the size of the ball to the observations.
+
+        Returns:
+            Dict: The altered observation dictionary.
+        """
         obs = super()._get_obs()
         obs["observation"] = np.append(obs["observation"], self.ball_size)
         return obs
@@ -179,20 +189,20 @@ class MIMoCatchEnv(MIMoEnv):
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `True` if the ball is knocked out of position.
+            bool: ``True`` if MIMo has been touching the ball for the last second, ``False`` otherwise.
         """
 
         return all(self.in_contact_past)
 
     def _is_failure(self, achieved_goal, desired_goal):
-        """ Returns `False` if the ball drops below MIMo's hand.
+        """ Returns ``True`` if the ball drops below MIMo's hand.
 
         Args:
             achieved_goal (object): This parameter is ignored.
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `False`
+            bool: ``True`` if the ball drops below MIMo's hand, ``False`` otherwise.
         """
         hand_pos = self.sim.data.get_body_xpos('right_hand')
         target_pos = self.sim.data.get_body_xpos('target')
@@ -221,7 +231,7 @@ class MIMoCatchEnv(MIMoEnv):
         limited such that MIMo can always reach the ball.
 
         Returns:
-            bool: `True`
+            bool: Always returns ``True``.
         """
         self.sim.set_state(self.initial_state)
         # Lock shoulder and elbow joint
@@ -324,7 +334,7 @@ class MIMoCatchEnv(MIMoEnv):
         This function performs the actual contact check and is called during :meth:`.step_callback`.
 
         Returns:
-            ``True`` if MIMo is currently touching the ball, ``False`` otherwise..
+            bool: ``True`` if MIMo is currently touching the ball, ``False`` otherwise..
         """
         in_contact = False
         # Go over all contacts
@@ -374,7 +384,7 @@ class MIMoCatchEnv(MIMoEnv):
         :meth:`._in_contact`!
 
         Returns:
-            ``True`` if MIMo is currently touching the ball, ``False`` otherwise."""
+            bool: ``True`` if MIMo is currently touching the ball, ``False`` otherwise."""
         return self.in_contact_past[self.steps % self.steps_in_contact_for_success]
 
     def _viewer_setup(self):

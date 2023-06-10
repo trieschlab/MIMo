@@ -92,6 +92,16 @@ Plotting utilities
    
    mimoEnv.utils.plot_points
    mimoEnv.utils.plot_forces
+
+Assorted functions
+++++++++++++++++++
+
+ .. autosummary::
+   :toctree: _autosummary
+   :recursive:
+   :nosignatures:
+
+   mimoEnv.utils.determine_geom_masses
    
 Detail documentation
 ----------------------

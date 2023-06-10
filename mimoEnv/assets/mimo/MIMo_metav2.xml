@@ -345,7 +345,7 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 		<joint name="robot:right_lf_distal" 			joint1="robot:right_lf_distal" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:right_th_swivel" 			joint1="robot:right_th_swivel" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:right_th_adduction" 			joint1="robot:right_th_adduction" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
-		<joint name="robot:right_th_rot" 				joint1="robot:right_th_rot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
+		<!--<joint name="robot:right_th_rot" 				joint1="robot:right_th_rot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>-->
 		<joint name="robot:right_th_pivot" 				joint1="robot:right_th_pivot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:right_th_middle" 			joint1="robot:right_th_middle" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:right_th_distal" 			joint1="robot:right_th_distal" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
@@ -377,7 +377,7 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 		<joint name="robot:left_lf_distal" 				joint1="robot:left_lf_distal" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:left_th_swivel" 				joint1="robot:left_th_swivel" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:left_th_adduction" 			joint1="robot:left_th_adduction" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
-		<joint name="robot:left_th_rot" 				joint1="robot:left_th_rot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
+		<!--<joint name="robot:left_th_rot" 				joint1="robot:left_th_rot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>-->
 		<joint name="robot:left_th_pivot" 				joint1="robot:left_th_pivot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:left_th_middle" 				joint1="robot:left_th_middle" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:left_th_distal" 				joint1="robot:left_th_distal" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>

@@ -1,7 +1,7 @@
 <mujoco model="MIMo">
 
 	<!-- We use the first three user values on actuators to store the muscle model parameters. The first is VMAX, the next two are FMAX.-->
-	<size nuser_actuator="3" />
+	<size nuser_actuator="3"/>
 
 	<default>
 		<default class="mimo">

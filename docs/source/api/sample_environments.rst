@@ -68,13 +68,12 @@ Self-body Environment
 
 
 
-Training scripts
-----------------
+Training script
+---------------
 
-The training scripts for all the sample environments are functionally identical, so we
-document only one of them in detail.
+There is also a training script for all the sample environments.
 
-.. automodule:: mimoEnv.reach
+.. automodule:: mimoEnv.illustrations
    :members:
    :undoc-members:
    :show-inheritance:
@@ -96,6 +95,7 @@ Environments
 .. automodule:: mimoEnv.envs.dummy
    :members:
    :undoc-members:
+   :inherited-members:
    :show-inheritance:
    :private-members:
 
