@@ -1,4 +1,6 @@
 """ This module defines the base class for the muscle actuation model.
+
+Authors: Pierre Schumacher, Dominik Mattern
 """
 import warnings
 import numpy as np
@@ -69,9 +71,9 @@ class MuscleModel(ActuationModel):
 
         The actuation space consists of two opposing muscles for each motor in the simulation, each with range [0, 1].
 
-                Returns:
-                    A gym spaces object with the actuation space.
-                """
+        Returns:
+            spaces.Space: A gym spaces object with the actuation space.
+        """
         action_space = spaces.Box(low=-0.0, high=1.0, shape=(self.env.n_actuators * 2,), dtype=np.float32)
         self.control_input = np.zeros(action_space.shape)  # Set initial control input to avoid NoneType Errors
         return action_space
@@ -90,7 +92,7 @@ class MuscleModel(ActuationModel):
     def substep_update(self):
         """ Update muscle activity and torque.
 
-        As activity is time-dependent we update activity and the output torque every time step. The desired
+        As activity is time-dependent we update activity and the output torque every physics step. The desired
         activity level (input action) is not changed during this."""
         self._compute_muscle_action(update_action=False)
 
@@ -98,7 +100,7 @@ class MuscleModel(ActuationModel):
         """ Returns muscle activations and forces for every actuator.
 
         Returns:
-            A flat numpy array with the quantities described above.
+            np.ndarray: A flat array with the quantities described above.
         """
         return np.concatenate([self.muscle_activations.flatten(), self.muscle_forces.flatten() * self.fmax])
 
@@ -110,7 +112,7 @@ class MuscleModel(ActuationModel):
         :math:`i`, respectively, and :math:`n` is the number of muscles in the model.
 
         Returns:
-            The cost as a float.
+            float: The actuation cost.
         """
         per_muscle_cost = self.activity * self.activity * self.fmax
         return np.abs(per_muscle_cost).sum() / (2 * self.env.n_actuators * self.fmax.sum())
@@ -121,12 +123,20 @@ class MuscleModel(ActuationModel):
 
     @property
     def muscle_activations(self):
-        """ Activity for every muscle. """
+        """ Activity for every muscle.
+
+        Returns:
+            np.ndarray: An array with copies of the activity for every muscle.
+        """
         return self.activity.copy()
 
     @property
     def muscle_lengths(self):
-        """ Virtual muscle lengths for all muscles. """
+        """ Virtual muscle lengths for all muscles.
+
+        Returns:
+            np.ndarray: An array with copies of the virtual muscle lengths.
+        """
         return np.concatenate([self.lce_1, self.lce_2], dtype=np.float32).copy()
 
     @property
@@ -450,22 +460,22 @@ class MuscleModel(ActuationModel):
         return output
 
 
-def bump(length, A, mid, B):
+def bump(length, a, mid, b):
     """
     Part of the force length relationship as implemented by MuJoCo.
     """
-    left = 0.5 * (A + mid)
-    right = 0.5 * (mid + B)
+    left = 0.5 * (a + mid)
+    right = 0.5 * (mid + b)
 
-    a_dif = np.square(length - A) * 0.5
-    b_dif = np.square(length - B) * 0.5
+    a_dif = np.square(length - a) * 0.5
+    b_dif = np.square(length - b) * 0.5
     mid_dif = np.square(length - mid) * 0.5
 
-    output = b_dif / ((B - right) * (B - right))
+    output = b_dif / ((b - right) * (b - right))
 
     output[length < right] = 1 - mid_dif[length < right] / ((right - mid) * (right - mid))
     output[length < mid] = 1 - mid_dif[length < mid] / ((mid - left) * (mid - left))
-    output[length < left] = a_dif[length < left] / ((left - A) * (left - A))
-    output[(length <= A) | (length >= B)] = 0
+    output[length < left] = a_dif[length < left] / ((left - a) * (left - a))
+    output[(length <= a) | (length >= b)] = 0
 
     return output
