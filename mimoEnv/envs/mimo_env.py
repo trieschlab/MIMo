@@ -18,7 +18,7 @@ from mimoTouch.touch import TrimeshTouch, Touch
 from mimoVision.vision import SimpleVision, Vision
 from mimoVestibular.vestibular import SimpleVestibular, Vestibular
 from mimoProprioception.proprio import SimpleProprioception, Proprioception
-from mimoActuation.actuation import ActuationModel, TorqueMotorModel
+from mimoActuation.actuation import ActuationModel, SpringDamperModel
 import mimoEnv.utils as mimo_utils
 
 
@@ -189,6 +189,8 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
     relevant sensory module.
     Not passing a dictionary disables the relevant module.
     By default, all sensory modalities are disabled and the only sensor outputs are the relative joint positions.
+    Actuation models can also be changed using the `actuation_model` constructor argument. They do not use a
+    configuration dictionary, instead deriving all required parameters from the XMLs.
 
     Implementing subclasses will have to override the following functions:
     - :meth:`._is_success`, to determine when an episode completes successfully.
@@ -232,7 +234,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
         vestibular_params (Dict|None): The configuration dictionary for the vestibular system. If ``None`` the module is
             disabled. Default ``None``.
         actuation_model (Type[ActuationModel]): Class for the actuation model. Default is
-            :class:`~mimoActuation.actuation.TorqueMotorModel`. Note that this must be a class, not an instance.
+            :class:`~mimoActuation.actuation.SpringDamperModel`. Note that this must be a class, not an instance.
         goals_in_observation (bool): If ``True`` the desired and achieved goals are included in the observation
             dictionary. Default ``True``.
         done_active (bool): If ``True``, :meth:`._is_done` returns ``True`` if the simulation reaches a success or
@@ -270,7 +272,7 @@ class MIMoEnv(robot_env.RobotEnv, utils.EzPickle):
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
-                 actuation_model=TorqueMotorModel,
+                 actuation_model=SpringDamperModel,
                  goals_in_observation=True,
                  done_active=False):
         utils.EzPickle.__init__(**locals())

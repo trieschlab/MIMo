@@ -26,7 +26,7 @@ import argparse
 import cv2
 
 import mimoEnv
-from mimoActuation.actuation import TorqueMotorModel
+from mimoActuation.actuation import SpringDamperModel
 from mimoActuation.muscle import MuscleModel
 
 
@@ -133,7 +133,7 @@ def main():
 
     save_dir = os.path.join("models", env_name, save_model)
 
-    actuation_model = MuscleModel if use_muscle else TorqueMotorModel
+    actuation_model = MuscleModel if use_muscle else SpringDamperModel
 
     env_names = {"reach": "MIMoReach-v0",
                  "standup": "MIMoStandup-v0",

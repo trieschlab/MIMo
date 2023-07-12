@@ -23,7 +23,7 @@ import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS, SCENE_DIRECTORY
 import mimoEnv.utils as env_utils
-from mimoActuation.actuation import TorqueMotorModel
+from mimoActuation.actuation import SpringDamperModel
 
 
 TOUCH_PARAMS = {
@@ -112,7 +112,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
                  touch_params=TOUCH_PARAMS,
                  vision_params=None,
                  vestibular_params=None,
-                 actuation_model=TorqueMotorModel,
+                 actuation_model=SpringDamperModel,
                  ):
 
         self.target_geom = 0  # The geom on MIMo we are trying to touch

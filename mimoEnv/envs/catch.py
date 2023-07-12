@@ -59,6 +59,7 @@ TOUCH_PARAMS = {
 :meta hide-value:
 """
 
+
 class MIMoCatchEnv(MIMoEnv):
     """ MIMo tries to catch a falling ball.
 
@@ -73,6 +74,28 @@ class MIMoCatchEnv(MIMoEnv):
             every 10-50 time steps. Default ``False``.
         position_inaccurate (bool): If ``True``, the position tracked by the head is offset by a small random distance
             from the true position of the ball. Default ``False``.
+
+    Attributes:
+        action_penalty (bool): If ``True``, an action penalty based on the cost function of the actuation model is
+            applied to the reward. Default ``True``.
+        jitter (bool): If ``True``, the input actions are multiplied with a perturbation array which is randomized
+            every 10-50 time steps. Default ``False``.
+        use_position_inaccuracy (bool): If ``True``, the position tracked by the head is offset by a small random
+            distance from the true position of the ball. Default ``False``.
+        position_limits (np.ndarray): Maximum distances away from the default ball position for the randomization.
+        position_inaccuracy_limits (np.ndarray): Maximum distances for the head tracking offset.
+        position_offset (np.ndarray): The actual inaccuracy of the head tracking. This is randomized each episode.
+        size_limits (Tuple[float, float]): Minimum and maximum size of the ball.
+        ball_size (float): Current ball size. Changes each episode.
+        mass_limits (Tuple[float, float]): Minimum and maximum mass of the ball.
+        ball_mass (float): Current ball mass. Changes each episode.
+        jitter_array (np.ndarray): Control inputs are multiplied by this array before being passed to MuJoCo. This is
+            randomized every so often.
+        jitter_period (int): The number of steps the current jitter array is used for before being randomized again.
+        steps_in_contact_for_success (int): For how many steps MIMo must hold onto the ball.
+        in_contact_past (List[bool]): A list storing which past steps we were in contact for. This list works by
+            modulo, i.e. to determine if MIMo held the ball on step `i`, do
+            ``in_contact_past[i % steps_in_contact_for_success]``.
     """
     def __init__(self,
                  model_path=CATCH_XML,
@@ -86,8 +109,8 @@ class MIMoCatchEnv(MIMoEnv):
                  goals_in_observation=False,
                  done_active=True,
                  action_penalty=True,
-                 jitter = False,
-                 position_inaccurate = False,):
+                 jitter=False,
+                 position_inaccurate=False,):
 
         self.jitter = jitter
         self.use_position_inaccuracy = position_inaccurate
@@ -96,9 +119,9 @@ class MIMoCatchEnv(MIMoEnv):
         self.position_limits = np.array([0.01, 0.01, 0.08, 0, 0, 0, 0])
         self.position_inaccuracy_limits = np.asarray([0.005, 0.005, 0.005])
         self.position_offset = np.zeros((3,))
-        self.size_limits = [0.005, 0.025] # [.005, .025]
+        self.size_limits = (0.005, 0.025)
         self.ball_size = 0.025
-        self.mass_limits = [0.05, 0.5] # [.05, .5]
+        self.mass_limits = (0.05, 0.5)
         self.ball_mass = 0.5
 
         self.jitter_period = 0
@@ -234,11 +257,6 @@ class MIMoCatchEnv(MIMoEnv):
             bool: Always returns ``True``.
         """
         self.sim.set_state(self.initial_state)
-        # Lock shoulder and elbow joint
-        #env_utils.lock_joint(self.sim.model, "robot:right_shoulder_horizontal")
-        #env_utils.lock_joint(self.sim.model, "robot:right_shoulder_ad_ab")
-        #env_utils.lock_joint(self.sim.model, "robot:right_shoulder_rotation")
-        #env_utils.lock_joint(self.sim.model, "robot:right_elbow")
 
         # Randomize ball position
         random_shift = np.random.uniform(low=-self.position_limits, high=self.position_limits)
@@ -276,12 +294,6 @@ class MIMoCatchEnv(MIMoEnv):
 
         # Reset gravity
         self.sim.model.opt.gravity[2] = gravity
-
-        # Unlock joint
-        #env_utils.unlock_joint(self.sim.model, "robot:right_shoulder_horizontal")
-        #env_utils.unlock_joint(self.sim.model, "robot:right_shoulder_ad_ab")
-        #env_utils.unlock_joint(self.sim.model, "robot:right_shoulder_rotation")
-        #env_utils.unlock_joint(self.sim.model, "robot:right_elbow")
 
         self._step_callback()
         self.steps = 0

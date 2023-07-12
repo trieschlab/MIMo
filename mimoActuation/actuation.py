@@ -16,6 +16,7 @@ class ActuationModel:
     motors as defined in the XMLs.
 
     The key functions are:
+
     - :meth:`.get_action_space` determines the actuation space attribute for the gym environment. This should have the
       shape of the input to the abstract model motors.
     - :meth:`.action` computes the actual control inputs to the simulation motors from a control input to the abstract
@@ -31,9 +32,8 @@ class ActuationModel:
       simulation.
 
     Attributes:
-        env: The environment to which this module will be attached.
-        actuators: The simulation motors to include in this model.
-
+        env (gym.Env): The environment to which this module will be attached.
+        actuators (np.ndarray): The simulation motors, by ID, to include in this model.
     """
     def __init__(self, env, actuators):
         self.env = env
@@ -43,7 +43,7 @@ class ActuationModel:
         """ Determines the actuation space attribute for the gym environment.
 
         Returns:
-            A gym spaces object with the actuation space.
+            gym.spaces.Space: A gym spaces object with the actuation space.
         """
         raise NotImplementedError
 
@@ -68,7 +68,7 @@ class ActuationModel:
         """ Collect any quantities for the observations.
 
         Returns:
-            A flat numpy array with these quantities.
+            np.ndarray: A flat numpy array with these quantities.
         """
         raise NotImplementedError
 
@@ -78,7 +78,7 @@ class ActuationModel:
         This function may be used as an action penalty.
 
         Returns:
-            The cost as a float.
+            float: The cost of the action.
         """
         raise NotImplementedError
 
@@ -88,8 +88,8 @@ class ActuationModel:
         raise NotImplementedError
 
 
-class TorqueMotorModel(ActuationModel):
-    """ Class for the torque actuation model.
+class SpringDamperModel(ActuationModel):
+    """ Class for the Spring-Damper actuation model.
 
     In this model, MIMo's muscles are represented by torque motors with linear and instantaneous control response, i.e.
     the abstract model directly matches the in-simulation definitions.
@@ -97,9 +97,11 @@ class TorqueMotorModel(ActuationModel):
     components in the joint definitions of MIMo. The maximum torque of the motors is set to the maximum voluntary
     isometric torque along the corresponding axis, with a control input of 1 representing maximum torque.
 
-    In addition to the attributes from the base actuation class, there is one extra attribute:
+    In addition to the attributes from the base actuation class, there are two extra attributes:
+
     Attributes:
-        control_input: Contains the current control input.
+        control_input (np.ndarray): Contains the current control input.
+        max_torque (np.ndarray): The maximum motor torques.
     """
     def __init__(self, env, actuators):
         super().__init__(env, actuators)
@@ -113,7 +115,7 @@ class TorqueMotorModel(ActuationModel):
         will be [-1, 1] for all motors.
 
         Returns:
-            A gym spaces object with the actuation space.
+            gym.spaces.Space: The actuation space.
         """
         bounds = self.env.sim.model.actuator_ctrlrange.copy().astype(np.float32)[self.actuators]
         low, high = bounds.T
@@ -136,10 +138,10 @@ class TorqueMotorModel(ActuationModel):
         self.env.sim.data.ctrl[self.actuators] = self.control_input
 
     def observations(self):
-        """ Control input and output torque for each motor for this time step.
+        """ Control input and output torque for each motor at this time step.
 
         Returns:
-            A flat numpy array with the control inputs and output torques.
+            np.ndarray: A flat array with the control inputs and output torques.
         """
         torque = self.simulation_torque().flatten()
         return np.concatenate([self.control_input.flatten(), torque])
@@ -152,7 +154,7 @@ class TorqueMotorModel(ActuationModel):
         :math:`i`, respectively, and :math:`n` is the number of motors in the model.
 
         Returns:
-            The cost as a float.
+            float: The cost as described above.
         """
         per_actuator_cost = self.control_input * self.control_input * self.max_torque
         return np.abs(per_actuator_cost).sum() / (self.env.n_actuators * self.max_torque.sum())
@@ -161,7 +163,7 @@ class TorqueMotorModel(ActuationModel):
         """ Computes the currently applied torque for each motor in the simulation.
 
         Returns:
-            A numpy array with applied torques for each motor.
+            np.ndarray: An array with applied torques for each motor.
         """
         actuator_gear = self.env.sim.model.actuator_gear[self.actuators, 0]
         control_input = self.env.sim.data.ctrl[self.actuators]

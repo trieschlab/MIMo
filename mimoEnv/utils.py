@@ -334,7 +334,7 @@ def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
         mujoco_model (sim.model): The MuJoCo model object.
         mujoco_data (sim.data): The MuJoCo data object.
         joint_name (str): The name of the joint.
-        qpos (numpy.ndarray): The new joint position. The shape of the array must match the joint!
+        qpos (numpy.ndarray|float): The new joint position. The shape of the array must match the joint!
     """
     joint_id = mujoco_model.joint_name2id(joint_name)
     joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]

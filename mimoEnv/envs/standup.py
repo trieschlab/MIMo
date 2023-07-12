@@ -21,7 +21,7 @@ import numpy as np
 import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_VESTIBULAR_PARAMS
-from mimoActuation.actuation import TorqueMotorModel
+from mimoActuation.actuation import SpringDamperModel
 
 STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
 """ Path to the stand up scene.
@@ -85,7 +85,7 @@ class MIMoStandupEnv(MIMoEnv):
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
-                 actuation_model=TorqueMotorModel,
+                 actuation_model=SpringDamperModel,
                  ):
 
         super().__init__(model_path=model_path,

@@ -21,7 +21,7 @@ import copy
 import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
-from mimoActuation.actuation import TorqueMotorModel
+from mimoActuation.actuation import SpringDamperModel
 
 
 REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
@@ -49,7 +49,7 @@ class MIMoReachEnv(MIMoEnv):
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
-                 actuation_model=TorqueMotorModel,
+                 actuation_model=SpringDamperModel,
                  goals_in_observation=False,
                  done_active=True):
 

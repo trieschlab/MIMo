@@ -9,6 +9,8 @@ A simple implementation treating using one 3D gyro and one 3D accelerometer is i
 import numpy as np
 from mimoEnv.utils import get_sensor_addr
 
+from typing import Dict, List
+
 
 class Vestibular:
     """ Abstract base class for the vestibular system.
@@ -22,11 +24,11 @@ class Vestibular:
     outputs should also be stored in :attr:`.sensor_outputs`.
 
     Attributes:
-        env: The environment to which this module will be attached.
-        vestibular_parameters: A dictionary containing the configuration. The exact from will depend on the specific
-            implementation.
-        sensor_outputs: A list of outputs corresponding to the configuration dictionary. This should be populated by
-            :meth:`.get_vestibular_obs`.
+        env (gym.Env): The environment to which this module will be attached.
+        vestibular_parameters (Dict): A dictionary containing the configuration. The exact from will depend on the
+            specific implementation.
+        sensor_outputs (np.ndarray): A list of outputs corresponding to the configuration dictionary. This should be
+            populated by :meth:`.get_vestibular_obs`.
     """
     def __init__(self, env, vestibular_parameters):
         self.env = env
@@ -63,10 +65,10 @@ class SimpleVestibular(Vestibular):
     and the gyro, both located in the head.
 
     Attributes:
-        env: The environment to which this module should be attached.
-        vestibular_parameters: A dictionary containing the configuration.
-        sensor_outputs: A list of outputs corresponding to the configuration dictionary. This is populated by
-            :meth:`.get_vestibular_obs`.
+        env (gym.Env): The environment to which this module should be attached.
+        vestibular_parameters (Dict[str, List[str]]): A dictionary containing the configuration.
+        sensor_outputs (np.ndarray): A list of outputs corresponding to the configuration dictionary. This is populated
+            by :meth:`.get_vestibular_obs`.
     """
     def __init__(self, env, vestibular_parameters):
         super().__init__(env, vestibular_parameters)

@@ -12,7 +12,7 @@ Both of the implementations also have functions for visualizing the touch sensat
 import math
 import operator
 from collections import deque
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Callable
 
 import numpy as np
 import mujoco_py
@@ -58,18 +58,21 @@ class Touch:
     Note that the bodies listed in 'scales' must actually exist in the scene to avoid errors!
 
     Attributes:
-        env: The environment to which this module will be attached.
-        sensor_scales: A dictionary listing the sensor distances for each body part. Populated from `touch_params`.
-        touch_type: The name of the member method that determines output type. Populated from `touch_params`.
-        touch_function: A reference to the actual member method determined by `touch_type`.
-        touch_size: The size of the output of a single sensor for the given touch type.
-        response_type: The name of the member method that determines how the output is distributed over the sensors.
-            Populated from `touch_params`.
-        response_function: A reference to the actual member method determined by `response_type`.
-        sensor_positions: A dictionary containing the positions of the sensor points for each body part. The
-            coordinates should be in the frame of the associated body part.
-        sensor_outputs: A dictionary containing the outputs produced by the sensors. Shape will depend on the specific
-            implementation. This should be populated by :meth:`.get_touch_obs`
+        env (gym.Env): The environment to which this module will be attached.
+        sensor_scales (Dict[int, float]): A dictionary listing the sensor distances for each body part. Populated from
+            `touch_params`.
+        touch_type (str): The name of the member method that determines output type. Populated from `touch_params`.
+        touch_function (Callable): A reference to the actual member method determined by `touch_type`.
+        touch_size (int): The size of the output of a single sensor for the given touch type.
+        response_type (str): The name of the member method that determines how the output is distributed over the
+            sensors. Populated from `touch_params`.
+        response_function (Callable): A reference to the actual member method determined by `response_type`.
+        sensor_positions (Dict[int, np.ndarray]): A dictionary containing the positions of the sensor points for each
+            body part. The coordinates should be in the frame of the associated body part.
+        sensor_outputs (Dict[int, np.ndarray]): A dictionary containing the outputs produced by the sensors for each
+            body part. Shape will depend on the specific implementation. This should be populated by
+            :meth:`.get_touch_obs`. Note that this will differ from the touch output to the environment, which is
+            flattened.
     """
 
     #: A dictionary listing valid touch output types and their sizes.
@@ -89,13 +92,13 @@ class Touch:
         self.touch_type = touch_params["touch_function"]
         assert self.touch_type in self.VALID_TOUCH_TYPES
         assert hasattr(self, self.touch_type)
-        self.touch_function = getattr(self, self.touch_type)
+        self.touch_function: Callable = getattr(self, self.touch_type)
         self.touch_size = self.VALID_TOUCH_TYPES[self.touch_type]
 
         # Get all information for the surface adjustment function: function name, reference to function
         self.response_type = touch_params["response_function"]
         assert self.response_type in self.VALID_RESPONSE_FUNCTIONS
-        self.response_function = getattr(self, self.response_type)
+        self.response_function: Callable = getattr(self, self.response_type)
 
         self.sensor_outputs = {}
         self.sensor_positions = {}
@@ -140,9 +143,10 @@ class DiscreteTouch(Touch):
     The following attributes are provided in addition to those of :class:`~mimoTouch.touch.Touch`.
 
     Attributes:
-        m_data: A direct reference to the MuJoCo simulation data object.
-        m_model: A direct reference to the MuJoCo simulation model object.
-        plotting_limits: A convenience dictionary listing axis limits for plotting forces or sensor points for geoms.
+        m_data (sim.data): A direct reference to the MuJoCo simulation data object.
+        m_model (sim.model): A direct reference to the MuJoCo simulation model object.
+        plotting_limits (Dict[int, float]): A convenience dictionary listing axis limits for plotting forces or sensor
+            points for geoms.
     """
 
     VALID_TOUCH_TYPES = {
@@ -500,7 +504,6 @@ class DiscreteTouch(Touch):
         fig, ax = env_utils.plot_forces(points, forces, limit=np.max(points) + 0.5, show=False)
         return fig, ax
 
-
     # =============== Raw force and contact normal ====================================
     # =================================================================================
 
@@ -769,53 +772,55 @@ def scale_linear(force, distances, scale):
 class TrimeshTouch(Touch):
     """ A touch class with sensor meshes using MuJoCo bodies as the basic sensing component.
 
-        Sensor points are simply spread evenly over individual geoms. Geoms belonging to the same body are then merged,
-        removing all intersecting sensors. Nearest sensors are determined through adjacency to the closest vertex, but
-        distances are still euclidean distance instead of geodesic. For runtime reasons multiple datastructures are
-        cached, so the sensor positions in :attr:`.sensor_positions` should not be altered as they are tied to the
-        underlying sensor mesh. Trimesh is used for the mesh operations. Supported output types are
+    Sensor points are simply spread evenly over individual geoms. Geoms belonging to the same body are then merged,
+    removing all intersecting sensors. Nearest sensors are determined through adjacency to the closest vertex, but
+    distances are still euclidean distance instead of geodesic. For runtime reasons multiple datastructures are
+    cached, so the sensor positions in :attr:`.sensor_positions` should not be altered as they are tied to the
+    underlying sensor mesh. Trimesh is used for the mesh operations. Supported output types are
 
         - 'force_vector': The contact force vector (normal and frictional forces) reported in the coordinate frame of
           the sensing body.
         - 'force_vector_global': Like 'force_vector', but reported in the world coordinate frame instead.
         - 'normal_force': Returns the normal force only, as a vector in the frame of the sensing body.
 
-        The output can be spread to nearby sensors in two different ways:
+    The output can be spread to nearby sensors in two different ways:
 
         - 'nearest': Directly add the output to the nearest sensor.
         - 'spread_linear': Spreads the force to nearby sensor points, such that it decreases linearly with distance to
           the contact point. The force drops to 0 at twice the sensor scale. The force per sensor is normalised such
           that the total force is conserved.
 
-        Touch functions return their output, while response functions do not return anything and instead write their
-        adjusted forces directly into the output dictionary.
+    Touch functions return their output, while response functions do not return anything and instead write their
+    adjusted forces directly into the output dictionary.
 
-        An LRU cache is used to speed up performance of the nearest sensor point searches. This cache persists through
-        calls to :meth:`~mimoEnv.envs.mimo_env.MIMoEnv.reset`.
+    An LRU cache is used to speed up performance of the nearest sensor point searches. This cache persists through
+    calls to :meth:`~mimoEnv.envs.mimo_env.MIMoEnv.reset`.
 
-        The following attributes are provided in addition to those of :class:`~mimoTouch.touch.Touch`.
+    The following attributes are provided in addition to those of :class:`~mimoTouch.touch.Touch`.
 
-        Attributes:
-            m_data: A direct reference to the MuJoCo simulation data object.
-            m_model: A direct reference to the MuJoCo simulation model object.
-            meshes: A dictionary containing the sensor mesh objects for each body.
-            active_vertices: A dictionary of masks. Not every sensor point will be active as they may intersect another
-                geom on the same body. Only active vertices contribute to the output, but inactive ones are still
-                required for mesh operations. If a sensor is active the associated entry in this dictionary will be
-                ``True``, otherwise ``False``.
-            plotting_limits: A convenience dictionary listing axis limits for plotting forces or sensor points for
-                geoms.
-            contact_tuples: A list of tuples listing the contact index, the relevant sensing body and the raw contact
-                forces for that contact. Note that a contact may appear twice if both involved bodies have sensors.
-            _submeshes: A dictionary like :attr:`.meshes`, but storing a list of the individual geom meshes instead.
-            _active_subvertices: A dictionary like :attr:`.active_vertices`, but storing a list of masks for each geom
-                mesh instead.
-            _vertex_to_sensor_idx: A dictionary that maps the indices for each active vertex. Calculations happen on
-                submeshes, so the indices have to mapped onto the output array. This dictionary stores that mapping.
-            _neighbour_cache: An LRU cache storing the results for the nearest neighbour searches. Hit rate and current
-                size can be determined with ``._neighbour_cache.hits()`` and ``._neighbour_cache._cache.currsize``
-                respectively.
-
+    Attributes:
+        m_data (sim.data): A direct reference to the MuJoCo simulation data object.
+        m_model (sim.model): A direct reference to the MuJoCo simulation model object.
+        meshes (Dict[int, trimesh.Trimesh]): A dictionary containing the sensor mesh objects for each body.
+        active_vertices (Dict[int, np.ndarray]: A dictionary of masks. Not every sensor point will be active as they
+            may intersect another geom on the same body. Only active vertices contribute to the output, but inactive
+            ones are still required for mesh operations. If a sensor is active the associated entry in this dictionary
+            will be ``True``, otherwise ``False``.
+        plotting_limits (Dict[int, float]: A convenience dictionary listing axis limits for plotting forces or sensor
+            points for geoms.
+        contact_tuples (List[Tuple[int, int, np.ndarray]]): A list of tuples listing the contact index, the relevant
+            sensing body and the raw contact forces for that contact. Note that a contact may appear twice if both
+            involved bodies have sensors.
+        _submeshes (Dict[int, List[trimesh.Trimesh]]): A dictionary like :attr:`.meshes`, but storing a list of the
+            individual geom meshes instead.
+        _active_subvertices (Dict[int, List[np.ndarray]): A dictionary like :attr:`.active_vertices`, but storing a
+            list of masks for each geom mesh instead.
+        _vertex_to_sensor_idx (Dict[int, List[np.ndarray]]): A dictionary that maps the indices for each active vertex.
+            Calculations happen on submeshes, so the indices have to mapped onto the output array. This dictionary
+            stores that mapping.
+        _neighbour_cache (LRUCache): An LRU cache storing the results for the nearest neighbour searches. Hit rate and
+            current size can be determined with ``._neighbour_cache.hits()`` and ``._neighbour_cache._cache.currsize``
+            respectively.
         """
 
     VALID_TOUCH_TYPES = {
@@ -1515,7 +1520,9 @@ class TrimeshTouch(Touch):
         contact = self.m_data.contact[contact_id]
         forces = self.get_raw_force(contact_id, body_id)
         force_rot = np.reshape(contact.frame, (3, 3))
-        normal_force = forces[0] * force_rot[:, 0]  # Forces[0] is the magnitude of the normal force, while the first row of the contact frame is the normal vector.
+        # Forces[0] is the magnitude of the normal force, while the first column of the contact frame is the normal
+        # vector.
+        normal_force = forces[0] * force_rot[:, 0]
         normal_force = env_utils.world_rot_to_body(self.m_data, normal_force, body_id)
         return normal_force
 
@@ -1833,10 +1840,9 @@ class TrimeshTouch(Touch):
                 meshes.append(mesh)
             body_mesh = trimesh.util.concatenate(meshes)
             vertex_position = env_utils.body_pos_to_world(self.m_data, position=body_mesh.vertices,
-                                                     body_id=body_id) + offsets
+                                                          body_id=body_id) + offsets
             triangles = body_mesh.faces
             return vertex_position, triangles
-
 
         root_id = env_utils.get_body_id(self.m_model, body_id=root_id, body_name=root_name)
         # Go through all bodies and note their child bodies
@@ -1919,8 +1925,10 @@ class TrimeshTouch(Touch):
 
         return fig, ax
 
+
 _rng = np.random.default_rng()
-_vectors = env_utils.normalize_vectors(_rng.normal(size=(10,3)))
+_vectors = env_utils.normalize_vectors(_rng.normal(size=(10, 3)))
+
 
 def _contains(points, mesh, directions=_vectors, tol=1e-10):
     """ Check whether points are inside a mesh.

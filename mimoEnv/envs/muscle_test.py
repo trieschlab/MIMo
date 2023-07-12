@@ -19,7 +19,7 @@ import mujoco_py
 from mimoEnv.envs.mimo_env import SCENE_DIRECTORY, MIMoEnv
 from mimoEnv.envs.dummy import MIMoDummyEnv
 import mimoEnv.utils as env_utils
-from mimoActuation.actuation import TorqueMotorModel
+from mimoActuation.actuation import SpringDamperModel
 from mimoActuation.muscle import MuscleModel
 
 STATIC_TEST_XML = os.path.join(SCENE_DIRECTORY, "muscle_static_test.xml")
@@ -153,7 +153,7 @@ class MIMoComplianceEnv(MIMoEnv):
                  model_path=COMPLIANCE_XML,
                  initial_qpos=COMPLIANCE_INIT_POSITION,
                  n_substeps=2,
-                 actuation_model=TorqueMotorModel,
+                 actuation_model=SpringDamperModel,
                  ):
 
         super().__init__(model_path=model_path,
