@@ -1,4 +1,6 @@
 """ This module defines the base class for the muscle actuation model.
+
+Authors: Pierre Schumacher, Dominik Mattern
 """
 import warnings
 import numpy as np
@@ -12,12 +14,32 @@ class MuscleModel(ActuationModel):
     """ Class for the muscle actuation model.
 
     Implementation of the muscle model as seen in
-    `https://arxiv.org/abs/2207.03952 <https://arxiv.org/abs/2207.03952>`_. The muscles are represented by two opposing
-    muscles for each joint. These follow the force-length and force-velocity curves as described in the paper.
+    `https://arxiv.org/abs/2207.03952 <https://arxiv.org/abs/2207.03952>`_. Each actuator is internally modeled as two
+    opposing muscles. These follow the force-length and force-velocity curves as described in the paper.
     Torque is applied in the simulation by setting the gear ratio to the computed output torque and applying a dummy
     control signal of 1.
     There are many parameters in this model, two of which were tweaked for MIMo specifically. The function used for
     this is :func:`~mimoActuation.muscle_testing.calibrate_full`.
+
+    This model loads and modifies data from the actuators and joints the MIMo XML, which are effectively part of the
+    specifications for this model. Changing them before this model is initialized might have unintended consequences
+    for the actuation!
+
+    Attributes:
+        lmax (float): Determines the shape of the force-length curve.
+        lmin (float): Determines the shape of the force-length curve.
+        fvmax (float): The highest multiplier due to the force-velocity curve.
+        fpmax (float): Multiplier for the passive force component.
+        lce_min (float): Minimum virtual muscle length.
+        lce_max (float): Maximum virtual muscle length.
+        tau (float): Time constant for the activity. A higher tau means muscle activity takes longer to build up to the
+            control signal.
+        fmax (float|np.ndarray): Force multiplier to translate the normalised force-length and force-velocity curves
+            into appropriate ranges.
+        vmax (float|np.ndarray): Reference velocity for the force-velocity curve. A higher vmax leads to increased force
+            at high virtual muscle velocities.
+        target_activity (np.ndarray): Current control input. :attr:`.activity` will approach this value over time.
+        activity (np.ndarray): Muscle activity.
     """
     def __init__(self, env, actuators):
         super().__init__(env, actuators)
@@ -69,9 +91,9 @@ class MuscleModel(ActuationModel):
 
         The actuation space consists of two opposing muscles for each motor in the simulation, each with range [0, 1].
 
-                Returns:
-                    A gym spaces object with the actuation space.
-                """
+        Returns:
+            spaces.Space: A gym spaces object with the actuation space.
+        """
         action_space = spaces.Box(low=-0.0, high=1.0, shape=(self.env.n_actuators * 2,), dtype=np.float32)
         self.control_input = np.zeros(action_space.shape)  # Set initial control input to avoid NoneType Errors
         return action_space
@@ -79,7 +101,7 @@ class MuscleModel(ActuationModel):
     def action(self, action):
         """ Set the control inputs for the next step.
 
-        Control values are clipped to action space.
+        Input values are clipped to the action space.
 
         Args:
             action (numpy.ndarray): A numpy array with control values.
@@ -90,21 +112,30 @@ class MuscleModel(ActuationModel):
     def substep_update(self):
         """ Update muscle activity and torque.
 
-        As activity is time-dependent we update activity and the output torque every time step. The desired
+        As activity is time-dependent we update activity and the output torque every physics step. The desired
         activity level (input action) is not changed during this."""
         self._compute_muscle_action(update_action=False)
 
     def observations(self):
-        """ Returns muscle quantities for every actuator this time step.
-
-        Included are the control input (i.e. the desired activation level for each muscle), the muscle activation
-        (actual activation levels), the muscle forces (normalized torque factor) and the actual output torque.
+        """ Returns muscle activations and forces for every actuator.
 
         Returns:
-            A flat numpy array with the quantitites described above.
+            np.ndarray: A flat array with the quantities described above.
         """
-        torque = self.simulation_torque().flatten()
-        return np.concatenate([self.control_input.flatten(), self.muscle_activations.flatten(), self.muscle_forces.flatten(), torque])
+        return np.concatenate([self.muscle_activations.flatten(), self.muscle_forces.flatten() * self.fmax])
+
+    def cost(self):
+        """ Approximates the metabolic cost of muscle activations.
+
+        Currently, it is given by :math:`\\sum_{i=1}^n \\frac{m_{a_i}^2 * f_{max_i}}{n \\sum_{i=1}^n f_{max_i}}`, where
+        :math:`m_{a_i}` and :math:`f_{max_i}` are the activation and the maximum isometric muscle force of muscle
+        :math:`i`, respectively, and :math:`n` is the number of muscles in the model.
+
+        Returns:
+            float: The actuation cost.
+        """
+        per_muscle_cost = self.activity * self.activity * self.fmax
+        return np.abs(per_muscle_cost).sum() / (2 * self.env.n_actuators * self.fmax.sum())
 
     def reset(self):
         """ Set activity to zero and recompute muscle quantities. """
@@ -112,22 +143,36 @@ class MuscleModel(ActuationModel):
 
     @property
     def muscle_activations(self):
-        """ Activity for every muscle. """
+        """ Activity for every muscle.
+
+        Returns:
+            np.ndarray: An array with copies of the activity for every muscle.
+        """
         return self.activity.copy()
 
     @property
     def muscle_lengths(self):
-        """ Virtual muscle lengths for all muscles. """
+        """ Virtual muscle lengths for all muscles.
+
+        Returns:
+            np.ndarray: An array with copies of the virtual muscle lengths.
+        """
         return np.concatenate([self.lce_1, self.lce_2], dtype=np.float32).copy()
 
     @property
     def muscle_velocities(self):
-        """ Virtual muscle speeds for all muscles. """
+        """ Virtual muscle speeds for all muscles.
+
+        Returns:
+            np.ndarray: An array with copies of the virtual muscle velocities."""
         return np.concatenate([self.lce_dot_1, self.lce_dot_2], dtype=np.float32).copy()
 
     @property
     def muscle_forces(self):
-        """ Muscle force vectors. """
+        """ Muscle force vectors.
+
+        Returns:
+            np.ndarray: An array with copies of the forces applied by each muscle."""
         return np.concatenate([self.force_muscles_1, self.force_muscles_2], dtype=np.float32).copy()
 
     def _set_max_forces(self):
@@ -233,16 +278,17 @@ class MuscleModel(ActuationModel):
         self._update_muscle_state()
 
     def _update_muscle_state(self):
+        """ Computes the new muscle quantities needed to determine actuator torque.
+        """
         self._update_activity()
         self._update_virtual_lengths()
         self._update_virtual_velocities()
         self._update_torque()
 
     def _update_activity(self):
+        """ Updates the muscle activities for the current time step.
         """
-        Very simple low-pass filter, even simpler than MuJoCo internal, update in the future.
-        """
-        # Need sim timestep here rather than dt since we take calculate this every physics step, while dt is the
+        # Need sim timestep here rather than dt since we calculate this every physics step, while dt is the
         # duration of an environment step.
         self.activity += self.env.sim.model.opt.timestep * (self.target_activity - self.activity) / self.tau
         self.activity = np.clip(self.activity, 0, 1)
@@ -254,7 +300,7 @@ class MuscleModel(ActuationModel):
         self.lce_2 = (self.env.sim.data.qpos[self.mimo_actuated_qpos].flatten() - self.env.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()) * self.moment_2 + self.lce_2_ref
 
     def _update_virtual_velocities(self):
-        """ Update the muscle lengths from current joint angle velocities.
+        """ Update the muscle velocities from current joint angle velocities.
         """
         self.lce_dot_1 = self.moment_1 * self.env.sim.data.qvel[self.mimo_actuated_qvel].flatten()
         self.lce_dot_2 = self.moment_2 * self.env.sim.data.qvel[self.mimo_actuated_qvel].flatten()
@@ -282,24 +328,24 @@ class MuscleModel(ActuationModel):
 
         We adjust the MuJoCo actuator gear (which is just a scalar force multiplier) to be equal to the torque we want
         to apply, then we output an action-vector that is 1 everywhere. Doing this allows us to keep the same XMLs and
-        gym interfaces for both versions of MIMo.
+        gym interfaces for different actuation models.
         """
         self.env.sim.model.actuator_gear[self.actuators, 0] = self.joint_torque.copy()
 
     def _compute_muscle_action(self, action=None, update_action=True):
-        """ Take in the muscle action, compute all virtual quantities and apply the correct torques.
+        """ Take in the muscle action, compute all virtual quantities and set the correct torques.
 
         All-in-one function that updates muscle activity and computes muscle torques given current simulation state.
 
         Args:
-            action: Either an array with control inputs or `None`. If `None` we reuse the previous control input.
-                    Default `None`. This argument is ignored if "update_action" is `False`.
-            update_action: If `True` we set :attr:`~.target_activity` to the "action" argument. If `False` the action
-                    is ignored.
+            action: Either an array with control inputs or ``None``. If ``None`` we reuse the previous control input.
+                Default ``None``. This argument is ignored if "update_action" is ``False``.
+            update_action: If ``True`` we set :attr:`~.target_activity` to the `action` argument. If ``False`` the
+                `action` argument is ignored.
 
         Returns:
-            A dummy array consisting only of ones. We apply our muscle torque by reusing the torque motors in the
-            simulation. We set their gear ratio to our desired muscle torque and then apply a control input of 1.
+            np.ndarray: A dummy array consisting only of ones. We apply our muscle torque by reusing the torque motors
+            in the simulation. We set their gear ratio to our desired muscle torque and then apply a control input of 1.
         """
         assert not (update_action and action is None)
         if update_action:
@@ -315,7 +361,7 @@ class MuscleModel(ActuationModel):
             lce (np.ndarray): Virtual muscle lengths for MIMo.
 
         Returns:
-            An array with the force-length multipliers.
+            np.ndarray: An array with the force-length multipliers.
         """
         return bump(lce, self.lmin, 1, self.lmax) + 0.15 * bump(lce, self.lmin, 0.5 * (self.lmin + 0.95), 0.95)
 
@@ -326,7 +372,7 @@ class MuscleModel(ActuationModel):
             lce_dot (np.ndarray): Virtual muscle velocities for MIMo.
 
         Returns:
-            An array with the force-velocity multipliers.
+            np.ndarray: An array with the force-velocity multipliers.
         """
         c = self.fvmax - 1
         eff_vel = lce_dot / self.vmax
@@ -346,7 +392,7 @@ class MuscleModel(ActuationModel):
             lce (np.ndarray): Virtual muscle lengths for MIMo.
 
         Returns:
-            An array with the passive force components.
+            np.ndarray: An array with the passive force components.
         """
         b = 0.5 * (self.lmax + 1)
         tmp = (lce[lce <= b] - 1) / (b - 1)
@@ -360,7 +406,7 @@ class MuscleModel(ActuationModel):
         """ Setter for :attr:`~.fmax`.
 
         Args:
-            fmax: The new fmax array. Either a float or an array with shape (2*n_actuators, ).
+            fmax (np.ndarray|float): The new fmax value(s).
         """
         self.fmax = fmax
 
@@ -368,7 +414,7 @@ class MuscleModel(ActuationModel):
         """ Setter for :attr:`~.vmax`.
 
         Args:
-            vmax: The new vmax array. Either a float or an array with shape (n_actuators, ).
+            vmax (np.ndarray|float): The new vmax value(s).
         """
         self.vmax = vmax
 
@@ -376,7 +422,7 @@ class MuscleModel(ActuationModel):
         """ Computes the currently applied torque for each motor in the simulation.
 
         Returns:
-            A numpy array with applied torques for each motor.
+            np.ndarray: A numpy array with applied torques for each motor.
         """
         actuator_gear = self.env.sim.model.actuator_gear[self.actuators, 0]
         control_input = self.env.sim.data.ctrl[self.actuators]
@@ -386,9 +432,9 @@ class MuscleModel(ActuationModel):
         """ Collect all muscle related values at the current timestep for all of MIMo's actuators.
 
         Returns:
-            A list containing the joint position and velocity, corrected position, output torque, desired target muscle
-            activity, actual current muscle activity, virtual muscle length, virtual muscle velocity, muscle force,
-            FL factor, FV factor and the FP component for all muscles.
+            List[np.ndarray]: A list containing the joint position and velocity, corrected position, output torque,
+            desired target muscle activity, actual current muscle activity, virtual muscle length, virtual muscle
+            velocity, muscle force, FL factor, FV factor and the FP component for all muscles.
         """
         actuator_qpos = self.env.sim.data.qpos[self.mimo_actuated_qpos].flatten()
         actuator_qvel = self.env.sim.data.qvel[self.mimo_actuated_qvel].flatten()
@@ -441,22 +487,33 @@ class MuscleModel(ActuationModel):
         return output
 
 
-def bump(length, A, mid, B):
-    """
-    Part of the force length relationship as implemented by MuJoCo.
-    """
-    left = 0.5 * (A + mid)
-    right = 0.5 * (mid + B)
+def bump(length, a, mid, b):
+    """ Part of the force length relationship as implemented by MuJoCo.
 
-    a_dif = np.square(length - A) * 0.5
-    b_dif = np.square(length - B) * 0.5
+    The parameters `a`, `mid` and `b` define the shape of the force-length curve. See
+    `https://arxiv.org/abs/2207.03952 <https://arxiv.org/abs/2207.03952>`_ for more details.
+
+    Args:
+        length (np.ndarray): The current virtual muscle lengths.
+        a (float): One of the parameters of the force-length equation.
+        mid (float): One of the parameters of the force-length equation.
+        b (float): One of the parameters of the force-length equation.
+
+    Returns:
+        np.ndarray: Resulting force-length multiplier.
+    """
+    left = 0.5 * (a + mid)
+    right = 0.5 * (mid + b)
+
+    a_dif = np.square(length - a) * 0.5
+    b_dif = np.square(length - b) * 0.5
     mid_dif = np.square(length - mid) * 0.5
 
-    output = b_dif / ((B - right) * (B - right))
+    output = b_dif / ((b - right) * (b - right))
 
     output[length < right] = 1 - mid_dif[length < right] / ((right - mid) * (right - mid))
     output[length < mid] = 1 - mid_dif[length < mid] / ((mid - left) * (mid - left))
-    output[length < left] = a_dif[length < left] / ((left - A) * (left - A))
-    output[(length <= A) | (length >= B)] = 0
+    output[length < left] = a_dif[length < left] / ((left - a) * (left - a))
+    output[(length <= a) | (length >= b)] = 0
 
     return output

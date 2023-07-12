@@ -1,0 +1,172 @@
+<!-- Copyright 2021 DeepMind Technologies Limited
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<mujoco model="MIMo">
+
+	<!-- We use the first three user values on actuators to store the muscle model parameters. The first is VMAX, the next two are FMAX.-->
+	<size nuser_actuator="3"/>
+
+	<default>
+		<default class="mimo">
+        	<joint limited="true" damping=".1" stiffness=".1" armature="0.001" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
+        	<geom condim="3" material="skin" friction="1 0.005 0.0002" solimp="0.95 0.99 0.001 0.5 1" solref="0.005 1"/>
+        	<motor ctrlrange="-1 1" ctrllimited="true" forcelimited="true"/>
+    	</default>
+	</default>
+
+    <asset>
+
+		<texture name="tex_head_default" type="cube" fileright="tex/head_front.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_head_happy" type="cube" fileright="tex/head_front_happy.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_head_sad" type="cube" fileright="tex/head_front_sad.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_head_surprised" type="cube" fileright="tex/head_front_surprised.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_head_angry" type="cube" fileright="tex/head_front_angry.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_head_disgusted" type="cube" fileright="tex/head_front_disgusted.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_head_scared" type="cube" fileright="tex/head_front_scared.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_top_sleeve" type="cube" fileright="tex/sleeve_right.png" fileleft="tex/sleeve_left.png" fileup="tex/sleeve_up.png" filedown="tex/sleeve_down.png" filefront="tex/sleeve_front.png" fileback="tex/sleeve_back.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_pants_leg" type="cube" fileright="tex/leg_right.png" fileleft="tex/leg_left.png" fileup="tex/leg_up.png" filedown="tex/leg_down.png" filefront="tex/leg_front.png" fileback="tex/leg_back.png" rgb1="0.95 .8 .5"/>
+		<texture name="tex_eye_left" type="cube" fileright="tex/eye_pupil_left.png" rgb1="1 1 1"/>
+		<texture name="tex_eye_right" type="cube" fileright="tex/eye_pupil_right.png" rgb1="1 1 1"/>
+
+		<material name="skin" rgba="0.95 0.8 0.5 1" specular=".15" shininess=".7"/>
+		<material name="buttons" rgba=".05 .05 .05 1" specular=".9" shininess=".9"/>
+		<material name="head" texture="tex_head_default" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="top_up" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
+		<material name="top_middle" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
+		<material name="top_down" rgba=".1 .5 0.0 1" specular=".0" shininess=".0"/>
+		<material name="top_sleeve" texture="tex_top_sleeve" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="pants_up" rgba="0.1 0.1 0.6 1" specular=".0" shininess=".0"/>
+		<material name="pants_down" rgba="0.1 0.1 0.6 1" specular=".0" shininess=".0"/>
+		<material name="pants_leg" texture="tex_pants_leg" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="eye_left" texture="tex_eye_left" texuniform="true" specular=".0" shininess=".0"/>
+		<material name="eye_right" texture="tex_eye_right" texuniform="true" specular=".0" shininess=".0"/>
+
+    </asset>
+
+	<!-- Internal contacts should not have friction to reduce "getting stuck" on ourselves-->
+	<contact>
+		<pair geom1="lb" geom2="ub1" condim="1"/>
+		<exclude body1="left_eye" body2="upper_body"/>
+		<exclude body1="right_eye" body2="upper_body"/>
+	</contact>
+
+	<tendon>
+		<fixed class="mimo" name="hip_bend" limited="true" range="-.01 .01">
+			<joint joint="robot:hip_bend1" coef="1"/>
+			<joint joint="robot:hip_bend2" coef="-1"/>
+		</fixed>
+		<fixed class="mimo" name="hip_rotation" limited="true" range="-.01 .01">
+			<joint joint="robot:hip_rot1" coef="1"/>
+			<joint joint="robot:hip_rot2" coef="-1"/>
+		</fixed>
+		<fixed class="mimo" name="hip_lean" limited="true" range="-.01 .01">
+			<joint joint="robot:hip_lean1" coef="1"/>
+			<joint joint="robot:hip_lean2" coef="-.5"/>
+		</fixed>
+
+		<fixed class="mimo" name="head_limits1" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_swivel" coef="1"/>
+			<joint joint="robot:head_tilt_side" coef="1"/>
+		</fixed>
+		<fixed class="mimo" name="head_limits2" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_tilt" coef="1"/>
+			<joint joint="robot:head_tilt_side" coef="1"/>
+		</fixed>
+		<fixed class="mimo" name="head_limits3" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_swivel" coef="1"/>
+			<joint joint="robot:head_tilt" coef="1"/>
+		</fixed>
+		<fixed class="mimo" name="head_limits1_sym" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_swivel" coef="1"/>
+			<joint joint="robot:head_tilt_side" coef="-1"/>
+		</fixed>
+		<fixed class="mimo" name="head_limits2_sym" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_tilt" coef="1"/>
+			<joint joint="robot:head_tilt_side" coef="-1"/>
+		</fixed>
+		<fixed class="mimo" name="head_limits3_sym" limited="true" range="-2.1 2.1">
+			<joint joint="robot:head_swivel" coef="1"/>
+			<joint joint="robot:head_tilt" coef="-1"/>
+		</fixed>
+		<!-- TODO: Change to springlength="0 0.1" after migrating to newer MuJoCo versions-->
+		<fixed class="mimo" name="fingers_ad_ffmf_right" limited="false" springlength="0" stiffness=".03">
+			<joint joint="robot:right_ff_side" coef="1"/>
+			<joint joint="robot:right_mf_side" coef="-1"/>
+		</fixed>
+		<fixed class="mimo" name="fingers_ad_mfrf_right" limited="false" springlength="0" stiffness=".03">
+			<joint joint="robot:right_mf_side" coef="1"/>
+			<joint joint="robot:right_rf_side" coef="-1"/>
+		</fixed>
+		<fixed class="mimo" name="fingers_ad_rflf_right" limited="false" springlength="0" stiffness=".03">
+			<joint joint="robot:right_rf_side" coef="1"/>
+			<joint joint="robot:right_lf_side" coef="-1"/>
+		</fixed>
+	</tendon>
+	
+	<sensor>
+		<accelerometer name="vestibular_acc" site="vestibular"/>
+		<gyro name="vestibular_gyro" site="vestibular"/>
+
+		<torque name="proprio:right_shoulder" site="torque_right_shoulder"/>
+		<torque name="proprio:right_elbow" site="torque_right_elbow"/>
+		<torque name="proprio:right_wrist" site="torque_right_wrist"/>
+
+		<torque name="proprio:right_ff_knuckle" site="torque_right_ff_knuckle"/>
+		<torque name="proprio:right_ff_middle" site="torque_right_ff_middle"/>
+		<torque name="proprio:right_ff_distal" site="torque_right_ff_distal"/>
+		<torque name="proprio:right_mf_knuckle" site="torque_right_mf_knuckle"/>
+		<torque name="proprio:right_mf_middle" site="torque_right_mf_middle"/>
+		<torque name="proprio:right_mf_distal" site="torque_right_mf_distal"/>
+		<torque name="proprio:right_rf_knuckle" site="torque_right_rf_knuckle"/>
+		<torque name="proprio:right_rf_middle" site="torque_right_rf_middle"/>
+		<torque name="proprio:right_rf_distal" site="torque_right_rf_distal"/>
+		<torque name="proprio:right_lf_meta" site="torque_right_lf_meta"/>
+		<torque name="proprio:right_lf_knuckle" site="torque_right_lf_knuckle"/>
+		<torque name="proprio:right_lf_middle" site="torque_right_lf_middle"/>
+		<torque name="proprio:right_lf_distal" site="torque_right_lf_distal"/>
+		<torque name="proprio:right_th_base" site="torque_right_th_base"/>
+		<torque name="proprio:right_th_hub" site="torque_right_th_hub"/>
+		<torque name="proprio:right_th_distal" site="torque_right_th_distal"/>
+
+	</sensor>
+
+    <actuator>
+		<motor class="mimo"	name="act:right_wrist_rotation" 			joint="robot:right_hand1" 				gear=".7"			forcerange="-1 1"		user="1.513 7.842 7.842"/>
+		<motor class="mimo"	name="act:right_wrist_flexion" 				joint="robot:right_hand2" 				gear="1.24"			forcerange="-1 .57"		user="1.455 13.66 7.874"/>
+		<motor class="mimo"	name="act:right_wrist_ulnar" 				joint="robot:right_hand3" 				gear=".95"			forcerange="-.87 1"		user="2.254 5.155 6.021"/>
+
+		<motor class="mimo"	name="act:right_ff_side" 			 		joint="robot:right_ff_side" 			gear=".05"			forcerange="-1 1"		user="6.217 .1556 .1556"/>
+		<motor class="mimo"	name="act:right_ff_knuckle" 			 	joint="robot:right_ff_knuckle"			gear=".0619"		forcerange="-.345 1"	user="4.368 .1422 .4378"/>
+		<motor class="mimo"	name="act:right_ff_middle" 				 	joint="robot:right_ff_middle"			gear=".02063"		forcerange="-.345 1"	user="3.493 .04684 .1339"/>
+		<motor class="mimo"	name="act:right_ff_distal" 				 	joint="robot:right_ff_distal"			gear=".01548"		forcerange="-.345 1"	user="2.539 .03054 .07747"/>
+
+		<motor class="mimo"	name="act:right_mf_side" 			 		joint="robot:right_mf_side" 			gear=".05"			forcerange="-1 1"		user="5.375 .1556 .1556"/>
+		<motor class="mimo"	name="act:right_mf_knuckle" 			 	joint="robot:right_mf_knuckle"			gear=".117"			forcerange="-.345 1"	user="4.325 .2687 .8275"/>
+		<motor class="mimo"	name="act:right_mf_middle" 			 		joint="robot:right_mf_middle"			gear=".039"			forcerange="-.345 1"	user="3.375 .08855 .2532"/>
+		<motor class="mimo"	name="act:right_mf_distal" 				 	joint="robot:right_mf_distal"			gear=".02925"		forcerange="-.345 1"	user="2.577 .05771 .1464"/>
+
+		<motor class="mimo"	name="act:right_rf_side"  					joint="robot:right_rf_side" 			gear=".05"			forcerange="-1 1"		user="4.984 .1556 .1556"/>
+		<motor class="mimo"	name="act:right_rf_knuckle" 			 	joint="robot:right_rf_knuckle"			gear=".078"			forcerange="-.345 1"	user="2.817 .1791 .5517"/>
+		<motor class="mimo"	name="act:right_rf_middle" 			 		joint="robot:right_rf_middle" 			gear=".026"			forcerange="-.345 1"	user="3.007 .05903 .1688"/>
+		<motor class="mimo"	name="act:right_rf_distal" 				 	joint="robot:right_rf_distal" 			gear=".0195"		forcerange="-.345 1"	user="2.313 .03847 .09759"/>
+
+		<motor class="mimo"	name="act:right_lf_side" 					joint="robot:right_lf_side" 			gear=".05" 			forcerange="-1 1"		user="5.282 .1556 .1556"/>
+		<motor class="mimo"	name="act:right_lf_meta" 					joint="robot:right_lf_meta" 			gear=".064" 		forcerange="-.345 1"	user="6.855 .07962 .1508"/>
+		<motor class="mimo"	name="act:right_lf_knuckle" 			 	joint="robot:right_lf_knuckle" 			gear=".0196"		forcerange="-.345 1"	user="2.337 .04502 .1386"/>
+		<motor class="mimo"	name="act:right_lf_middle" 				 	joint="robot:right_lf_middle" 			gear=".00653"		forcerange="-.345 1"	user="2.566 .01483 .04239"/>
+		<motor class="mimo"	name="act:right_lf_distal" 				 	joint="robot:right_lf_distal" 			gear=".00490"		forcerange="-.345 1"	user="2.001 .009666 .02452"/>
+	</actuator>
+	
+</mujoco>

@@ -1,4 +1,3 @@
-
 <!-- Copyright (c) 2022 Dominik Mattern, Francisco Lopez, Markus Ernst, Arthur Aubret
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -38,6 +37,8 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 
 <mujoco model="MIMo">
 
+	<size nuser_actuator="3" />
+
 	<default>
 		<default class="mimo">
         	<joint limited="true" damping=".1" stiffness=".1" armature="0.001" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>
@@ -47,7 +48,6 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
     </default>
 
     <asset>
-
 		<texture name="tex_head_default" type="cube" fileright="tex/head_front.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
 		<texture name="tex_head_happy" type="cube" fileright="tex/head_front_happy.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
 		<texture name="tex_head_sad" type="cube" fileright="tex/head_front_sad.png" fileleft="tex/head_back.png" fileup="tex/head_left.png" filedown="tex/head_right.png" filefront="tex/head_top.png" rgb1="0.95 .8 .5"/>
@@ -72,7 +72,6 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 		<material name="pants_leg" texture="tex_pants_leg" texuniform="true" specular=".0" shininess=".0"/>
 		<material name="eye_left" texture="tex_eye_left" texuniform="true" specular=".0" shininess=".0"/>
 		<material name="eye_right" texture="tex_eye_right" texuniform="true" specular=".0" shininess=".0"/>
-
     </asset>
 
 	<!-- Internal contacts should not have friction to reduce "getting stuck" on ourselves-->

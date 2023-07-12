@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from mujoco_py.generated import const
+from typing import List, Dict, Tuple
 
 EPS = 1e-10
 
@@ -29,12 +30,13 @@ MUJOCO_DOF_SIZES = {
 """
 
 
-def rotate_vector(vector, rot_matrix):
-    """ Rotates the vectors with the the rotation matrix.
+def rotate_vector(vector: np.ndarray, rot_matrix: np.ndarray):
+    """ Rotates the vectors with the rotation matrix.
 
     The vector can be a 1d vector or a multidimensional array of vectors, as long as the final dimension has length 3.
-    Convention for mujoco matrices: Use rotate_vector to convert from special frame to global, rotate_vector_transpose
-    for the inverse rotation. The exception are the contact frames, which are transposed.
+    Convention for mujoco matrices: Use this function to convert from special frame to global and
+    :func:`~mimoEnv.utils.rotate_vector_transpose` for the inverse rotation. The exception are the contact frames,
+    which are transposed.
 
     Args:
         vector (numpy.ndarray): The vector(s). Must have shapes (3,) or (.., 3).
@@ -102,8 +104,8 @@ def get_geom_id(mujoco_model, geom_id=None, geom_name=None):
 
     Args:
         mujoco_model (sim.model): The MuJoCo model object.
-        geom_id (int): The id of the geom.
-        geom_name (str): The name of the geom.
+        geom_id (int): The id of the geom. Default ``None``.
+        geom_name (str): The name of the geom. Default ``None``.
 
     Returns:
         int: The id of the geom referred to by either the name or the id above.
@@ -124,8 +126,8 @@ def get_body_id(mujoco_model, body_id=None, body_name=None):
     
     Args:
         mujoco_model (sim.model): The MuJoCo model object.
-        body_id (int): The id of the body.
-        body_name (str): The name of the body.
+        body_id (int): The id of the body. Default ``None``.
+        body_name (str): The name of the body. Default ``None``.
         
     Returns:
         int: The id of the geom referred to by either the name or the id above.
@@ -147,7 +149,7 @@ def get_geoms_for_body(sim_model, body_id):
         body_id (int): The id of the body.
 
     Returns:
-        list of int: A list of the ids of the geoms belonging to the given body.
+        List[int]: A list of the ids of the geoms belonging to the given body.
     """
     geom_start = sim_model.body_geomadr[body_id]
     geom_end = geom_start + sim_model.body_geomnum[body_id]
@@ -165,7 +167,7 @@ def get_child_bodies(sim_model, body_id):
         body_id (int): The id of the root body.
 
     Returns:
-        list of int: The ids of the bodies in the subtree.
+        List[int]: The ids of the bodies in the subtree.
     """
     children_dict = {}
     # Built a dictionary listing the children for each node
@@ -212,7 +214,7 @@ def get_sensor_addr(mujoco_model, sensor_id):
         sensor_id (int): The ID of the sensor.
 
     Returns:
-        A list of indices.
+        List[int]: The array indices.
     """
     start = mujoco_model.sensor_adr[sensor_id]
     end = start + mujoco_model.sensor_dim[sensor_id]
@@ -326,13 +328,13 @@ def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
     """ Sets the joint position for the joint with name joint_name.
 
     Directly sets the joint to the position provided by `qpos`. Note that the shape of `qpos` must match the joint! A
-    free joint for example has length 7. The sizes for all types can be found in :data:`MUJOCO_JOINT_SIZES`
+    free joint for example has length 7. The sizes for all types can be found in :data:`MUJOCO_JOINT_SIZES`.
 
     Args:
         mujoco_model (sim.model): The MuJoCo model object.
         mujoco_data (sim.data): The MuJoCo data object.
         joint_name (str): The name of the joint.
-        qpos (numpy.ndarray): The new joint position. The shape of the array must match the joint!
+        qpos (numpy.ndarray|float): The new joint position. The shape of the array must match the joint!
     """
     joint_id = mujoco_model.joint_name2id(joint_name)
     joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
@@ -349,7 +351,7 @@ def get_joint_qpos_addr(mujoco_model, joint_id):
         joint_id (int): The ID of the joint.
 
     Returns:
-        A list of indices.
+        List[int]: The array indices.
     """
     joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
     joint_type = mujoco_model.jnt_type[joint_id]
@@ -365,7 +367,7 @@ def get_joint_qvel_addr(mujoco_model, joint_id):
         joint_id (int): The ID of the joint.
 
     Returns:
-        A list of indices.
+        List[int]: The array indices.
     """
     joint_qvel_addr = mujoco_model.jnt_dofadr[joint_id]
     joint_type = mujoco_model.jnt_type[joint_id]
@@ -406,7 +408,7 @@ def lock_joint(mujoco_model, joint_name, joint_angle=None):
         joint_name (str): The name of the joint.
         joint_angle (float): The locking angle in radians, as a delta from the model starting value. The angle that the
             joint will be locked to can be set separately using :func:`~mimoEnv.utils.set_joint_locking_angle`. By
-            default joints are locked into the value they have in the scene xml.
+            default, joints are locked into the value they have in the scene xml.
     """
     constraint_id = equality_name2id(mujoco_model, joint_name)
     if joint_angle is not None:
@@ -766,18 +768,19 @@ def body_rot_to_body(mujoco_data, vector, body_id_source, body_id_target):
 # ======================== Plotting utils =========================================
 # =================================================================================
 
-def plot_points(points, limit: float = 1.0, title="", show=True):
+def plot_points(points, limit=1.0, title="", show=True):
     """ Plots an array of points.
 
     Args:
         points (numpy.ndarray): An array containing points. Shape should be (n, 3) for n points.
         limit (float): The limit that is applied to the axis. Default 1.
         title (str): The title for the plot. Empty by default.
-        show (bool): If `True` the plot is rendered to a window, if `False` the figure and axis objects are returned
+        show (bool): If ``True`` the plot is rendered to a window, if ``False`` the figure and axis objects are returned
             instead.
 
     Returns:
-        The figure and axis objects if `show` is `False`, ``None`` otherwise.
+        Tuple[plt.Figure, plt.Axes]|None: A tuple (fig, ax) containing the pyplot figure and axis objects if `show` is
+        ``False``, ``None`` otherwise.
     """
     xs = points[:, 0]
     ys = points[:, 1]
@@ -798,22 +801,23 @@ def plot_points(points, limit: float = 1.0, title="", show=True):
         return fig, ax
 
 
-def plot_forces(points, vectors, limit: float = 1.0, title="", show=True):
+def plot_forces(points, vectors, limit=1.0, title="", show=True):
     """ Plots an array of points and vectors pointing from those points.
 
-    points and vectors must have the same shape. For each point there is a vector, the direction and size of which is
-    determined by the `vectors` argument, starting from that point.
+    The arrays `points` and `vectors` must have the same shape. For each point there is a vector, plotted as arrows,
+    the direction and size of which is determined by the `vectors` argument, starting from that point.
 
     Args:
         points (numpy.ndarray): An array containing the points. Shape should be (n, 3) for n points.
         vectors (numpy.ndarray): An array of vectors with one for each point. Shape should be (n, 3) for n points.
         limit (float): The limit that is applied to the axis. Default 1.
         title (str): The title for the plot. Empty by default.
-        show (bool): If `True` the plot is rendered to a window, if `False` the figure and axis objects are returned
+        show (bool): If ``True`` the plot is rendered to a window, if ``False`` the figure and axis objects are returned
             instead.
 
     Returns:
-        The figure and axis objects if `show` is `False`, ``None`` otherwise.
+        Tuple[plt.Figure, plt.Axes]|None: A tuple (fig, ax) containing the pyplot figure and axis objects if `show` is
+        ``False``, ``None`` otherwise.
     """
     xs = points[:, 0]
     ys = points[:, 1]
@@ -842,9 +846,22 @@ def plot_forces(points, vectors, limit: float = 1.0, title="", show=True):
 # ======================== Mass utils =============================================
 # =================================================================================
 
-def determine_geom_masses(mujoco_model, mujoco_data, body_ids, target_mass):
-    """ Given a list of bodies and a desired target mass, calculate the mass of component geoms assuming identical
-    density. This function takes account of overlap between geoms within each body.
+def determine_geom_masses(mujoco_model, mujoco_data, body_ids, target_mass, print_out=False):
+    """ Distribute a target mass over multiple bodies.
+
+    Given a list of bodies and a desired target mass, calculate the mass of component geoms assuming identical
+    density such that the total mass of the bodies matches the target mass. This function takes account of overlap
+    between geoms within each body, but not between bodies.
+
+    Args:
+        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_data (sim.data): The MuJoCo data object.
+        body_ids (List[int]): A list of bodies by ID over which the mass will be distributed.
+        target_mass (float): The target mass.
+        print_out (bool): If ``True``, target masses and body names are printed to console.
+
+    Returns:
+        Dict[str, List[float]]: A dictionary with body names as keys and a list of geom masses as values.
     """
     from mimoTouch.sensormeshes import mesh_box, mesh_sphere, mesh_capsule, mesh_cylinder, mesh_ellipsoid
     mesh_distance = 0.001  # The distance between points on the mesh we use to calculate volume
@@ -869,7 +886,7 @@ def determine_geom_masses(mujoco_model, mujoco_data, body_ids, target_mass):
             elif geom_type == const.GEOM_CAPSULE:
                 mesh = mesh_capsule(mesh_distance, 2 * size[1], size[0])
             elif geom_type == const.GEOM_CYLINDER:
-                # Cylinder size 0 is radius, size 1 is half length
+                # Cylinder size 0 is radius, size 1 is half the length
                 mesh = mesh_cylinder(mesh_distance, 2 * size[1], size[0])
             elif geom_type == const.GEOM_PLANE:
                 RuntimeWarning("Cannot add sensors to plane geoms!")
@@ -891,15 +908,22 @@ def determine_geom_masses(mujoco_model, mujoco_data, body_ids, target_mass):
 
         volume += volumes[body_id]
 
-    print("Current total mass: {}\n".format(mass))
-    print("Target mass: {}\n".format(target_mass))
-    print("Volume: {}\n".format(volume))
-    print("Final overall density: {}".format(target_mass / volume))
-    print("Body Name\tTarget masses for constituent geoms")
+    output_dict = {}
     for body_id in body_ids:
         body_name = mujoco_model.body_id2name(body_id)
         this_body_volume_contribution_ratio = volumes[body_id] / volume
         this_body_target_mass = this_body_volume_contribution_ratio * target_mass
         this_body_target_density = this_body_target_mass / volumes_with_overlap[body_id]
         masses = [mesh.volume * this_body_target_density for mesh in meshes[body_id]]
-        print(body_name, ":", ", ".join(["{:.4e}".format(mass) for mass in masses]))
+        output_dict[body_name] = masses
+
+    if print_out:
+        print("Current total mass: {}\n".format(mass))
+        print("Target mass: {}\n".format(target_mass))
+        print("Volume: {}\n".format(volume))
+        print("Final overall density: {}".format(target_mass / volume))
+        print("Body Name\tTarget masses for constituent geoms")
+        for body_name in output_dict:
+            print(body_name, ":", ", ".join(["{:.4e}".format(mass) for mass in output_dict[body_name]]))
+
+    return output_dict

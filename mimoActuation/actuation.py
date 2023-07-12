@@ -10,6 +10,7 @@ from gym import spaces
 
 from mimoEnv.utils import set_joint_locking_angle
 
+
 class ActuationModel:
     """ Abstract base class for MIMo's actuation model.
 
@@ -23,6 +24,7 @@ class ActuationModel:
     motors as defined in the XMLs.
 
     The key functions are:
+
     - :meth:`.get_action_space` determines the actuation space attribute for the gym environment. This should have the
       shape of the input to the abstract model motors.
     - :meth:`.action` computes the actual control inputs to the simulation motors from a control input to the abstract
@@ -31,13 +33,15 @@ class ActuationModel:
     - :meth:`.observations` should return any actuation-related quantities that could reasonably be used as
       observations for the gym environment. Note that these will only actually be included if the proprioception
       module is appropriately configured.
+    - :meth:`.cost` should return the cost of the current activations. This can represent the metabolic cost or an
+      action penalty. This function is not used by default, but environments may use it as they wish, for example during
+      reward calculation.
     - :meth:`.reset` should reset whatever internal quantities the model uses to the value at the start of the
       simulation.
 
     Attributes:
-        env: The environment to which this module will be attached.
-        actuators: The simulation motors to include in this model.
-
+        env (gym.Env): The environment to which this module will be attached.
+        actuators (np.ndarray): The simulation motors, by ID, to include in this model.
     """
     def __init__(self, env, actuators):
         self.env = env
@@ -47,7 +51,7 @@ class ActuationModel:
         """ Determines the actuation space attribute for the gym environment.
 
         Returns:
-            A gym spaces object with the actuation space.
+            gym.spaces.Space: A gym spaces object with the actuation space.
         """
         raise NotImplementedError
 
@@ -72,7 +76,17 @@ class ActuationModel:
         """ Collect any quantities for the observations.
 
         Returns:
-            A flat numpy array with these quantities.
+            np.ndarray: A flat numpy array with these quantities.
+        """
+        raise NotImplementedError
+
+    def cost(self):
+        """ Returns the "cost" of the current action.
+
+        This function may be used as an action penalty.
+
+        Returns:
+            float: The cost of the action.
         """
         raise NotImplementedError
 
@@ -82,8 +96,8 @@ class ActuationModel:
         raise NotImplementedError
 
 
-class TorqueMotorModel(ActuationModel):
-    """ Class for the torque actuation model.
+class SpringDamperModel(ActuationModel):
+    """ Class for the Spring-Damper actuation model.
 
     In this model, MIMo's muscles are represented by torque motors with linear and instantaneous control response, i.e.
     the abstract model directly matches the in-simulation definitions.
@@ -91,13 +105,16 @@ class TorqueMotorModel(ActuationModel):
     components in the joint definitions of MIMo. The maximum torque of the motors is set to the maximum voluntary
     isometric torque along the corresponding axis, with a control input of 1 representing maximum torque.
 
-    In addition to the attributes from the base actuation class, there is one extra attribute:
+    In addition to the attributes from the base actuation class, there are two extra attributes:
+
     Attributes:
-        control_input: Contains the current control input.
+        control_input (np.ndarray): Contains the current control input.
+        max_torque (np.ndarray): The maximum motor torques.
     """
     def __init__(self, env, actuators):
         super().__init__(env, actuators)
         self.control_input = None
+        self.max_torque = self.env.sim.model.actuator_gear[self.actuators, 0]
 
     def get_action_space(self):
         """ Determines the actuation space attribute for the gym environment.
@@ -106,7 +123,7 @@ class TorqueMotorModel(ActuationModel):
         will be [-1, 1] for all motors.
 
         Returns:
-            A gym spaces object with the actuation space.
+            gym.spaces.Space: The actuation space.
         """
         bounds = self.env.sim.model.actuator_ctrlrange.copy().astype(np.float32)[self.actuators]
         low, high = bounds.T
@@ -129,19 +146,32 @@ class TorqueMotorModel(ActuationModel):
         self.env.sim.data.ctrl[self.actuators] = self.control_input
 
     def observations(self):
-        """ Control input and output torque for each motor for this time step.
+        """ Control input and output torque for each motor at this time step.
 
         Returns:
-            A flat numpy array with the control inputs and output torques.
+            np.ndarray: A flat array with the control inputs and output torques.
         """
         torque = self.simulation_torque().flatten()
         return np.concatenate([self.control_input.flatten(), torque])
+
+    def cost(self):
+        """ Provides a cost function for current motor usage.
+
+        The cost is given by given by :math:`\\sum_{i=1}^n \\frac{u_i^2 * T_{max_i}}{n \\sum_{i=1}^n T_{max_i}}`, where
+        :math:`u_i` and :math:`T_{max_i}` are the control signal and maximum motor torque of motor
+        :math:`i`, respectively, and :math:`n` is the number of motors in the model.
+
+        Returns:
+            float: The cost as described above.
+        """
+        per_actuator_cost = self.control_input * self.control_input * self.max_torque
+        return np.abs(per_actuator_cost).sum() / (self.env.n_actuators * self.max_torque.sum())
 
     def simulation_torque(self):
         """ Computes the currently applied torque for each motor in the simulation.
 
         Returns:
-            A numpy array with applied torques for each motor.
+            np.ndarray: An array with applied torques for each motor.
         """
         actuator_gear = self.env.sim.model.actuator_gear[self.actuators, 0]
         control_input = self.env.sim.data.ctrl[self.actuators]
@@ -164,9 +194,10 @@ class PositionalModel(ActuationModel):
 
     In addition to the attributes from the base actuation class, there is one extra attribute:
     Attributes:
-        control_input: Contains the current control input.
-        actuated_joints: Contains an array of joint IDs associated with the actuators.
-        constraints: Contains an array of constraint IDs belonging to the joints in 'actuated_joints'."""
+        control_input (np.ndarray): Contains the current control input.
+        actuated_joints (np.npdarray): Contains an array of joint IDs associated with the actuators.
+        constraints (np.ndarray): Contains an array of constraint IDs belonging to the joints in 'actuated_joints'.
+    """
     def __init__(self, env, actuators):
         super().__init__(env, actuators)
         self.control_input = None
@@ -174,6 +205,11 @@ class PositionalModel(ActuationModel):
         self.constraints = self.get_constraints()
 
     def get_constraints(self):
+        """ Collects the constraints associated with the actuated joints in the scene.
+
+        Returns:
+            np.ndarray: An array with the constraint IDs.
+        """
         constraints = []
         # Iterate over all constraints, check that they belong to an actuated joint and are type 'joint'
         for i in range(self.env.sim.model.neq):
@@ -188,7 +224,7 @@ class PositionalModel(ActuationModel):
         The actuation space directly corresponds to the range of motion of the joints in radians.
 
         Returns:
-            A gym spaces object with the actuation space.
+            gym.space.Spaces: A gym spaces object with the actuation space.
         """
         bounds = self.env.sim.model.jnt_range.copy().astype(np.float32)[self.actuated_joints]
         low, high = bounds.T
@@ -211,7 +247,7 @@ class PositionalModel(ActuationModel):
         """ Returns the current control input, i.e. the locked positions.
 
         Returns:
-            A flat numpy array with the control input.
+            np.ndarray: A flat numpy array with the control input.
         """
         return self.control_input.flatten()
 
@@ -219,3 +255,11 @@ class PositionalModel(ActuationModel):
         """ Reset actuation model to the initial state.
         """
         self.action(numpy.zeros_like(self.control_input))
+
+    def cost(self):
+        """ Dummy function.
+
+        Returns:
+            float: Always returns 0.
+        """
+        return 0

@@ -21,7 +21,7 @@ import numpy as np
 import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_VESTIBULAR_PARAMS
-
+from mimoActuation.actuation import SpringDamperModel
 
 STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
 """ Path to the stand up scene.
@@ -67,13 +67,15 @@ class MIMoStandupEnv(MIMoEnv):
     """ MIMo stands up using crib railings as an aid.
 
     Attributes and parameters are the same as in the base class, but the default arguments are adapted for the scenario.
-    Specifically we have :attr:`.done_active` and :attr:`.goals_in_observation` as `False` and touch and vision sensors
-    disabled.
+    Specifically we have :attr:`.done_active` and :attr:`.goals_in_observation` as ``False`` and touch and vision
+    sensors disabled.
 
     Even though we define a success condition in :meth:`~mimoEnv.envs.standup.MIMoStandupEnv._is_success`, it is
-    disabled since :attr:`.done_active` is set to `False`. The purpose of this is to enable extra information for
+    disabled since :attr:`.done_active` is set to ``False``. The purpose of this is to enable extra information for
     the logging features of stable baselines.
 
+    Attributes:
+        init_crouch_position (numpy.ndarray): The initial position.
     """
     def __init__(self,
                  model_path=STANDUP_XML,
@@ -83,6 +85,7 @@ class MIMoStandupEnv(MIMoEnv):
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
+                 actuation_model=SpringDamperModel,
                  ):
 
         super().__init__(model_path=model_path,
@@ -92,6 +95,7 @@ class MIMoStandupEnv(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
+                         actuation_model=actuation_model,
                          goals_in_observation=False,
                          done_active=False)
 
@@ -134,9 +138,8 @@ class MIMoStandupEnv(MIMoEnv):
         crouching position.
 
         Returns:
-            bool: `True`
+            bool: Always returns ``True``.
         """
-
         self.sim.set_state(self.initial_state)
         default_state = self.sim.get_state()
         qpos = self.init_crouch_position
@@ -162,14 +165,14 @@ class MIMoStandupEnv(MIMoEnv):
         return True
 
     def _is_failure(self, achieved_goal, desired_goal):
-        """ Dummy function. Always returns `False`.
+        """ Dummy function. Always returns ``False``.
 
         Args:
             achieved_goal (object): This parameter is ignored.
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `False`
+            bool: ``False``
         """
         return False
 
@@ -179,7 +182,7 @@ class MIMoStandupEnv(MIMoEnv):
         We use a fixed goal height of 0.5.
 
         Returns:
-            float: `0.5`
+            float: 0.5
         """
         return 0.5
 

@@ -1,5 +1,7 @@
 <mujoco model="MIMo">
 
+	<size nuser_actuator="3"/>
+
 	<default>
 		<default class="mimo">
         	<joint limited="true" damping="1" stiffness="1" armature="0.01" solimplimit="0.98 0.99 0.001 .5 1" solreflimit="0.02 1"/>

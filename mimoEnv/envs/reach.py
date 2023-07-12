@@ -21,6 +21,7 @@ import copy
 import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
+from mimoActuation.actuation import SpringDamperModel
 
 
 REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
@@ -39,7 +40,6 @@ class MIMoReachEnv(MIMoEnv):
     the reward and success conditions are computed directly from the model state, while
     :meth:`~mimoEnv.envs.reach.MIMoReachEnv._sample_goal` and
     :meth:`~mimoEnv.envs.reach.MIMoReachEnv._get_achieved_goal` are dummy functions.
-
     """
     def __init__(self,
                  model_path=REACH_XML,
@@ -49,6 +49,7 @@ class MIMoReachEnv(MIMoEnv):
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
+                 actuation_model=SpringDamperModel,
                  goals_in_observation=False,
                  done_active=True):
 
@@ -59,6 +60,7 @@ class MIMoReachEnv(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
+                         actuation_model=actuation_model,
                          goals_in_observation=goals_in_observation,
                          done_active=done_active)
 
@@ -92,7 +94,7 @@ class MIMoReachEnv(MIMoEnv):
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `True` if the ball is knocked out of position.
+            bool: ``True`` if the ball is knocked out of position.
         """
         target_pos = self.sim.data.get_body_xpos('target')
         success = (np.linalg.norm(target_pos - self.target_init_pos) > 0.01)
@@ -106,7 +108,7 @@ class MIMoReachEnv(MIMoEnv):
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `False`
+            bool: ``False``.
         """
         return False
 
@@ -133,7 +135,7 @@ class MIMoReachEnv(MIMoEnv):
         limited such that MIMo can always reach the ball.
 
         Returns:
-            bool: `True`
+            bool: ``True``.
         """
 
         self.sim.set_state(self.initial_state)

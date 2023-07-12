@@ -239,7 +239,7 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 
 		<motor class="mimo"	name="act:right_thumb_side" 			 	joint="robot:right_th_swivel" 			gear=".373"			forcerange="-.345 1"	user="3.491 1.117 2.604"/>
 		<motor class="mimo"	name="act:right_thumb_add" 					joint="robot:right_th_adduction" 		gear=".134" 		forcerange="-1 1"		user="5.646 .4969 .5024"/>
-		<motor class="mimo"	name="act:right_thumb_rotation" 		 	joint="robot:right_th_rot" 				gear=".1"			forcerange="-1 1"		user="6.506 .2741 .2871"/>
+		<!--<motor class="mimo"	name="act:right_thumb_rotation" 		 	joint="robot:right_th_rot" 				gear=".1"			forcerange="-1 1"		user="6.506 .2741 .2871"/> -->
 		<motor class="mimo"	name="act:right_thumb_pivot" 				joint="robot:right_th_pivot" 			gear=".1" 			forcerange="-1 1"		user="9.055 .1868 .1868"/>
 		<motor class="mimo"	name="act:right_thumb_middle" 			 	joint="robot:right_th_middle" 			gear=".126"			forcerange="-.345 1"	user="3.877 .2433 .7065"/>
 		<motor class="mimo"	name="act:right_thumb_distal" 			 	joint="robot:right_th_distal" 			gear=".0945"		forcerange="-.345 1"	user="3.392 .2053 .4959"/>
@@ -275,7 +275,7 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 
 		<motor class="mimo"	name="act:left_thumb_side" 			 		joint="robot:left_th_swivel" 			gear=".373"			forcerange="-.345 1"	user="3.491 1.117 2.604"/>
 		<motor class="mimo"	name="act:left_thumb_add" 					joint="robot:left_th_adduction" 		gear=".134" 		forcerange="-1 1"		user="5.646 .4969 .5024"/>
-		<motor class="mimo"	name="act:left_thumb_rotation" 				joint="robot:left_th_rot" 				gear=".1" 			forcerange="-1 1"		user="6.506 .2741 .2871"/>
+		<!--<motor class="mimo"	name="act:left_thumb_rotation" 				joint="robot:left_th_rot" 				gear=".1" 			forcerange="-1 1"		user="6.506 .2741 .2871"/> -->
 		<motor class="mimo"	name="act:left_thumb_pivot" 				joint="robot:left_th_pivot" 			gear=".1" 			forcerange="-1 1"		user="9.055 .1868 .1868"/>
 		<motor class="mimo"	name="act:left_thumb_middle" 			 	joint="robot:left_th_middle" 			gear=".126"			forcerange="-.345 1"	user="3.877 .2433 .7065"/>
 		<motor class="mimo"	name="act:left_thumb_distal" 			 	joint="robot:left_th_distal" 			gear=".0945"		forcerange="-.345 1"	user="3.392 .2053 .4959"/>
@@ -345,7 +345,7 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 		<joint name="robot:right_lf_distal" 			joint1="robot:right_lf_distal" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:right_th_swivel" 			joint1="robot:right_th_swivel" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:right_th_adduction" 			joint1="robot:right_th_adduction" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
-		<joint name="robot:right_th_rot" 				joint1="robot:right_th_rot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
+		<!--<joint name="robot:right_th_rot" 				joint1="robot:right_th_rot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>-->
 		<joint name="robot:right_th_pivot" 				joint1="robot:right_th_pivot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:right_th_middle" 			joint1="robot:right_th_middle" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:right_th_distal" 			joint1="robot:right_th_distal" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
@@ -377,7 +377,7 @@ This file includes work (https://github.com/vikashplus/Adroit) covered by the fo
 		<joint name="robot:left_lf_distal" 				joint1="robot:left_lf_distal" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:left_th_swivel" 				joint1="robot:left_th_swivel" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:left_th_adduction" 			joint1="robot:left_th_adduction" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
-		<joint name="robot:left_th_rot" 				joint1="robot:left_th_rot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
+		<!--<joint name="robot:left_th_rot" 				joint1="robot:left_th_rot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>-->
 		<joint name="robot:left_th_pivot" 				joint1="robot:left_th_pivot" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:left_th_middle" 				joint1="robot:left_th_middle" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
 		<joint name="robot:left_th_distal" 				joint1="robot:left_th_distal" active="false" polycoef="0 1 0 0 0" solimp="0.95 0.99999 0.001 0.5 2"/>
