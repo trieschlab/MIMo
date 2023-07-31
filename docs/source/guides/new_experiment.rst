@@ -201,29 +201,27 @@ parent class.
     class MIMoStandupEnv(MIMoEnv):
         def __init__(self,
                  model_path=STANDUP_XML,
-                 initial_qpos={},
-                 n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
+                 done_active=False,
+                 **kwargs,
                  ):
 
             super().__init__(model_path=model_path,
-                             initial_qpos=initial_qpos,
-                             n_substeps=n_substeps,
                              proprio_params=proprio_params,
                              touch_params=touch_params,
                              vision_params=vision_params,
                              vestibular_params=vestibular_params,
-                             goals_in_observation=False,
-                             done_active=False)
+                             done_active=done_active,
+                             **kwargs,)
 
 Next we need to override all the abstract functions. We will use the head height as our goal
 variable::
 
     def get_achieved_goal(self):
-        return self.sim.data.get_body_xpos('head')[2]
+        return self.data.body('head').xpos[2]
 
 Since we want fixed length episodes and have disabled `done_active` we don't need any of the
 other goal related functions and just implement them as dummy functions::

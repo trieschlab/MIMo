@@ -22,5 +22,3 @@ MuJoCo's own python wrappers. With this change come several breaking changes:
    should use gymnasiums MuJoCoRenderer with
    ``img = env.mujoco_renderer.render(render_mode="rgb_array", camera_name=...)``,
    similar to the old interface.
-
-There are other minor changes as well, please see
