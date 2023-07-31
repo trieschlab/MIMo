@@ -44,7 +44,7 @@ def test(env, save_dir, test_for=1000, model=None, render_video=False):
         render_video (bool): If ``True``, all episodes during testing will be recorded and saved as videos in
             `save_dir`.
     """
-    obs = env.reset()
+    obs, _ = env.reset()
     images = []
     im_counter = 0
 
@@ -60,7 +60,7 @@ def test(env, save_dir, test_for=1000, model=None, render_video=False):
             images.append(img)
         if done or trunc:
             time.sleep(1)
-            obs = env.reset()
+            obs, _ = env.reset()
             if render_video:
                 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
                 video = cv2.VideoWriter(os.path.join(save_dir, 'episode_{}.avi'.format(im_counter)), fourcc, 50, (500, 500))

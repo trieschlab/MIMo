@@ -23,6 +23,7 @@ Contents
   
    guides/index.rst
    api/index.rst
+   changelog.rst
 
 MIMo is a simple, childlike robot physically simulated using MuJoCo. He has multiple sensory
 modalities including touch, vision, proprioception and a vestibular system.

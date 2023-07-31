@@ -70,7 +70,7 @@ class MIMoDummyEnv(MIMoEnv):
                  model_path=BENCHMARK_XML,
                  frame_skip=2,
                  initial_qpos=None,
-                 render_mode="human",
+                 render_mode=None,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=DEFAULT_TOUCH_PARAMS,
                  vision_params=DEFAULT_VISION_PARAMS,

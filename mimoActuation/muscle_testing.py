@@ -554,7 +554,10 @@ def recording_episode(env_name, video_dir, env_params, video_width=500, video_he
                 action[:] = env.action_space.sample()
         ep_steps += 1
         obs, _, done, _ = env.step(action)
-        img = env.mujoco_renderer.render(mode="rgb_array", width=video_width, height=video_height, camera_name=camera_name)
+        img = env.mujoco_renderer.render(render_mode="rgb_array",
+                                                   width=video_width,
+                                                   height=video_height,
+                                                   camera_name=camera_name)
         images.append(img)
         if make_joint_plots:
             muscle_data.append(env.actuation_model.collect_data_for_actuators())
@@ -676,7 +679,7 @@ def compliance_test():
             damping_torque = env.model.dof_damping[shoulder_joint_dof] * env.data.qvel[shoulder_joint_qvel]
             net_torque = motor_torque - damping_torque - stiffness_torque
             net_torques.append(net_torque)
-            img = env.mujoco_renderer.render(mode="rgb_array")
+            img = env.mujoco_renderer.render(render_mode="rgb_array")
             video_imgs.append(img)
             if i + 1 in img_times:
                 plot_imgs.append(img)
@@ -767,7 +770,6 @@ def compliance_test():
     action[shoulder_actuator_id] = control_input_antagonist
     action[shoulder_actuator_id + env.n_actuators] = control_input_agonist
     img_times_medium = [45, 52, 66, 450]
-    # Data collection
     # Data collection
     qpos_medium, motor_torques_medium, net_torques_medium, \
         plot_imgs_medium, video_imgs_medium = collect_data(env, action, img_times_medium)

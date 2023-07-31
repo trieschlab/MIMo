@@ -12,6 +12,7 @@ from typing import Dict, Type
 
 from gymnasium import spaces, utils
 from gymnasium.envs.mujoco import MujocoEnv
+from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
 from mimoTouch.touch import TrimeshTouch, Touch
 from mimoVision.vision import SimpleVision, Vision
@@ -319,7 +320,21 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         self.goals_in_observation = goals_in_observation
         self.done_active = done_active
 
-        # Initialize scene
+        # Here we have most MIMo specific attributes. These are populated during _initialize_simulation, which is
+        # called by MujocoEnv during its initialization.
+        # MIMo components
+        self.mimo_joints = None
+        self.mimo_actuators = None
+        # Face emotions:
+        self.facial_expressions = None
+        self._head_material_id = None
+
+        # Currently a type, will be replaced with an instance during _initialize_simulation
+        self.actuation_model = actuation_model
+
+        self._initial_qpos = initial_qpos
+
+        # Load XML and initialize everything
         super().__init__(model_path,
                          frame_skip,
                          observation_space=None,
@@ -329,6 +344,12 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
                          camera_id=camera_id,
                          camera_name=camera_name,
                          default_camera_config=default_camera_config)
+
+        self.goal = self.sample_goal()
+        self._set_observation_space()
+
+    def _initialize_simulation(self,):
+        super()._initialize_simulation()
 
         fps = int(np.round(1 / self.dt))
         self.metadata = {
@@ -340,26 +361,16 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
             "render_fps": fps,
         }
 
-        # MIMo components
-        self.mimo_joints = None
-        self.mimo_actuators = None
         self._get_joints()
         self._get_actuators()
 
-        # Face emotions:
-        self.facial_expressions = None
-        self._head_material_id = None
         self._get_facial_expressions(EMOTES)
 
-        self._env_setup(initial_qpos=initial_qpos)
-        self.init_qpos = self.data.qpos.ravel().copy()
-        self.init_qvel = self.data.qvel.ravel().copy()
+        # Set qpos:
+        self._set_initial_position(self._initial_qpos)
+        self._env_setup()
 
-        # Actuation init
-        self.actuation_model = actuation_model(self, self.mimo_actuators)
-        self._set_action_space()
-        self.goal = self.sample_goal()
-        self._set_observation_space()
+        self.actuation_model = self.actuation_model(self, self.mimo_actuators)
 
     @property
     def n_actuators(self):
@@ -437,22 +448,13 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         head_material_name = "head"
         self._head_material_id = self.model.material(head_material_name).id
 
-    def _env_setup(self, initial_qpos):
+    def _env_setup(self):
         """ This function initializes all the sensory components of the model.
 
-        Calls the setup functions for all the sensory components and sets the initial positions of the joints according
-        to the constructor arguments.
-
-        Args:
-            initial_qpos (dict[str, float]): A dictionary with the initial joint positions for each joint. Keys are
-                joint names with joint positions in radians as values. Joints that are missing will be left in their
-                default positions.
+        Calls the setup functions for all the sensory components.
         """
-        # Our init goes here. At this stage the mujoco model is already loaded, but most of the gym attributes, such as
+        # Our init goes here. At this stage the mujoco model is already loaded, but some of the gym attributes, such as
         # observation space and goals are not set yet
-
-        # Set qpos:
-        self._set_initial_position(initial_qpos)
 
         # Do setups
         self.proprio_setup(self.proprio_params)
@@ -621,6 +623,12 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         super()._reset_simulation()
         self.actuation_model.reset()
         self.goal = self.sample_goal()
+        # Gym mujoco renderer breaks when MjModel and MjData are reset, so re-initialize here.
+        default_camera_config = self.mujoco_renderer.default_cam_config
+        self.mujoco_renderer.close()
+        self.mujoco_renderer = MujocoRenderer(
+            self.model, self.data, default_camera_config
+        )
 
     def get_proprio_obs(self):
         """ Collects and returns the outputs of the proprioceptive system.

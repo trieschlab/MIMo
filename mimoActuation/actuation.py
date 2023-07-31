@@ -9,7 +9,6 @@ import numpy as np
 from gymnasium import spaces
 
 from mimoEnv.utils import set_joint_locking_angle
-from mimoEnv.envs.mimo_env import MIMoEnv
 
 
 class ActuationModel:
@@ -48,7 +47,7 @@ class ActuationModel:
         env (gym.Env): The environment to which this module will be attached.
         actuators (np.ndarray): The simulation motors, by ID, to include in this model.
     """
-    def __init__(self, env:MIMoEnv, actuators):
+    def __init__(self, env, actuators):
         self.env = env
         self.actuators = actuators
 
@@ -197,7 +196,8 @@ class PositionalModel(ActuationModel):
     associated with the actuators in the 'actuators' parameter. Note that this requires that there is an equality
     constraint in the XMLs for each actuated joint. This is true for MIMo by default.
 
-    In addition to the attributes from the base actuation class, there is one extra attribute:
+    In addition to the attributes from the base actuation class, there is three extra attributes.
+
     Attributes:
         control_input (np.ndarray): Contains the current control input.
         actuated_joints (np.npdarray): Contains an array of joint IDs associated with the actuators.
