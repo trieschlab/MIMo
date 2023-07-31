@@ -345,6 +345,8 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
                          camera_name=camera_name,
                          default_camera_config=default_camera_config)
 
+        self._env_setup()
+
         self.goal = self.sample_goal()
         self._set_observation_space()
 
@@ -368,7 +370,6 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
 
         # Set qpos:
         self._set_initial_position(self._initial_qpos)
-        self._env_setup()
 
         self.actuation_model = self.actuation_model(self, self.mimo_actuators)
 

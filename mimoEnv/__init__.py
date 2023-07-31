@@ -15,7 +15,7 @@ register(id='MIMoShowroom-v0',
          entry_point='mimoEnv.envs:MIMoV2DummyEnv',
          max_episode_steps=500,
          kwargs={"model_path": DEMO_XML,
-                 "render_mode": "human"
+                 "render_mode": "human",
                  },
          )
 
