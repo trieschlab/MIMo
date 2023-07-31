@@ -162,7 +162,7 @@ class MIMoCatchEnv(MIMoEnv):
         self.target_geoms = env_utils.get_geoms_for_body(self.model, self.target_id)
         self.own_geoms = []
         for body_name in touch_params["scales"]:
-            body_id = self.model.body_name2id(body_name)
+            body_id = self.model.body(body_name).id
             self.own_geoms.extend(env_utils.get_geoms_for_body(self.model, body_id))
         self.action_penalty = action_penalty
         print("Action penalty: ", self.action_penalty)
@@ -245,8 +245,8 @@ class MIMoCatchEnv(MIMoEnv):
         Returns:
             bool: ``True`` if the ball drops below MIMo's hand, ``False`` otherwise.
         """
-        hand_pos = env_utils.get_body_position(self.model, self.hand_id)
-        target_pos = env_utils.get_body_position(self.model, self.target_id)
+        hand_pos = env_utils.get_body_position(self.data, self.hand_id)
+        target_pos = env_utils.get_body_position(self.data, self.target_id)
         return (target_pos[2] < (hand_pos[2] - 0.1)) or (np.linalg.norm(target_pos-hand_pos) > 0.5)
 
     def is_truncated(self):
@@ -255,7 +255,7 @@ class MIMoCatchEnv(MIMoEnv):
         Returns:
             bool: Always returns ``False``.
         """
-        return "False"
+        return False
 
     def sample_goal(self):
         """ Dummy function. Returns an empty array.
@@ -326,7 +326,7 @@ class MIMoCatchEnv(MIMoEnv):
 
         # reset target in random initial position and velocities as zero
         mujoco.mj_forward(self.model, self.data)
-        return True
+        return self._get_obs()
 
     def _step_callback(self):
         """ Checks if MIMo is touching the ball and performs head tracking.
@@ -336,8 +336,8 @@ class MIMoCatchEnv(MIMoEnv):
         self.in_contact_past[self.steps % self.steps_in_contact_for_success] = self._in_contact()
 
         # manually set head and eye positions to look at target
-        target_pos = env_utils.get_body_position(self.model, self.target_id) + self.position_offset
-        head_pos = env_utils.get_body_position(self.model, self.head_id)
+        target_pos = env_utils.get_body_position(self.data, self.target_id) + self.position_offset
+        head_pos = env_utils.get_body_position(self.data, self.head_id)
         head_target_dif = target_pos - head_pos
         head_target_dist = np.linalg.norm(head_target_dif)
         head_target_dif[2] = head_target_dif[2] - 0.067375  # extra difference to eye height in head
