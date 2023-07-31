@@ -7,23 +7,29 @@ A simple implementation treating using one 3D gyro and one 3D accelerometer is i
 """
 
 import numpy as np
-from mimoEnv.utils import get_data_for_sensor
+from typing import Dict, List
+
+from mimoEnv.utils import get_sensor_addr
+from gymnasium.envs.mujoco import MujocoEnv
 
 
 class Vestibular:
     """ Abstract base class for the vestibular system.
 
     This class defines the functions that all implementing classes must provide.
+    The constructor takes two arguments: `env`, which is the environment we are working with, and
+    `vestibular_parameters`, which can be used to supply implementation specific parameters.
+
+    There is only one function that implementations must provide:
     :meth:`.get_vestibular_obs` should produce the sensor outputs that will be returned to the environment. These
     outputs should also be stored in :attr:`.sensor_outputs`.
 
     Attributes:
-        env: The environment to which this module will be attached.
-        vestibular_parameters: A dictionary containing the configuration. The exact from will depend on the specific
-            implementation.
-        sensor_outputs: A list of outputs corresponding to the configuration dictionary. This should be populated by
-            :meth:`.get_vestibular_obs`.
-
+        env (MujocoEnv): The environment to which this module will be attached.
+        vestibular_parameters (Dict): A dictionary containing the configuration. The exact from will depend on the
+            specific implementation.
+        sensor_outputs (np.ndarray): A list of outputs corresponding to the configuration dictionary. This should be
+            populated by :meth:`.get_vestibular_obs`.
     """
     def __init__(self, env, vestibular_parameters):
         self.env = env
@@ -35,8 +41,10 @@ class Vestibular:
 
         This function should perform the whole sensory pipeline and return the vestibular output as defined in
         :attr:`.vestibular_parameters`. Exact return value and functionality will depend on the implementation, but
-        should always be a numpy array.
+        should always be a flat numpy array.
 
+        Returns:
+            np.ndarray: An array containing the vestibular sensations.
         """
         raise NotImplementedError
 
@@ -54,19 +62,20 @@ class SimpleVestibular(Vestibular):
             "sensors": ["vestibular_acc", "vestibular_gyro"],
         }
 
-    The default model has two sensors that can be used for 'vestibular_acc' and 'vestibular_gyro' for the accelerometer
+    The default model has two sensors, 'vestibular_acc' and 'vestibular_gyro', that can be used for the accelerometer
     and the gyro, both located in the head.
 
     Attributes:
-        env: The environment to which this module should be attached.
-        vestibular_parameters: A dictionary containing the configuration.
-        sensor_outputs: A list of outputs corresponding to the configuration dictionary. This is populated by
-            :meth:`.get_vestibular_obs`.
-
+        env (MujocoEnv): The environment to which this module should be attached.
+        vestibular_parameters (Dict[str, List[str]]): A dictionary containing the configuration.
+        sensor_outputs (np.ndarray): A list of outputs corresponding to the configuration dictionary. This is populated
+            by :meth:`.get_vestibular_obs`.
     """
     def __init__(self, env, vestibular_parameters):
         super().__init__(env, vestibular_parameters)
-        self.sensors = vestibular_parameters["sensors"]
+        self.sensors = self.vestibular_parameters["sensors"]
+        self.sensor_ids = [self.env.model.sensor(name).id for name in self.sensors]
+        self.sensor_addrs = np.asarray([get_sensor_addr(self.env.model, idx) for idx in self.sensor_ids])
 
     def get_vestibular_obs(self):
         """ Produce the vestibular sensor outputs.
@@ -74,12 +83,7 @@ class SimpleVestibular(Vestibular):
         Directly reads the sensor values from the MuJoCo sensors provided in the configuration.
 
         Returns:
-            A numpy array containing the concatenated sensor values.
-
+            np.ndarray: An array containing the concatenated sensor values.
         """
-        data = []
-        for sensor in self.sensors:
-            sensor_output = get_data_for_sensor(self.env.model, self.env.data, sensor)
-            data.append(sensor_output)
-        self.sensor_outputs = data
-        return np.concatenate(data)
+        self.sensor_outputs = self.env.data.sensordata[self.sensor_addrs].flatten()
+        return np.asarray(self.sensor_outputs)

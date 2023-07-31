@@ -22,6 +22,7 @@ import numpy as np
 
 from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS, SCENE_DIRECTORY
 import mimoEnv.utils as env_utils
+from mimoActuation.actuation import SpringDamperModel
 
 
 TOUCH_PARAMS = {
@@ -50,7 +51,6 @@ TOUCH_PARAMS = {
 
 
 SITTING_POSITION = {
-    "mimo_location": np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]),
     "robot:hip_lean1": np.array([0.039088]), "robot:hip_rot1": np.array([0.113112]),
     "robot:hip_bend1": np.array([0.5323]), "robot:hip_lean2": np.array([0]), "robot:hip_rot2": np.array([0]),
     "robot:hip_bend2": np.array([0.5323]),
@@ -91,9 +91,9 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
     MIMo is tasked with touching a given part of his body using his right arm.
     Attributes and parameters are mostly identical to the base class, but there are two changes.
-    The constructor takes two arguments less, ``goals_in_observation`` and ``done_active``, which are both permanently
-    set to `True`.
-    Finally there are two extra attributes for handling the goal state. The :attr:`.goal` attribute stores the target
+    The constructor takes two arguments less, `goals_in_observation` and `done_active`, which are both permanently
+    set to ``True``.
+    Finally, there are two extra attributes for handling the goal state. The :attr:`.goal` attribute stores the target
     geom in a one hot encoding, while :attr:`.target_geom` and :attr:`.target_body` store the geom and its associated
     body as an index. For more information on geoms and bodies please see the MuJoCo documentation.
 
@@ -111,6 +111,10 @@ class MIMoSelfBodyEnv(MIMoEnv):
                  touch_params=TOUCH_PARAMS,
                  vision_params=None,
                  vestibular_params=None,
+                 actuation_model=SpringDamperModel,
+                 goals_in_observation=True,
+                 done_active=True,
+                 **kwargs,
                  ):
 
         self.target_geom = 0  # The geom on MIMo we are trying to touch
@@ -124,9 +128,20 @@ class MIMoSelfBodyEnv(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
-                         goals_in_observation=True,
-                         done_active=True)
+                         actuation_model=actuation_model,
+                         goals_in_observation=goals_in_observation,
+                         done_active=done_active,
+                         **kwargs)
 
+        env_utils.set_joint_qpos(self.model,
+                                 self.data,
+                                 "mimo_location",
+                                 np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]))
+        #  "mimo_location": np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]),
+        for joint_name in SITTING_POSITION:
+            env_utils.lock_joint(self.model, joint_name, joint_angle=SITTING_POSITION[joint_name][0])
+        # Let sim settle for a few timesteps to allow weld and locks to settle
+        self.do_simulation(np.zeros(self.action_space.shape), 25)
         self.init_sitting_qpos = self.data.qpos.copy()
 
     def sample_goal(self):
@@ -138,7 +153,7 @@ class MIMoSelfBodyEnv(MIMoEnv):
         Returns:
             numpy.ndarray: The target geom in a one hot encoding.
         """
-        # randomly select geom as target (except for 2 latest geoms that correspong to fingers)
+        # randomly select geom as target (except for 2 latest geoms that correspond to fingers)
         active_geom_codes = list(self.touch.sensor_outputs.keys())
         target_geom_idx = np.random.randint(len(active_geom_codes) - 2)
         self.target_geom = active_geom_codes[int(target_geom_idx)]
@@ -149,14 +164,12 @@ class MIMoSelfBodyEnv(MIMoEnv):
             target_geom_onehot[self.target_geom] = 1
 
         self.target_body = self.model.body(self.model.geom(self.target_geom).bodyid).name
-        #print('Target body: ', self.target_body)
-
         return target_geom_onehot
 
     def is_success(self, achieved_goal, desired_goal):
         """ We have succeeded when we have a touch sensation on the goal body.
 
-        We ignore the :attr:`.goal` attribute in this for performance reasons and determine the the success condition
+        We ignore the :attr:`.goal` attribute in this for performance reasons and determine the success condition
         using :attr:`.target_geom` instead. This allows us to save a number of array operations each step.
 
         Args:
@@ -182,8 +195,8 @@ class MIMoSelfBodyEnv(MIMoEnv):
         - Otherwise the reward is -1.
 
         Args:
-            achieved_goal (dict): This parameter is ignored.
-            desired_goal (dict): This parameter is ignored.
+            achieved_goal (object): This parameter is ignored.
+            desired_goal (object): This parameter is ignored.
             info (dict): This parameter is ignored.
 
         Returns:
@@ -210,21 +223,11 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
         return reward
 
-    def _step_callback(self):
-        """ Manually reset position excluding arm each step.
-
-        This restores the body to the sitting position if it deviated.
-        Avoids some physics issues that would sometimes occur with welds.
-        """
-        # Manually set body to sitting position (except for the right arm joints)
-        for body_name in SITTING_POSITION:
-            env_utils.set_joint_qpos(self.model, self.data, body_name, SITTING_POSITION[body_name])
-
     def reset_model(self):
         """ Reset to the initial sitting position.
 
         Returns:
-            bool: `True`
+            Dict: Observations after reset.
         """
         # set qpos as new initial position and velocity as zero
         qpos = self.init_sitting_qpos
@@ -233,22 +236,22 @@ class MIMoSelfBodyEnv(MIMoEnv):
         return self._get_obs()
 
     def is_failure(self, achieved_goal, desired_goal):
-        """ Dummy function that always returns False.
+        """ Dummy function that always returns ``False``.
 
         Args:
             achieved_goal (object): This parameter is ignored.
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `False`
+            bool: ``False``.
         """
         return False
 
     def is_truncated(self):
-        """ Dummy function. Always returns `False`.
+        """ Dummy function. Always returns ``False``.
 
         Returns:
-            bool: `False`
+            bool: ``False``.
         """
         return False
 

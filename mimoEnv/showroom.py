@@ -12,7 +12,7 @@ def main():
     The environment is rendered to an interactive window.
     """
 
-    env = gym.make("MIMoShowroom-v0", show_sensors=False, print_space_sizes=True)
+    env = gym.make("MIMoShowroom-v0", show_sensors=False, print_space_sizes=True, render_mode="human")
 
     max_steps = 2000
 

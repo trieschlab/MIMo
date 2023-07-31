@@ -1,16 +1,18 @@
 Sample environments
 ===================
 
-This section describes the code used for the experiments and demos from the paper PAPERTITLE, LINK. 
-The :ref:`reach <sec reach>`, :ref:`standup <sec standup>` and :ref:`self-body <sec selfbody>`
-experiments each involve an environment and a training script using the RL algorithms from
-`Stable Baselines3 <https://github.com/DLR-RM/stable-baselines3>`_.
+This section describes the code used for the experiments and demos from our paper
+`MIMo: A Multi-Modal Infant Model for Studying Cognitive Development in Humans and AIs <https://ieeexplore.ieee.org/document/9962192>`_.
+The learning illustration environments, :ref:`reach <sec reach>`, :ref:`standup <sec standup>`,
+:ref:`self-body <sec selfbody>` and :ref:`catch <sec catch>` each involve an environment and a training script using RL
+algorithms from `Stable Baselines3 <https://github.com/DLR-RM/stable-baselines3>`_. The catch environment is
+based on the full hand version of MIMo, while the others use the mitten hand.
 There is a simple :ref:`benchmarking <sec benchmark>` scenario in which MIMo takes random actions.
 Finally there is a :ref:`demo <sec demo>` environment in a simple room with some toys, with all sensory 
 modalities enabled using the default configurations.
 
 All of the the environments register with gym under the names ``MIMoReach-v0``,
-``MIMoStandup-v0``, ``MIMoSelfBody-v0``, ``MIMoBench-v0`` and ``MIMoShowroom-v0``.
+``MIMoStandup-v0``, ``MIMoSelfBody-v0``, ``MIMoCatch-v0``, ``MIMoBench-v0`` and ``MIMoShowroom-v0``.
 
 
 .. contents::
@@ -53,13 +55,25 @@ Self-body Environment
    :private-members:
 
 
-Training scripts
-----------------
+.. _sec catch:
 
-The training scripts for all the sample environments are functionally identical, so we
-document only one of them in detail.
+Self-body Environment
+---------------------
 
-.. automodule:: mimoEnv.reach
+.. automodule:: mimoEnv.envs.catch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
+
+
+Training script
+---------------
+
+There is also a training script for all the sample environments.
+
+.. automodule:: mimoEnv.illustrations
    :members:
    :undoc-members:
    :show-inheritance:
@@ -81,6 +95,7 @@ Environments
 .. automodule:: mimoEnv.envs.dummy
    :members:
    :undoc-members:
+   :inherited-members:
    :show-inheritance:
    :private-members:
 

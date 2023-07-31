@@ -6,6 +6,7 @@ A simple implementation directly reading values is in :class:`~mimoProprioceptio
 """
 
 import numpy as np
+from typing import Dict, List
 from mimoEnv.utils import get_joint_qpos_addr, get_joint_qvel_addr, get_sensor_addr
 
 
@@ -17,13 +18,14 @@ class Proprioception:
     :attr:`.sensor_outputs`.
 
     Attributes:
-        env: The environment to which this module will be attached.
-        proprio_parameters: A dictionary containing the configuration. The exact from will depend on the specific
+        env (Gym.Env): The environment to which this module will be attached.
+        proprio_parameters (Dict): A dictionary containing the configuration. The exact from will depend on the specific
             implementation.
-        output_components: A list containing all the proprioceptive components that should be put in the output. This
-            attribute is populated by `proprio_parameters`. These components must be in :attr:`VALID_COMPONENTS`.
-        sensor_outputs: A dictionary containing the outputs produced by the sensors. Shape will depend on the specific
-            implementation. This should be populated by :meth:`.get_proprioception_obs`.
+        output_components (List[str]): A list containing all the proprioceptive components that should be put in the
+            output. This attribute is populated by `proprio_parameters`. These components must be in
+            :attr:`VALID_COMPONENTS`.
+        sensor_outputs (Dict[str, np.ndarray]): A dictionary containing the outputs produced by the sensors. Shape will
+            depend on the specific implementation. This should be populated by :meth:`.get_proprioception_obs`.
     """
 
     #: Valid entries for the output components
@@ -44,8 +46,10 @@ class Proprioception:
 
         This function should perform the whole sensory pipeline and return the output as defined in
         :attr:`.proprio_parameters`. Exact return value and functionality will depend on the implementation, but
-        should always be a numpy array.
+        should always be a flat numpy array.
 
+        Returns:
+            np.ndarray: A flat numpy array with proprioceptive outputs.
         """
         raise NotImplementedError
 
@@ -56,9 +60,11 @@ class SimpleProprioception(Proprioception):
     This class can provide relative joint positions, joint velocities, joint torques and limit sensors on the joint
     range of motion. Torques are in newton-meters, all other values in radians. Joint positions are always part of the
     output, while the others can be added optionally through the configuration dictionary. Valid components are
-    'velocity', 'torque', 'limits'.
+    'velocity', 'torque', 'limits' and 'actuation'.
     The limit sensing increases linearly from 0 through 1 and beyond as the joint position moves within the threshold
     distance to the limit and then exceeds the limit. The threshold is part of the configuration.
+    The 'actuation' component returns quantities from the actuation model. What these are depends on the specific
+    actuation model.
     The configuration dictionary should have the form::
 
         {
@@ -67,25 +73,22 @@ class SimpleProprioception(Proprioception):
         }
 
     Joint positions, velocities and limits are read from the simulation state directly, joint torques uses torque
-    sensors placed between bodies in the scene. By default MIMo has one sensor for each joint. Any torque sensor with
+    sensors placed between bodies in the scene. By default, MIMo has one sensor for each joint. Any torque sensor with
     the 'proprio' prefix is used for the output.
 
+    The following attributes are provided in addition to those of :class:`~mimoProprioception.proprio.Proprioception`.
+
     Attributes:
-        env: The environment to which this module will be attached.
-        proprio_parameters: A dictionary containing the configuration.
-        output_components: A list containing all the proprioceptive components that should be put in the output. This
-            attribute is populated by `proprio_parameters`. These components must be in :attr:`VALID_COMPONENTS`.
-        sensor_outputs: A dictionary containing the outputs produced by the sensors. Contains one entry for each output
-            component. Populated by :meth:`.get_proprioception_obs`.
-        sensors: A list containing all the torque sensors.
-        sensor_names: A dictionary of lists that can be used to find the joint/sensor of the associated entry in the
-            output. The ith value in the joint position output belongs to joint sensor_names['qpos'][i].
-        limit_thresh: Threshold distance to joint limit. If the joint is more than this distance away from the limit,
-            the output will be 0. Default value is .035
+        sensors (List[str]): A list containing all the torque sensors.
+        sensor_names(Dict[str, List[str]]): A dictionary of lists that can be used to find the joint/sensor of the
+            associated entry in the output. The ith value in the joint position output belongs to joint
+            sensor_names['qpos'][i].
+        limit_thresh (float): Threshold distance to joint limit, in radians. If the joint is more than this distance
+            away from the limit, the output will be 0. Default value is .035
     """
 
     #: Valid entries for the output components
-    VALID_COMPONENTS = ["velocity", "torque", "limits"]
+    VALID_COMPONENTS = ["velocity", "torque", "limits", "actuation"]
 
     def __init__(self, env, proprio_parameters):
         super().__init__(env, proprio_parameters)
@@ -122,7 +125,7 @@ class SimpleProprioception(Proprioception):
         if "limits" in self.output_components:
             self.sensor_names["limit"] = self.joint_names
 
-        if "threshold" in proprio_parameters:
+        if proprio_parameters is not None and "threshold" in proprio_parameters:
             self.limit_thresh = proprio_parameters["threshold"]
         else:
             self.limit_thresh = .035  # ~2 degrees in radians
@@ -136,8 +139,7 @@ class SimpleProprioception(Proprioception):
         entries.
 
         Returns:
-            A numpy array containing the concatenation of all enabled outputs.
-
+            np.ndarray: A numpy array containing the concatenation of all enabled outputs.
         """
         self.sensor_outputs = {}
         robot_qpos = self.env.data.qpos[self.joint_qpos].flatten()
@@ -153,9 +155,12 @@ class SimpleProprioception(Proprioception):
         # from 0 to 1 at the limit and then beyond 1 beyond the limit
         if "limits" in self.output_components:
             l_dif = robot_qpos - (self.joint_limits[:, 0] + self.limit_thresh)
-            u_dif = (self.joint_limits[:, 1] + self.limit_thresh) - robot_qpos
+            u_dif = (self.joint_limits[:, 1] - self.limit_thresh) - robot_qpos
             response = np.minimum(l_dif, u_dif) / self.limit_thresh
             response = - np.minimum(response, 0)
             self.sensor_outputs["limits"] = response
+
+        if "actuation" in self.output_components:
+            self.sensor_outputs["actuation"] = self.env.actuation_model.observations().flatten()
 
         return np.concatenate([self.sensor_outputs[key] for key in sorted(self.sensor_outputs.keys())])

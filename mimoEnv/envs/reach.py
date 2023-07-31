@@ -20,7 +20,7 @@ import numpy as np
 import copy
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
-import mimoEnv.utils as env_utils
+from mimoActuation.actuation import SpringDamperModel
 
 
 REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
@@ -39,28 +39,27 @@ class MIMoReachEnv(MIMoEnv):
     the reward and success conditions are computed directly from the model state, while
     :meth:`~mimoEnv.envs.reach.MIMoReachEnv.sample_goal` and
     :meth:`~mimoEnv.envs.reach.MIMoReachEnv.get_achieved_goal` are dummy functions.
-
     """
     def __init__(self,
                  model_path=REACH_XML,
-                 initial_qpos={},
-                 frame_skip=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
+                 actuation_model=SpringDamperModel,
                  goals_in_observation=False,
-                 done_active=True):
+                 done_active=True,
+                 **kwargs,):
 
         super().__init__(model_path=model_path,
-                         initial_qpos=initial_qpos,
-                         frame_skip=frame_skip,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
+                         actuation_model=actuation_model,
                          goals_in_observation=goals_in_observation,
-                         done_active=done_active)
+                         done_active=done_active,
+                         **kwargs)
 
         self.target_init_pos = copy.deepcopy(self.data.body('target').xpos)
 
@@ -94,7 +93,7 @@ class MIMoReachEnv(MIMoEnv):
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `True` if the ball is knocked out of position.
+            bool: ``True`` if the ball is knocked out of position.
         """
         target_pos = self.data.body('target').xpos
         success = (np.linalg.norm(target_pos - self.target_init_pos) > 0.01)
@@ -108,7 +107,7 @@ class MIMoReachEnv(MIMoEnv):
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `False`
+            bool: ``False``.
         """
         return False
 
@@ -143,7 +142,7 @@ class MIMoReachEnv(MIMoEnv):
         limited such that MIMo can always reach the ball.
 
         Returns:
-            bool: `True`
+            Dict: Observations after reset.
         """
 
         self.set_state(self.init_qpos, self.init_qvel)
@@ -176,13 +175,13 @@ class MIMoReachEnv(MIMoEnv):
         head_pos = self.data.body('head').xpos
         head_target_dif = target_pos - head_pos
         head_target_dist = np.linalg.norm(head_target_dif)
-        head_target_dif[2] = head_target_dif[2] - 0.067375  # extra difference to eyes height in head
+        head_target_dif[2] = head_target_dif[2] - 0.067375  # extra difference to height of eyes in head
         half_eyes_dist = 0.0245  # horizontal distance between eyes / 2
         eyes_target_dist = head_target_dist - 0.07  # remove distance from head center to eyes
 
         self.data.qpos[13] = np.arctan(head_target_dif[1] / head_target_dif[0])  # head - horizontal
         self.data.qpos[14] = np.arctan(-head_target_dif[2] / head_target_dif[0])  # head - vertical
-        self.data.qpos[15] = 0  # head - side tild
+        self.data.qpos[15] = 0  # head - side tilt
         self.data.qpos[16] = np.arctan(-half_eyes_dist / eyes_target_dist)  # left eye -  horizontal
         self.data.qpos[17] = 0  # left eye - vertical
         self.data.qpos[17] = 0  # left eye - torsional

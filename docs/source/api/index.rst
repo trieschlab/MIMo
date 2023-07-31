@@ -5,6 +5,7 @@ API
    :maxdepth: 2
 
    mimoclass
+   mimoActuation
    sample_environments
    mimoProprioception
    mimoTouch

@@ -11,7 +11,7 @@ letting the simulation settle. This leads to MIMo sagging into a slightly random
 episode. All episodes have a fixed length, there are no goal or failure states.
 
 Reward shaping is employed, such that MIMo is penalised for using muscle inputs and large inputs in particular.
-Additionally he is rewarded each step for the current height of his head.
+Additionally, he is rewarded each step for the current height of his head.
 
 The class with the environment is :class:`~mimoEnv.envs.standup.MIMoStandupEnv` while the path to the scene XML is
 defined in :data:`STANDUP_XML`.
@@ -21,7 +21,7 @@ import numpy as np
 import mujoco
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_VESTIBULAR_PARAMS
-
+from mimoActuation.actuation import SpringDamperModel
 
 STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
 """ Path to the stand up scene.
@@ -32,8 +32,8 @@ STANDUP_XML = os.path.join(SCENE_DIRECTORY, "standup_scene.xml")
 SITTING_POSITION = {
     "mimo_location": np.array([-0.103287, 0.00444494, 0.0672742, 0.965518, -0.00942109, -0.207444, 0.157016]),
     "robot:hip_lean1": np.array([-0.0134586]), "robot:hip_rot1": np.array([-0.259285]),
-    "robot:hip_bend1": np.array([0.407198]), "robot:hip_lean2": np.array([-0.0565839]), "robot:hip_rot2": np.array([-0.248653]),
-    "robot:hip_bend2": np.array([0.38224]),
+    "robot:hip_bend1": np.array([0.407198]), "robot:hip_lean2": np.array([-0.0565839]),
+    "robot:hip_rot2": np.array([-0.248653]), "robot:hip_bend2": np.array([0.38224]),
     "robot:head_swivel": np.array([0]), "robot:head_tilt": np.array([0]), "robot:head_tilt_side": np.array([0]),
     "robot:left_eye_horizontal": np.array([0]), "robot:left_eye_vertical": np.array([0]),
     "robot:left_eye_torsional": np.array([0]), "robot:right_eye_horizontal": np.array([0]),
@@ -44,8 +44,8 @@ SITTING_POSITION = {
     "robot:right_hand3": np.array([-0.0568468]), "robot:right_fingers": np.array([-1.4206]),
     "robot:left_shoulder_horizontal": np.array([0.778157]), "robot:left_shoulder_ad_ab": np.array([2.9349]),
     "robot:left_shoulder_rotation": np.array([1.16941]), "robot:left_elbow": np.array([-0.547872]),
-    "robot:left_hand1": np.array([-1.54373]), "robot:left_hand2": np.array([-0.98379]), "robot:left_hand3": np.array([0.225526]),
-    "robot:left_fingers": np.array([-1.27117]),
+    "robot:left_hand1": np.array([-1.54373]), "robot:left_hand2": np.array([-0.98379]),
+    "robot:left_hand3": np.array([0.225526]), "robot:left_fingers": np.array([-1.27117]),
     "robot:right_hip1": np.array([-2.26831]), "robot:right_hip2": np.array([-0.295142]),
     "robot:right_hip3": np.array([-0.313409]), "robot:right_knee": np.array([-2.53125]),
     "robot:right_foot1": np.array([-0.109924]), "robot:right_foot2": np.array([-0.0352949]),
@@ -67,13 +67,15 @@ class MIMoStandupEnv(MIMoEnv):
     """ MIMo stands up using crib railings as an aid.
 
     Attributes and parameters are the same as in the base class, but the default arguments are adapted for the scenario.
-    Specifically we have :attr:`.done_active` and :attr:`.goals_in_observation` as `False` and touch and vision sensors
-    disabled.
+    Specifically we have :attr:`.done_active` and :attr:`.goals_in_observation` as ``False`` and touch and vision
+    sensors disabled.
 
-    Even though we define a success condition in :meth:`~mimoEnv.envs.standup.MIMoStandupEnv.is_success`, it is
-    disabled since :attr:`.done_active` is set to `False`. The purpose of this is to enable extra information for
+    Even though we define a success condition in :meth:`~mimoEnv.envs.standup.MIMoStandupEnv._is_success`, it is
+    disabled since :attr:`.done_active` is set to ``False``. The purpose of this is to enable extra information for
     the logging features of stable baselines.
 
+    Attributes:
+        init_crouch_position (numpy.ndarray): The initial position.
     """
     def __init__(self,
                  model_path=STANDUP_XML,
@@ -83,6 +85,7 @@ class MIMoStandupEnv(MIMoEnv):
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
+                 actuation_model=SpringDamperModel,
                  ):
 
         super().__init__(model_path=model_path,
@@ -92,6 +95,7 @@ class MIMoStandupEnv(MIMoEnv):
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
+                         actuation_model=actuation_model,
                          goals_in_observation=False,
                          done_active=False)
 
@@ -134,7 +138,7 @@ class MIMoStandupEnv(MIMoEnv):
         crouching position.
 
         Returns:
-            observations
+            Dict: Observations after reset.
         """
 
         self.set_state(self.init_qpos, self.init_qvel)
@@ -156,22 +160,22 @@ class MIMoStandupEnv(MIMoEnv):
         return self._get_obs()
 
     def is_failure(self, achieved_goal, desired_goal):
-        """ Dummy function. Always returns `False`.
+        """ Dummy function. Always returns ``False``.
 
         Args:
             achieved_goal (object): This parameter is ignored.
             desired_goal (object): This parameter is ignored.
 
         Returns:
-            bool: `False`
+            bool: ``False``
         """
         return False
 
     def is_truncated(self):
-        """ Dummy function. Always returns `False`.
+        """ Dummy function. Always returns ``False``.
 
         Returns:
-            bool: `False`
+            bool: ``False``.
         """
         return False
 
@@ -181,7 +185,7 @@ class MIMoStandupEnv(MIMoEnv):
         We use a fixed goal height of 0.5.
 
         Returns:
-            float: `0.5`
+            float: 0.5
         """
         return 0.5
 
