@@ -80,8 +80,6 @@ class MuscleModel(ActuationModel):
         self.mimo_actuated_qpos = None
         self.mimo_actuated_qvel = None
 
-        self.action_space = self.get_action_space()
-
         self._set_max_forces()
         self._get_actuated_joints()
         self._set_muscles()
@@ -94,7 +92,7 @@ class MuscleModel(ActuationModel):
         Returns:
             spaces.Space: A gym spaces object with the actuation space.
         """
-        action_space = spaces.Box(low=-0.0, high=1.0, shape=(self.env.n_actuators * 2,), dtype=np.float32)
+        action_space = spaces.Box(low=-0.0, high=1.0, shape=(self.n_actuators * 2,), dtype=np.float32)
         self.control_input = np.zeros(action_space.shape)  # Set initial control input to avoid NoneType Errors
         return action_space
 
@@ -106,7 +104,7 @@ class MuscleModel(ActuationModel):
         Args:
             action (numpy.ndarray): A numpy array with control values.
         """
-        self.control_input = np.clip(action, self.env.action_space.low, self.env.action_space.high)
+        self.control_input = np.clip(action, self.action_space.low, self.action_space.high)
         self.env.data.ctrl[self.actuators] = self._compute_muscle_action(self.control_input)
 
     def substep_update(self):
@@ -135,7 +133,7 @@ class MuscleModel(ActuationModel):
             float: The actuation cost.
         """
         per_muscle_cost = self.activity * self.activity * self.fmax
-        return np.abs(per_muscle_cost).sum() / (2 * self.env.n_actuators * self.fmax.sum())
+        return np.abs(per_muscle_cost).sum() / (2 * self.n_actuators * self.fmax.sum())
 
     def reset(self):
         """ Set activity to zero and recompute muscle quantities. """
@@ -312,13 +310,13 @@ class MuscleModel(ActuationModel):
         in a NEGATIVE torque, (as muscles pull, they don't push) and the joint velocity gives us the correct muscle
         fiber velocities.
         """
-        self.force_muscles_1 = self.fl(self.lce_1) * self.fv(self.lce_dot_1) * self.activity[:self.env.n_actuators] \
+        self.force_muscles_1 = self.fl(self.lce_1) * self.fv(self.lce_dot_1) * self.activity[:self.n_actuators] \
                                + self.fp(self.lce_1)
-        self.force_muscles_2 = self.fl(self.lce_2) * self.fv(self.lce_dot_2) * self.activity[self.env.n_actuators:] \
+        self.force_muscles_2 = self.fl(self.lce_2) * self.fv(self.lce_dot_2) * self.activity[self.n_actuators:] \
                                + self.fp(self.lce_2)
         if isinstance(self.fmax, np.ndarray):
-            torque = self.moment_1 * self.force_muscles_1 * self.fmax[:self.env.n_actuators] \
-                     + self.moment_2 * self.force_muscles_2 * self.fmax[self.env.n_actuators:]
+            torque = self.moment_1 * self.force_muscles_1 * self.fmax[:self.n_actuators] \
+                     + self.moment_2 * self.force_muscles_2 * self.fmax[self.n_actuators:]
         else:
             torque = self.moment_1 * self.force_muscles_1 * self.fmax + self.moment_2 * self.force_muscles_2 * self.fmax
         self.joint_torque = -torque
@@ -444,11 +442,11 @@ class MuscleModel(ActuationModel):
 
         actuator_gear = self.env.model.actuator_gear[self.actuators, 0].flatten()
 
-        action_neg = self.target_activity[:self.env.n_actuators]
-        action_pos = self.target_activity[self.env.n_actuators:]
+        action_neg = self.target_activity[:self.n_actuators]
+        action_pos = self.target_activity[self.n_actuators:]
 
-        activity_neg = self.activity[:self.env.n_actuators]
-        activity_pos = self.activity[self.env.n_actuators:]
+        activity_neg = self.activity[:self.n_actuators]
+        activity_pos = self.activity[self.n_actuators:]
 
         lce_neg = self.lce_1
         lce_pos = self.lce_2

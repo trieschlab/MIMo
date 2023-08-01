@@ -28,3 +28,6 @@ MuJoCo's own python wrappers. With this change come several breaking changes:
    should use gymnasiums MuJoCoRenderer with
    ``img = env.mujoco_renderer.render(render_mode="rgb_array", ...)``,
    similar to the old interface.
+
+In addition to these changes there were also some adjustments to the actuation models
+to allow multiple to be attached to the same environment without conflicts.

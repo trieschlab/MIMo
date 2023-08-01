@@ -46,16 +46,22 @@ class ActuationModel:
     Attributes:
         env (gym.Env): The environment to which this module will be attached.
         actuators (np.ndarray): The simulation motors, by ID, to include in this model.
+        n_actuators (int): The number of actuators controlled by this model.
+        action_space (spaces.Box): The action space for this model. This is set by :meth:`~.get_action_space`
     """
     def __init__(self, env, actuators):
         self.env = env
         self.actuators = actuators
+        self.n_actuators = self.actuators.shape[0]
+        self.action_space = self.get_action_space()
 
     def get_action_space(self):
         """ Determines the actuation space attribute for the gym environment.
 
+        Note that his action space must be a Box!
+
         Returns:
-            gym.spaces.Space: A gym spaces object with the actuation space.
+            gym.spaces.Box: A gym spaces object with the actuation space.
         """
         raise NotImplementedError
 
@@ -146,7 +152,7 @@ class SpringDamperModel(ActuationModel):
         Args:
             action (numpy.ndarray): A numpy array with control values.
         """
-        self.control_input = np.clip(action, self.env.action_space.low, self.env.action_space.high)
+        self.control_input = np.clip(action, self.action_space.low, self.action_space.high)
         self.env.data.ctrl[self.actuators] = self.control_input
 
     def observations(self):
@@ -169,7 +175,7 @@ class SpringDamperModel(ActuationModel):
             float: The cost as described above.
         """
         per_actuator_cost = self.control_input * self.control_input * self.max_torque
-        return np.abs(per_actuator_cost).sum() / (self.env.n_actuators * self.max_torque.sum())
+        return np.abs(per_actuator_cost).sum() / (self.n_actuators * self.max_torque.sum())
 
     def simulation_torque(self):
         """ Computes the currently applied torque for each motor in the simulation.
@@ -245,7 +251,7 @@ class PositionalModel(ActuationModel):
         Args:
             action (numpy.ndarray): A numpy array with desired joint positions.
         """
-        self.control_input = np.clip(action, self.env.action_space.low, self.env.action_space.high)
+        self.control_input = np.clip(action, self.action_space.low, self.action_space.high)
         set_joint_locking_angle(self.env.model, "", angle=self.control_input, constraint_id=self.constraints)
 
     def observations(self):
