@@ -1,11 +1,11 @@
 Changelog
 =========
 
-Version MuJoCo (Proper Versions soon)
--------------------------------------
+Version 1.1.0 (The Big Migration)
+---------------------------------
 
 This version moves MIMo from gym and the mujoco_py wrappers to gymnasium and
-MuJoCo's own python wrappers. With this change come several breaking changes:
+MuJoCo's own python wrappers. With this move come several breaking changes:
 
  - Swapping python wrappers means some functions are no longer available. In
    particular, ``model.body_name2id`` and similar functions are not available with
@@ -31,3 +31,29 @@ MuJoCo's own python wrappers. With this change come several breaking changes:
 
 In addition to these changes there were also some adjustments to the actuation models
 to allow multiple to be attached to the same environment without conflicts.
+
+Version 1.0.0 (Initial release)
+-------------------------------
+
+First full release.
+
+In addition to many, many small updates, this version brings two major changes that
+"complete" the initial release:
+
+ 1. A new, five-fingered version of MIMo. This allows for experiments which
+    require dexterous manipulation.
+ 2. A system to handle actuation models, with three models/implementations to start
+    with. The first is the Spring-Damper model from the conference version. The
+    second is a new approach in which each actuator is modeled as two opposing,
+    independently controllable "muscles". Finally we have a positional model which
+    allows locking MIMo into or moving him through defined poses.
+
+The actuation systems come in a new package 'mimoActuation', which defines the
+interfaces and functions that actuation models must provide, similar to the
+sensory modules.
+Performance was also somewhat improved.
+
+Version 0.1.0 (Paper release)
+-----------------------------
+
+Conference paper version.
