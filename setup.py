@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 import pkg_resources
 
 with open('requirements.txt') as requirements_txt:
@@ -14,7 +14,7 @@ setup(
     url='',
     license='',
     author='Dominik Mattern, Francisco M. López, Pierre Schumacher',
-    packages=find_packages(),
+    packages=['mimoEnv', 'mimoVision', 'mimoVestibular', 'mimoProprioception', 'mimoTouch', 'mimoActuation'],
     install_requires=install_requires,
     author_email='domattee@yahoo.de',
     description='MIMo library'
