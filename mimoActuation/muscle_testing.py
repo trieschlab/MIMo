@@ -6,7 +6,7 @@ isometric torques. A second actuation model exists based on
 represents the position and velocity dependent force generating behaviour of real muscles. The second model requires
 several adjustments to the actuation and joint parameters, which can be done using the functions in this module.
 """
-import gym
+import gymnasium as gym
 import os
 import matplotlib
 from typing import Dict, List
@@ -16,6 +16,7 @@ import numpy as np
 import cv2
 
 import mimoEnv
+from mimoEnv.envs.mimo_env import MIMoEnv
 from mimoEnv.utils import EPS
 
 matplotlib.use("Agg")
@@ -161,7 +162,7 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
     The final VMAX values are saved to a file "vmax.npy" in the plotting directory.
 
     Args:
-        env_name (str): The name of the environment to be used for the calibration.
+        env_name (str): The name of the environment to be used for the calibration. Must use the muscle model.
         n_episodes (int): The total number of episodes.
         save_dir (str): The directory where the final VMAX and any plots will be saved.
         lr (float): The learning rate used to update VMAX every episode. Default 0.1.
@@ -175,19 +176,19 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
     """
     os.makedirs(save_dir, exist_ok=True)
     vmax_scale_factor = 1
-    env = gym.make(env_name)
-    max_vel = env.vmax
+    env: MIMoEnv = gym.make(env_name)
+    max_vel = env.actuation_model.vmax
     if not isinstance(max_vel, np.ndarray):
-        max_vel = np.ones_like(env.lce_dot_1) * max_vel
-    vmaxes = np.zeros((n_episodes + 1, env.lce_dot_1.shape[0]))
+        max_vel = np.ones_like(env.actuation_model.lce_dot_1) * max_vel
+    vmaxes = np.zeros((n_episodes + 1, env.actuation_model.lce_dot_1.shape[0]))
     vmaxes[0, :] = max_vel.copy()
     print("Calibrating VMAX for {} episodes using initial lr {} with decay {} every {} episodes.".format(
         n_episodes, lr, lr_decay, decay_lr_every))
     # Perform iteration
     for ep in range(1, n_episodes + 1):
         # Set initial values for this iteration
-        max_vel_episode = np.zeros_like(env.lce_dot_1) + EPS
-        env.set_vmax(max_vel)
+        max_vel_episode = np.zeros_like(env.actuation_model.lce_dot_1) + EPS
+        env.actuation_model.set_vmax(max_vel)
         _ = env.reset()
         ep_steps = 0
         action = np.zeros(env.action_space.shape)
@@ -195,12 +196,12 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
         while True:
             if not ep_steps % 200:
                 action[:] = np.random.randint(0, 2, size=action.shape)
-            state, rew, done, info = env.step(action)
-            max_vel_episode = vmax_scale_factor * np.maximum(max_vel_episode, env.lce_dot_1)
-            max_vel_episode = vmax_scale_factor * np.maximum(max_vel_episode, env.lce_dot_2)
+            state, rew, done, trunc, info = env.step(action)
+            max_vel_episode = vmax_scale_factor * np.maximum(max_vel_episode, env.actuation_model.lce_dot_1)
+            max_vel_episode = vmax_scale_factor * np.maximum(max_vel_episode, env.actuation_model.lce_dot_2)
             ep_steps += 1
 
-            if done:
+            if done or trunc:
                 break
         # Calculate new VMAX
         delta = max_vel_episode - max_vel
@@ -217,13 +218,13 @@ def vmax_calibration(env_name, n_episodes, save_dir, lr=0.1, lr_decay=0.8, decay
     max_vel = average_left_right(env, max_vel)
     np.save(os.path.join(save_dir, "vmax.npy"), max_vel)
     # VMAX is in relative quanitity, compute corresponding maximum qvel values (note that actual qvel may exceed this)
-    qvmax = np.stack([max_vel / env.moment_1, max_vel / env.moment_2], axis=-1)
+    qvmax = np.stack([max_vel / env.actuation_model.moment_1, max_vel / env.actuation_model.moment_2], axis=-1)
     np.save(os.path.join(save_dir, "qvmax.npy"), qvmax)
     np.save("vmax.npy", max_vel)
     # Make plot of vmax over time
     if make_plots:
         actuator_ids = env.mimo_actuators
-        actuator_names = [env.sim.model.actuator_id2name(act_id) for act_id in actuator_ids]
+        actuator_names = [env.model.actuator(act_id).name for act_id in actuator_ids]
         print("Creating vmax plots")
         # VMAX plot
         fig, axs = plt.subplots(len(actuator_names), 1, figsize=(10, env.n_actuators))
@@ -275,7 +276,7 @@ def fmax_calibration(env_name, save_dir, n_iterations=3, make_plots=True):
     entirely, leading to NaNs and associated errors. In this case adjust the initial FMAX downwards.
 
     Args:
-        env_name (str): The name of the environment to be used for the calibration.
+        env_name (str): The name of the environment to be used for the calibration. Must use the muscle model.
         save_dir (str): The directory where the final VMAX and any plots will be saved.
         n_iterations (int): How many iterations of the calibration to perform. Default 3.
         make_plots (bool): If ``True`` we plot muscle parameters during the last iteration. Default ``True``.
@@ -284,15 +285,16 @@ def fmax_calibration(env_name, save_dir, n_iterations=3, make_plots=True):
         np.ndarray: A numpy array with the final FMAX values.
     """
     os.makedirs(save_dir, exist_ok=True)
-    env = gym.make(env_name)
-    target_torque = np.concatenate([env.maximum_isometric_forces[:, 0], env.maximum_isometric_forces[:, 1]])
-    fmax = env.fmax
+    env: MIMoEnv = gym.make(env_name)
+    target_torque = np.concatenate([env.actuation_model.maximum_isometric_forces[:, 0],
+                                    env.actuation_model.maximum_isometric_forces[:, 1]])
+    fmax = env.actuation_model.fmax
     n_actuators = env.n_actuators
     if not isinstance(fmax, np.ndarray):
         fmax = np.ones_like(target_torque) * fmax
 
     actuator_ids = env.mimo_actuators
-    actuator_names = [env.sim.model.actuator_id2name(act_id) for act_id in actuator_ids]
+    actuator_names = [env.model.actuator(act_id).name for act_id in actuator_ids]
     muscle_data = []
 
     # Perform iteration
@@ -300,7 +302,7 @@ def fmax_calibration(env_name, save_dir, n_iterations=3, make_plots=True):
         # Setup for this iteration
         print("FMAX iteration {} of {}".format(ep + 1, n_iterations))
         _ = env.reset()
-        env.set_fmax(fmax.copy())
+        env.actuation_model.set_fmax(fmax.copy())
         fmax_old = fmax.copy()
         ep_steps = 0
         max_unscaled_torque = np.zeros(env.action_space.shape)
@@ -312,11 +314,11 @@ def fmax_calibration(env_name, save_dir, n_iterations=3, make_plots=True):
             _ = env.step(action)
             ep_steps += 1
             if make_plots and ep == n_iterations - 1:
-                muscle_data.append(env.collect_data_for_actuators())
+                muscle_data.append(env.actuation_model.collect_data_for_actuators())
             # Once we have stabilized, start collecting MVF
             if j > 250:
-                torque_1 = env.moment_1 * env.force_muscles_1
-                torque_2 = - env.moment_2 * env.force_muscles_2
+                torque_1 = env.actuation_model.moment_1 * env.actuation_model.force_muscles_1
+                torque_2 = - env.actuation_model.moment_2 * env.actuation_model.force_muscles_2
                 unscaled_torque = np.concatenate([torque_1, torque_2])
                 max_unscaled_torque = np.maximum(max_unscaled_torque, unscaled_torque)
 
@@ -326,7 +328,7 @@ def fmax_calibration(env_name, save_dir, n_iterations=3, make_plots=True):
             _ = env.step(action)
             ep_steps += 1
             if make_plots and ep == n_iterations - 1:
-                muscle_data.append(env.collect_data_for_actuators())
+                muscle_data.append(env.actuation_model.collect_data_for_actuators())
 
         # 500 steps with maximum tension of muscles acting in positive direction
         action = np.zeros(env.action_space.shape)
@@ -335,10 +337,10 @@ def fmax_calibration(env_name, save_dir, n_iterations=3, make_plots=True):
             _ = env.step(action)
             ep_steps += 1
             if make_plots and ep == n_iterations - 1:
-                muscle_data.append(env.collect_data_for_actuators())
+                muscle_data.append(env.actuation_model.collect_data_for_actuators())
             if j > 250:
-                torque_1 = env.moment_1 * env.force_muscles_1
-                torque_2 = - env.moment_2 * env.force_muscles_2
+                torque_1 = env.actuation_model.moment_1 * env.actuation_model.force_muscles_1
+                torque_2 = - env.actuation_model.moment_2 * env.actuation_model.force_muscles_2
                 unscaled_torque = np.concatenate([torque_1, torque_2])
                 max_unscaled_torque = np.maximum(max_unscaled_torque, unscaled_torque)
 
@@ -456,11 +458,11 @@ def plotting_episode(env_name, save_dir):
     os.makedirs(save_dir, exist_ok=True)
 
     print("Collecting data for plots")
-    env = gym.make(env_name)
-    max_vel = env.vmax
+    env: MIMoEnv = gym.make(env_name)
+    max_vel = env.actuation_model.vmax
     np.save(os.path.join(save_dir, 'vmax.npy'), max_vel)
     actuator_ids = env.mimo_actuators
-    actuator_names = [env.sim.model.actuator_id2name(act_id) for act_id in actuator_ids]
+    actuator_names = [env.model.actuator(act_id).name for act_id in actuator_ids]
 
     muscle_props = []
     muscle_data = []
@@ -473,14 +475,14 @@ def plotting_episode(env_name, save_dir):
             action[:] = np.random.randint(0, 2, size=action.shape)
 
         state, rew, done, info = env.step(action)
-        muscle_data.append(env.collect_data_for_actuators())
+        muscle_data.append(env.actuation_model.collect_data_for_actuators())
         ep_steps += 1
-        muscle_props.append([env.lce_1.copy(),
-                             env.lce_2.copy(),
-                             env.lce_dot_1.copy(),
-                             env.lce_dot_2.copy(),
-                             env.force_muscles_1.copy(),
-                             env.force_muscles_2.copy()])
+        muscle_props.append([env.actuation_model.lce_1.copy(),
+                             env.actuation_model.lce_2.copy(),
+                             env.actuation_model.lce_dot_1.copy(),
+                             env.actuation_model.lce_dot_2.copy(),
+                             env.actuation_model.force_muscles_1.copy(),
+                             env.actuation_model.force_muscles_2.copy()])
 
         if done:
             break
@@ -536,14 +538,14 @@ def recording_episode(env_name, video_dir, env_params, video_width=500, video_he
         interactive (bool): If ``True``, an interactive window is also rendered. Default ``False``.
     """
     os.makedirs(video_dir, exist_ok=True)
-    env = gym.make(env_name, **env_params)
+    env: MIMoEnv = gym.make(env_name, **env_params)
     _ = env.reset()
     ep_steps = 0
     action = np.zeros(env.action_space.shape)
     images = []
     muscle_data = []
     actuator_ids = env.mimo_actuators
-    actuator_names = [env.sim.model.actuator_id2name(act_id) for act_id in actuator_ids]
+    actuator_names = [env.model.actuator(act_id).name for act_id in actuator_ids]
     while True:
         if ep_steps % 200 == 0:
             if binary_actions:
@@ -552,10 +554,13 @@ def recording_episode(env_name, video_dir, env_params, video_width=500, video_he
                 action[:] = env.action_space.sample()
         ep_steps += 1
         obs, _, done, _ = env.step(action)
-        img = env.render(mode="rgb_array", width=video_width, height=video_height, camera_name=camera_name)[0]
+        img = env.mujoco_renderer.render(render_mode="rgb_array",
+                                                   width=video_width,
+                                                   height=video_height,
+                                                   camera_name=camera_name)
         images.append(img)
         if make_joint_plots:
-            muscle_data.append(env.collect_data_for_actuators())
+            muscle_data.append(env.actuation_model.collect_data_for_actuators())
         if interactive:
             env.render()
         if done:
@@ -655,7 +660,7 @@ def compliance_test():
         """ Collect joint data and video images.
 
         Args:
-            env (gym.Env): The environment to use.
+            env (MIMoEnv): The environment to use.
             action (np.ndarray): The input action. A constant action is used throughout.
             img_times (List[int]): A list of time steps when images will be taken for plotting.
         """
@@ -665,17 +670,16 @@ def compliance_test():
         plot_imgs = []
         video_imgs = []
         for i in range(n_steps):
-            obs, _, done, _ = env.step(action)
+            obs, _, done, trunc, _ = env.step(action)
             # Collect information on right shoulder joint
-            qpos.append(env.sim.data.qpos[shoulder_joint_qpos])
-            motor_torque = env.sim.data.ctrl[shoulder_actuator_id] * env.sim.model.actuator_gear[
-                shoulder_actuator_id, 0]
+            qpos.append(env.data.qpos[shoulder_joint_qpos])
+            motor_torque = env.data.ctrl[shoulder_actuator_id] * env.model.actuator_gear[shoulder_actuator_id, 0]
             motor_torques.append(motor_torque)
-            stiffness_torque = env.sim.model.jnt_stiffness[shoulder_joint_id] * env.sim.data.qpos[shoulder_joint_qpos]
-            damping_torque = env.sim.model.dof_damping[shoulder_joint_dof] * env.sim.data.qvel[shoulder_joint_qvel]
+            stiffness_torque = env.model.jnt_stiffness[shoulder_joint_id] * env.data.qpos[shoulder_joint_qpos]
+            damping_torque = env.model.dof_damping[shoulder_joint_dof] * env.data.qvel[shoulder_joint_qvel]
             net_torque = motor_torque - damping_torque - stiffness_torque
             net_torques.append(net_torque)
-            img = env.render(mode="rgb_array")
+            img = env.mujoco_renderer.render(render_mode="rgb_array")
             video_imgs.append(img)
             if i + 1 in img_times:
                 plot_imgs.append(img)
@@ -684,15 +688,15 @@ def compliance_test():
     n_steps = 500
 
     # First do the version without muscles
-    env = gym.make("MIMoComplianceTest-v0")
+    env: MIMoEnv = gym.make("MIMoComplianceTest-v0")
     _ = env.reset()
     # Collect all the indices and what have you for the right shoulder joint
-    shoulder_joint_id = env.sim.model.joint_name2id("robot:right_shoulder_ad_ab")
-    shoulder_joint_qpos = mimoEnv.utils.get_joint_qpos_addr(env.sim.model, shoulder_joint_id)
-    shoulder_joint_qvel = mimoEnv.utils.get_joint_qvel_addr(env.sim.model, shoulder_joint_id)
-    shoulder_joint_dof = env.sim.model.jnt_dofadr[shoulder_joint_id]
+    shoulder_joint_id = env.model.joint("robot:right_shoulder_ad_ab").id
+    shoulder_joint_qpos = mimoEnv.utils.get_joint_qpos_addr(env.model, shoulder_joint_id)
+    shoulder_joint_qvel = mimoEnv.utils.get_joint_qvel_addr(env.model, shoulder_joint_id)
+    shoulder_joint_dof = env.model.jnt_dofadr[shoulder_joint_id]
     shoulder_actuator_name = "act:right_shoulder_abduction"
-    shoulder_actuator_id = env.sim.model.actuator_name2id(shoulder_actuator_name)
+    shoulder_actuator_id = env.model.actuator(shoulder_actuator_name).id
 
     # Fixed control input
     control_input = 0.1775
@@ -766,7 +770,6 @@ def compliance_test():
     action[shoulder_actuator_id] = control_input_antagonist
     action[shoulder_actuator_id + env.n_actuators] = control_input_agonist
     img_times_medium = [45, 52, 66, 450]
-    # Data collection
     # Data collection
     qpos_medium, motor_torques_medium, net_torques_medium, \
         plot_imgs_medium, video_imgs_medium = collect_data(env, action, img_times_medium)

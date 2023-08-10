@@ -1,28 +1,28 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from mujoco_py.generated import const
+import mujoco
 from typing import List, Dict, Tuple
 
 EPS = 1e-10
 
 
 MUJOCO_JOINT_SIZES = {
-    const.JNT_FREE: 7,
-    const.JNT_BALL: 4,
-    const.JNT_SLIDE: 1,
-    const.JNT_HINGE: 1,
+    mujoco.mjtJoint.mjJNT_FREE: 7,
+    mujoco.mjtJoint.mjJNT_BALL: 4,
+    mujoco.mjtJoint.mjJNT_SLIDE: 1,
+    mujoco.mjtJoint.mjJNT_HINGE: 1,
 }
-""" Size of qpos entries for each joint type; free, ball, slide, hinge. 
+""" Size of qpos entries for each joint type; free, ball, slide, hinge.
 
 :meta hide-value:
 """
 
 
 MUJOCO_DOF_SIZES = {
-    const.JNT_FREE: 6,
-    const.JNT_BALL: 3,
-    const.JNT_SLIDE: 1,
-    const.JNT_HINGE: 1,
+    mujoco.mjtJoint.mjJNT_FREE: 6,
+    mujoco.mjtJoint.mjJNT_BALL: 3,
+    mujoco.mjtJoint.mjJNT_SLIDE: 1,
+    mujoco.mjtJoint.mjJNT_HINGE: 1,
 }
 """ Size of qvel entries for each joint type; free, ball, slide, hinge. 
 
@@ -103,7 +103,7 @@ def get_geom_id(mujoco_model, geom_id=None, geom_name=None):
     the id of a geom when either is specified. If both an id and a name are specified the name is ignored!
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
         geom_id (int): The id of the geom. Default ``None``.
         geom_name (str): The name of the geom. Default ``None``.
 
@@ -114,7 +114,7 @@ def get_geom_id(mujoco_model, geom_id=None, geom_name=None):
         raise RuntimeError("Need either name or geom id")
 
     if geom_id is None:
-        geom_id = mujoco_model.geom_name2id(geom_name)
+        geom_id = mujoco_model.geom(geom_name).id
 
     return geom_id
 
@@ -125,7 +125,7 @@ def get_body_id(mujoco_model, body_id=None, body_name=None):
     Works identical to :func:`~mimoEnv.utils.get_geom_id`
     
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
         body_id (int): The id of the body. Default ``None``.
         body_name (str): The name of the body. Default ``None``.
         
@@ -136,7 +136,7 @@ def get_body_id(mujoco_model, body_id=None, body_name=None):
         raise RuntimeError("Need either name or body id")
 
     if body_id is None:
-        body_id = mujoco_model.body_name2id(body_name)
+        body_id = mujoco_model.body(body_name).id
 
     return body_id
 
@@ -145,7 +145,7 @@ def get_geoms_for_body(sim_model, body_id):
     """ Returns all geom ids belonging to a given body.
 
     Args:
-        sim_model (sim.model): The MuJoCo model object.
+        sim_model (mujoco.MjModel): The MuJoCo model object.
         body_id (int): The id of the body.
 
     Returns:
@@ -163,7 +163,7 @@ def get_child_bodies(sim_model, body_id):
     bodies of a given body, including the given body.
 
     Args:
-        sim_model (sim.model): The MuJoCo model object.
+        sim_model (mujoco.MjModel): The MuJoCo model object.
         body_id (int): The id of the root body.
 
     Returns:
@@ -188,19 +188,18 @@ def get_child_bodies(sim_model, body_id):
             to_process.extend(children_dict[child])
     return children
 
-
 def get_data_for_sensor(mujoco_model, mujoco_data, sensor_name):
     """ Get sensor data from the sensor with the provided name.
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         sensor_name (str): The name of the sensor.
 
     Returns:
         numpy.ndarray: The output values of the sensor. The shape will depend on the sensor type.
     """
-    sensor_id = mujoco_model.sensor_name2id(sensor_name)
+    sensor_id = mujoco_model.sensor(sensor_name).id
     start = mujoco_model.sensor_adr[sensor_id]
     end = start + mujoco_model.sensor_dim[sensor_id]
     return mujoco_data.sensordata[start:end]
@@ -210,7 +209,7 @@ def get_sensor_addr(mujoco_model, sensor_id):
     """ Get the indices in the sensordata array corresponding to the given sensor.
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
         sensor_id (int): The ID of the sensor.
 
     Returns:
@@ -219,105 +218,6 @@ def get_sensor_addr(mujoco_model, sensor_id):
     start = mujoco_model.sensor_adr[sensor_id]
     end = start + mujoco_model.sensor_dim[sensor_id]
     return range(start, end)
-
-
-def _decode_name(mujoco_model, name_adr):
-    """ Decode the name given a name array address.
-
-    mujoco-py unfortunately does not properly wrap all of mujocos data structures/functions, so we have to get some
-    names (such as textures and materials) manually. This is a very tedious process in python.
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        name_adr (int): Array address in the MuJoCo name array.
-
-    Returns:
-        str: The name located at the address.
-    """
-    # TODO: Figure out cython so we don't have to do this
-    # TODO: Alternatively at least cache the name-id relationship somewhere
-    i = 0
-    while mujoco_model.names[name_adr + i].decode() != "":
-        i += 1
-    if i == 0:
-        return None
-    str_array = mujoco_model.names[name_adr: name_adr + i].astype(str)
-    return "".join(str_array)
-
-
-def texture_name2id(mujoco_model, texture_name):
-    """ Returns the id for the texture with the given name.
-
-    Textures in mujoco can be named, but we need the id to be able to do almost anything. This function allows grabbing
-    the id of a texture with a given name. It uses :func:`~mimoEnv.utils._decode_name` to do this, which is not
-    optimized, so do not use this often.
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        texture_name (str): The name of the texture.
-
-    Returns:
-        int: The id of the texture.
-    """
-    tex_id = None
-    for i, name_adr in enumerate(mujoco_model.name_texadr):
-        name = _decode_name(mujoco_model, name_adr)
-        if name == texture_name:
-            tex_id = i
-            break
-    if tex_id is None:
-        raise RuntimeError("Could not find texture with name {}".format(texture_name))
-    return tex_id
-
-
-def material_name2id(mujoco_model, material_name):
-    """ Returns the id for the material with the given name.
-
-    Materials in mujoco can be named, but we need the id to be able to do almost anything. This function allows grabbing
-    the id of a material with a given name. It uses :func:`~mimoEnv.utils._decode_name` to do this, which is not
-    optimized, so do not use this often.
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        material_name (str): The name of the material.
-
-    Returns:
-        int: The id of the material.
-    """
-    mat_id = None
-    for i, name_adr in enumerate(mujoco_model.name_matadr):
-        name = _decode_name(mujoco_model, name_adr)
-        if name == material_name:
-            mat_id = i
-            break
-    if mat_id is None:
-        raise RuntimeError("Could not find material with name {}".format(material_name))
-    return mat_id
-
-
-def equality_name2id(mujoco_model, equality_constraint_name):
-    """ Returns the id for the equality constraint with the given name.
-
-    Constraints in mujoco can be named, but we need the id to be able to do almost anything. This function allows
-    grabbing the id of a constraint with a given name. It uses :func:`~mimoEnv.utils._decode_name` to do this, which is
-    not optimized, so do not use this often.
-
-    Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        equality_constraint_name (str): The name of the constraint.
-
-    Returns:
-        int: The id of the constraint.
-    """
-    const_id = None
-    for i, name_adr in enumerate(mujoco_model.name_eqadr):
-        name = _decode_name(mujoco_model, name_adr)
-        if name == equality_constraint_name:
-            const_id = i
-            break
-    if const_id is None:
-        raise RuntimeError("Could not find equality constraint with name {}".format(equality_constraint_name))
-    return const_id
 
 
 # ======================== Joint manipulation utils ===============================
@@ -331,12 +231,12 @@ def set_joint_qpos(mujoco_model, mujoco_data, joint_name, qpos):
     free joint for example has length 7. The sizes for all types can be found in :data:`MUJOCO_JOINT_SIZES`.
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         joint_name (str): The name of the joint.
         qpos (numpy.ndarray|float): The new joint position. The shape of the array must match the joint!
     """
-    joint_id = mujoco_model.joint_name2id(joint_name)
+    joint_id = mujoco_model.joint(joint_name).id
     joint_qpos_addr = mujoco_model.jnt_qposadr[joint_id]
     joint_type = mujoco_model.jnt_type[joint_id]
     n_qpos = MUJOCO_JOINT_SIZES[joint_type]
@@ -347,7 +247,7 @@ def get_joint_qpos_addr(mujoco_model, joint_id):
     """ Get the indices in the qpos array corresponding to the given joint.
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
         joint_id (int): The ID of the joint.
 
     Returns:
@@ -363,7 +263,7 @@ def get_joint_qvel_addr(mujoco_model, joint_id):
     """ Get the indices in the qvel array corresponding to the given joint.
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
         joint_id (int): The ID of the joint.
 
     Returns:
@@ -384,14 +284,14 @@ def set_joint_locking_angle(mujoco_model, joint_name, angle, constraint_id=None)
     default, with each joint having a constraint of the same name that is disabled at initialization.
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
         joint_name (str): The name of the joint.
         angle (float|ndarray): The locking angle(s) in radians, as a delta from the model starting value.
-        constraint_id (int|ndarray): If the ID(s) of the constraint is already known the name search can be bypassed by
+        constraint_id (int|ndarray): If the ID(s) of the constraint is already known the id lookup can be bypassed by
             passing it here.
     """
     if constraint_id is None:
-        constraint_id = equality_name2id(mujoco_model, joint_name)
+        constraint_id = mujoco_model.equality(joint_name).id
     mujoco_model.eq_data[constraint_id, 0] = angle
 
 
@@ -404,13 +304,13 @@ def lock_joint(mujoco_model, joint_name, joint_angle=None):
     In effect this function enables the equality constraint with same name as the argument.
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
         joint_name (str): The name of the joint.
         joint_angle (float): The locking angle in radians, as a delta from the model starting value. The angle that the
             joint will be locked to can be set separately using :func:`~mimoEnv.utils.set_joint_locking_angle`. By
             default, joints are locked into the value they have in the scene xml.
     """
-    constraint_id = equality_name2id(mujoco_model, joint_name)
+    constraint_id = mujoco_model.equality(joint_name).id
     if joint_angle is not None:
         set_joint_locking_angle(mujoco_model, joint_name, joint_angle, constraint_id=constraint_id)
     mujoco_model.eq_active[constraint_id] = True
@@ -422,10 +322,10 @@ def unlock_joint(mujoco_model, joint_name):
     See :func:`~mimoEnv.utils.lock_joint`.
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
         joint_name (str): The name of the joint.
     """
-    constraint_id = equality_name2id(mujoco_model, joint_name)
+    constraint_id = mujoco_model.equality(joint_name).id
     mujoco_model.eq_active[constraint_id] = False
 
 
@@ -437,7 +337,7 @@ def get_geom_position(mujoco_data, geom_id):
     """ Returns the position of geom in the world frame.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         geom_id (int): The id of the geom.
 
     Returns:
@@ -450,20 +350,20 @@ def get_body_position(mujoco_data, body_id):
     """ Returns the position of body in the world frame.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         body_id (int): The id of the body.
 
     Returns:
         numpy.ndarray: The position of the body in the world frame. Shape (3,).
     """
-    return mujoco_data.body_xpos[body_id]
+    return mujoco_data.xpos[body_id]
 
 
 def get_geom_rotation(mujoco_data, geom_id):
     """ Returns the rotation matrix that rotates the geoms frame to the world frame.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         geom_id (int): The id of the geom.
 
     Returns:
@@ -476,13 +376,13 @@ def get_body_rotation(mujoco_data, body_id):
     """ Returns the rotation matrix that rotates the bodies frame to the world frame.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         body_id (int): The id of the body.
 
     Returns:
           numpy.ndarray: A (3,3) array containing the rotation matrix.
     """
-    return np.reshape(mujoco_data.body_xmat[body_id], (3, 3))
+    return np.reshape(mujoco_data.xmat[body_id], (3, 3))
 
 
 def world_pos_to_geom(mujoco_data, position, geom_id):
@@ -491,7 +391,7 @@ def world_pos_to_geom(mujoco_data, position, geom_id):
     Position can be a vector or an array of vectors such that the last dimension has size 3.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         position (numpy.ndarray): Array containing position(s). Its shape should be either (3,) or (.., 3).
         geom_id (int): The id of the geom.
 
@@ -509,7 +409,7 @@ def world_pos_to_body(mujoco_data, position, body_id):
     Position can be a vector or an array of vectors such that the last dimension has size 3.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         position (numpy.ndarray): Array containing position(s). Its shape should be either (3,) or (.., 3).
         body_id (int): The id of the geom.
 
@@ -527,7 +427,7 @@ def geom_pos_to_world(mujoco_data, position, geom_id):
     Position can be a vector or an array of vectors such that the last dimension has size 3.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         position (numpy.ndarray): Array containing position(s). Its shape should be either (3,) or (.., 3).
         geom_id (int): The id of the geom.
 
@@ -535,8 +435,7 @@ def geom_pos_to_world(mujoco_data, position, geom_id):
         numpy.ndarray: Array of the same shape as the input array with the converted coordinates.
     """
     global_pos = geom_rot_to_world(mujoco_data, position, geom_id)
-    global_pos = global_pos + get_geom_position(mujoco_data, geom_id)
-    return global_pos
+    return global_pos + get_geom_position(mujoco_data, geom_id)
 
 
 def body_pos_to_world(mujoco_data, position, body_id):
@@ -545,7 +444,7 @@ def body_pos_to_world(mujoco_data, position, body_id):
     Position can be a vector or an array of vectors such that the last dimension has size 3.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         position (numpy.ndarray): Array containing position(s). Its shape should be either (3,) or (.., 3).
         body_id (int): The id of the body.
 
@@ -563,7 +462,7 @@ def geom_pos_to_body(mujoco_data, position, geom_id, body_id):
     Position can be a vector or an array of vectors such that the last dimension has size 3.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         position (numpy.ndarray): Array containing position(s). Its shape should be either (3,) or (.., 3).
         geom_id (int): The id of the geom.
         body_id (int): The id of the body.
@@ -572,7 +471,8 @@ def geom_pos_to_body(mujoco_data, position, geom_id, body_id):
         numpy.ndarray: Array of the same shape as the input array with the converted coordinates.
     """
     world_pos = geom_pos_to_world(mujoco_data, position, geom_id)
-    return world_pos_to_body(mujoco_data, world_pos, body_id)
+    body_pos = world_pos_to_body(mujoco_data, world_pos, body_id)
+    return body_pos
 
 
 def body_pos_to_geom(mujoco_data, position, body_id, geom_id):
@@ -581,7 +481,7 @@ def body_pos_to_geom(mujoco_data, position, body_id, geom_id):
     Position can be a vector or an array of vectors such that the last dimension has size 3.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         position (numpy.ndarray): Array containing position(s). Its shape should be either (3,) or (.., 3).
         body_id (int): The id of the body.
         geom_id (int): The id of the geom.
@@ -599,7 +499,7 @@ def geom_pos_to_geom(mujoco_data, position, geom_id_source, geom_id_target):
     Position can be a vector or an array of vectors such that the last dimension has size 3.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         position (numpy.ndarray): Array containing position(s). Its shape should be either (3,) or (.., 3).
         geom_id_source (int): The id of the geom for the initial coordinate frame.
         geom_id_target (int): The id of the geom for the output coordinate frame.
@@ -617,7 +517,7 @@ def body_pos_to_body(mujoco_data, position, body_id_source, body_id_target):
     Position can be a vector or an array of vectors such that the last dimension has size 3.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         position (numpy.ndarray): Array containing position(s). Its shape should be either (3,) or (.., 3).
         body_id_source (int): The id of the body for the initial coordinate frame.
         body_id_target (int): The id of the body for the output coordinate frame.
@@ -635,7 +535,7 @@ def geom_rot_to_world(mujoco_data, vector, geom_id):
     Unlike the functions for the positions, this only converts the direction.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         vector (numpy.ndarray): A vector or array of vectors. Shape must be either (3,) or (.., 3).
         geom_id (int): The id of the geom.
 
@@ -651,7 +551,7 @@ def body_rot_to_world(mujoco_data, vector, body_id):
     Unlike the functions for the positions, this only converts the direction.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         vector (numpy.ndarray): A vector or array of vectors. Shape must be either (3,) or (.., 3).
         body_id (int): The id of the body.
 
@@ -667,7 +567,7 @@ def world_rot_to_geom(mujoco_data, vector, geom_id):
     Unlike the functions for the positions, this only converts the direction.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         vector (numpy.ndarray): A vector or array of vectors. Shape must be either (3,) or (.., 3).
         geom_id (int): The id of the geom.
 
@@ -683,7 +583,7 @@ def world_rot_to_body(mujoco_data, vector, body_id):
     Unlike the functions for the positions, this only converts the direction.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         vector (numpy.ndarray): A vector or array of vectors. Shape must be either (3,) or (.., 3).
         body_id (int): The id of the body.
 
@@ -699,7 +599,7 @@ def geom_rot_to_body(mujoco_data, vector, geom_id, body_id):
     Unlike the functions for the positions, this only converts the direction.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         vector (numpy.ndarray): A vector or array of vectors. Shape must be either (3,) or (.., 3).
         geom_id (int): The id of the geom.
         body_id (int): The id of the body.
@@ -717,7 +617,7 @@ def body_rot_to_geom(mujoco_data, vector, body_id, geom_id):
     Unlike the functions for the positions, this only converts the direction.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         vector (numpy.ndarray): A vector or array of vectors. Shape must be either (3,) or (.., 3).
         body_id (int): The id of the body.
         geom_id (int): The id of the geom.
@@ -735,7 +635,7 @@ def geom_rot_to_geom(mujoco_data, vector, geom_id_source, geom_id_target):
     Unlike the functions for the positions, this only converts the direction.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         vector (numpy.ndarray): A vector or array of vectors. Shape must be either (3,) or (.., 3).
         geom_id_source (int): The id of the geom for the initial coordinate frame.
         geom_id_target (int): The id of the geom for the output coordinate frame.
@@ -753,7 +653,7 @@ def body_rot_to_body(mujoco_data, vector, body_id_source, body_id_target):
     Unlike the functions for the positions, this only converts the direction.
 
     Args:
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         vector (numpy.ndarray): A vector or array of vectors. Shape must be either (3,) or (.., 3).
         body_id_source (int): The id of the body for the initial coordinate frame.
         body_id_target (int): The id of the body for the output coordinate frame.
@@ -854,8 +754,8 @@ def determine_geom_masses(mujoco_model, mujoco_data, body_ids, target_mass, prin
     between geoms within each body, but not between bodies.
 
     Args:
-        mujoco_model (sim.model): The MuJoCo model object.
-        mujoco_data (sim.data): The MuJoCo data object.
+        mujoco_model (mujoco.MjModel): The MuJoCo model object.
+        mujoco_data (mujoco.MjData): The MuJoCo data object.
         body_ids (List[int]): A list of bodies by ID over which the mass will be distributed.
         target_mass (float): The target mass.
         print_out (bool): If ``True``, target masses and body names are printed to console.
@@ -879,21 +779,21 @@ def determine_geom_masses(mujoco_model, mujoco_data, body_ids, target_mass, prin
             geom_type = mujoco_model.geom_type[geom_id]
             size = mujoco_model.geom_size[geom_id]
 
-            if geom_type == const.GEOM_BOX:
+            if geom_type == mujoco.mjtGeom.mjGEOM_BOX:
                 mesh = mesh_box(mesh_distance, size)
-            elif geom_type == const.GEOM_SPHERE:
+            elif geom_type == mujoco.mjtGeom.mjGEOM_SPHERE:
                 mesh = mesh_sphere(mesh_distance, size[0])
-            elif geom_type == const.GEOM_CAPSULE:
+            elif geom_type == mujoco.mjtGeom.mjGEOM_CAPSULE:
                 mesh = mesh_capsule(mesh_distance, 2 * size[1], size[0])
-            elif geom_type == const.GEOM_CYLINDER:
+            elif geom_type == mujoco.mjtGeom.mjGEOM_CYLINDER:
                 # Cylinder size 0 is radius, size 1 is half the length
                 mesh = mesh_cylinder(mesh_distance, 2 * size[1], size[0])
-            elif geom_type == const.GEOM_PLANE:
+            elif geom_type == mujoco.mjtGeom.mjGEOM_PLANE:
                 RuntimeWarning("Cannot add sensors to plane geoms!")
                 return None
-            elif geom_type == const.GEOM_ELLIPSOID:
+            elif geom_type == mujoco.mjtGeom.mjGEOM_ELLIPSOID:
                 mesh = mesh_ellipsoid(mesh_distance, size)
-            elif geom_type == const.GEOM_MESH:
+            elif geom_type == mujoco.mjtGeom.mjGEOM_MESH:
                 size = mujoco_model.geom_rbound[geom_id]
                 mesh = mesh_sphere(mesh_distance, size)
             body_meshes.append(mesh)

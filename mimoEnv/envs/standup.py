@@ -18,7 +18,7 @@ defined in :data:`STANDUP_XML`.
 """
 import os
 import numpy as np
-import mujoco_py
+import mujoco
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS, DEFAULT_VESTIBULAR_PARAMS
 from mimoActuation.actuation import SpringDamperModel
@@ -80,7 +80,7 @@ class MIMoStandupEnv(MIMoEnv):
     def __init__(self,
                  model_path=STANDUP_XML,
                  initial_qpos=SITTING_POSITION,
-                 n_substeps=2,
+                 frame_skip=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=None,
                  vision_params=None,
@@ -90,7 +90,7 @@ class MIMoStandupEnv(MIMoEnv):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
+                         frame_skip=frame_skip,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
                          vision_params=vision_params,
@@ -99,7 +99,7 @@ class MIMoStandupEnv(MIMoEnv):
                          goals_in_observation=False,
                          done_active=False)
 
-        self.init_crouch_position = self.sim.data.qpos.copy()
+        self.init_crouch_position = self.data.qpos.copy()
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
@@ -113,11 +113,11 @@ class MIMoStandupEnv(MIMoEnv):
         Returns:
             float: The reward as described above.
         """
-        quad_ctrl_cost = 0.01 * np.square(self.sim.data.ctrl).sum()
+        quad_ctrl_cost = 0.01 * np.square(self.data.ctrl).sum()
         reward = achieved_goal - 0.2 - quad_ctrl_cost
         return reward
 
-    def _is_success(self, achieved_goal, desired_goal):
+    def is_success(self, achieved_goal, desired_goal):
         """ Did we reach our goal height.
 
         Args:
@@ -130,7 +130,7 @@ class MIMoStandupEnv(MIMoEnv):
         success = (achieved_goal >= desired_goal)
         return success
 
-    def _reset_sim(self):
+    def reset_model(self):
         """ Resets the simulation.
 
         Return the simulation to the XML state, then slightly randomize all joint positions. Afterwards we let the
@@ -138,33 +138,28 @@ class MIMoStandupEnv(MIMoEnv):
         crouching position.
 
         Returns:
-            bool: Always returns ``True``.
+            Dict: Observations after reset.
         """
-        self.sim.set_state(self.initial_state)
-        default_state = self.sim.get_state()
-        qpos = self.init_crouch_position
+
+        self.set_state(self.init_qpos, self.init_qvel)
+        qpos = self.init_crouch_position.copy()
 
         # set initial positions stochastically
         qpos[7:] = qpos[7:] + self.np_random.uniform(low=-0.01, high=0.01, size=len(qpos[7:]))
 
         # set initial velocities to zero
-        qvel = np.zeros(self.sim.data.qvel.shape)
+        qvel = np.zeros(self.data.qvel.shape)
 
-        new_state = mujoco_py.MjSimState(
-            default_state.time, qpos, qvel, default_state.act, default_state.udd_state
-        )
-        self.sim.set_state(new_state)
-        self.sim.forward()
+        self.set_state(qpos, qvel)
 
         # perform 100 steps with no actions to stabilize initial position
         actions = np.zeros(self.action_space.shape)
         self._set_action(actions)
-        for _ in range(100):
-            self.sim.step()
+        mujoco.mj_step(self.model, self.data, nstep=100)
 
-        return True
+        return self._get_obs()
 
-    def _is_failure(self, achieved_goal, desired_goal):
+    def is_failure(self, achieved_goal, desired_goal):
         """ Dummy function. Always returns ``False``.
 
         Args:
@@ -176,7 +171,15 @@ class MIMoStandupEnv(MIMoEnv):
         """
         return False
 
-    def _sample_goal(self):
+    def is_truncated(self):
+        """ Dummy function. Always returns ``False``.
+
+        Returns:
+            bool: ``False``.
+        """
+        return False
+
+    def sample_goal(self):
         """ Returns the goal height.
 
         We use a fixed goal height of 0.5.
@@ -186,10 +189,10 @@ class MIMoStandupEnv(MIMoEnv):
         """
         return 0.5
 
-    def _get_achieved_goal(self):
+    def get_achieved_goal(self):
         """ Get the height of MIMos head.
 
         Returns:
             float: The height of MIMos head.
         """
-        return self.sim.data.get_body_xpos('head')[2]
+        return self.data.body('head').xpos[2]

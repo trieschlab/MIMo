@@ -184,7 +184,7 @@ def spread_points_ellipsoid(resolution, radii, return_normals=False):
         every point.
     """
     max_r = np.max(radii)
-    # If resolution would lead to very small number of sensor points, instead have single point at center of sphere
+    # If resolution leads to very small number of sensor points, instead have single point at center of sphere
     if resolution > max_r:
         if return_normals:
             return np.zeros((1, 3), dtype=np.float64), np.array([0, 0, 1])

@@ -20,12 +20,13 @@ The available algorithms are ``PPO, SAC, TD3, DDPG, A2C``.
 """
 
 import os
-import gym
+import gymnasium as gym
 import time
 import argparse
 import cv2
 
 import mimoEnv
+from mimoEnv.envs.mimo_env import MIMoEnv
 from mimoActuation.actuation import SpringDamperModel
 from mimoActuation.muscle import MuscleModel
 
@@ -34,7 +35,7 @@ def test(env, save_dir, test_for=1000, model=None, render_video=False):
     """ Testing function to view the behaviour of a model.
 
     Args:
-        env (gym.Env): The environment on which the model should be tested. This does not have to be the same training
+        env (MIMoEnv): The environment on which the model should be tested. This does not have to be the same training
             environment, but action and observation spaces must match.
         save_dir (str): The directory in which any rendered videos will be saved.
         test_for (int): The number of timesteps the testing runs in total. This will be broken into multiple episodes
@@ -43,8 +44,7 @@ def test(env, save_dir, test_for=1000, model=None, render_video=False):
         render_video (bool): If ``True``, all episodes during testing will be recorded and saved as videos in
             `save_dir`.
     """
-    env.seed(42)
-    obs = env.reset()
+    obs, _ = env.reset()
     images = []
     im_counter = 0
 
@@ -54,13 +54,13 @@ def test(env, save_dir, test_for=1000, model=None, render_video=False):
             action = env.action_space.sample()
         else:
             action, _ = model.predict(obs)
-        obs, _, done, _ = env.step(action)
+        obs, _, done, trunc, _ = env.step(action)
         if render_video:
-            img = env.render(mode="rgb_array")[0]
+            img = env.mujoco_renderer.render(render_mode="rgb_array")
             images.append(img)
-        if done:
+        if done or trunc:
             time.sleep(1)
-            obs = env.reset()
+            obs, _ = env.reset()
             if render_video:
                 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
                 video = cv2.VideoWriter(os.path.join(save_dir, 'episode_{}.avi'.format(im_counter)), fourcc, 50, (500, 500))

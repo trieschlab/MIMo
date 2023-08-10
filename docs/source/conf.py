@@ -20,7 +20,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc.preserve_defaults',  # Do not resolve the names of default arguments
 ]
-autodoc_mock_imports = ["mujoco_py", "gym"]
+autodoc_mock_imports = []  # "mujoco"
 autodoc_member_order = 'bysource'
 # autodoc_class_signature = 'separated' # Moves the class signatures into separate init function docu.
 numpydoc_class_members_toctree = False
@@ -46,7 +46,7 @@ intersphinx_mapping = {
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
     'mimo': ('https://mimo.readthedocs.io/en/latest/', None),
     'mujoco': ('https://mujoco.readthedocs.io/en/latest', None),
-    'gym': ('https://www.gymlibrary.dev', None),
+    'gym': ('https://gymnasium.farama.org', None),
 }
 intersphinx_disabled_domains = ['std']
 

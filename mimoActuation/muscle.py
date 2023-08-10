@@ -4,7 +4,7 @@ Authors: Pierre Schumacher, Dominik Mattern
 """
 import warnings
 import numpy as np
-from gym import spaces
+from gymnasium import spaces
 
 from mimoActuation.actuation import ActuationModel
 import mimoEnv.utils as mimo_utils
@@ -80,8 +80,6 @@ class MuscleModel(ActuationModel):
         self.mimo_actuated_qpos = None
         self.mimo_actuated_qvel = None
 
-        self.action_space = self.get_action_space()
-
         self._set_max_forces()
         self._get_actuated_joints()
         self._set_muscles()
@@ -94,7 +92,7 @@ class MuscleModel(ActuationModel):
         Returns:
             spaces.Space: A gym spaces object with the actuation space.
         """
-        action_space = spaces.Box(low=-0.0, high=1.0, shape=(self.env.n_actuators * 2,), dtype=np.float32)
+        action_space = spaces.Box(low=-0.0, high=1.0, shape=(self.n_actuators * 2,), dtype=np.float32)
         self.control_input = np.zeros(action_space.shape)  # Set initial control input to avoid NoneType Errors
         return action_space
 
@@ -106,8 +104,8 @@ class MuscleModel(ActuationModel):
         Args:
             action (numpy.ndarray): A numpy array with control values.
         """
-        self.control_input = np.clip(action, self.env.action_space.low, self.env.action_space.high)
-        self.env.sim.data.ctrl[self.actuators] = self._compute_muscle_action(self.control_input)
+        self.control_input = np.clip(action, self.action_space.low, self.action_space.high)
+        self.env.data.ctrl[self.actuators] = self._compute_muscle_action(self.control_input)
 
     def substep_update(self):
         """ Update muscle activity and torque.
@@ -135,7 +133,7 @@ class MuscleModel(ActuationModel):
             float: The actuation cost.
         """
         per_muscle_cost = self.activity * self.activity * self.fmax
-        return np.abs(per_muscle_cost).sum() / (2 * self.env.n_actuators * self.fmax.sum())
+        return np.abs(per_muscle_cost).sum() / (2 * self.n_actuators * self.fmax.sum())
 
     def reset(self):
         """ Set activity to zero and recompute muscle quantities. """
@@ -178,20 +176,20 @@ class MuscleModel(ActuationModel):
     def _set_max_forces(self):
         """ Collect maximum isometric forces from MuJoCo actuator gears.
         """
-        force_ranges = np.abs(self.env.sim.model.actuator_forcerange[self.actuators, :]).copy()
-        gears = self.env.sim.model.actuator_gear[self.actuators, 0].copy()
+        force_ranges = np.abs(self.env.model.actuator_forcerange[self.actuators, :]).copy()
+        gears = self.env.model.actuator_gear[self.actuators, 0].copy()
         self.maximum_isometric_forces = (force_ranges.T * gears).T
         # Have to disable force limits afterwards
-        self.env.sim.model.actuator_forcelimited[self.actuators] = \
-            np.zeros_like(self.env.sim.model.actuator_forcelimited[self.actuators])
+        self.env.model.actuator_forcelimited[self.actuators] = \
+            np.zeros_like(self.env.model.actuator_forcelimited[self.actuators])
 
     def _get_actuated_joints(self):
         """ Populates references to MIMo's joints and their indices in the qpos and qvel arrays.
         """
-        self.mimo_actuated_joints = self.env.sim.model.actuator_trnid[self.actuators, 0]
-        actuated_qpos_idx = [mimo_utils.get_joint_qpos_addr(self.env.sim.model, idx) for idx in
+        self.mimo_actuated_joints = self.env.model.actuator_trnid[self.actuators, 0]
+        actuated_qpos_idx = [mimo_utils.get_joint_qpos_addr(self.env.model, idx) for idx in
                              self.mimo_actuated_joints]
-        actuated_qvel_idx = [mimo_utils.get_joint_qvel_addr(self.env.sim.model, idx) for idx in
+        actuated_qvel_idx = [mimo_utils.get_joint_qvel_addr(self.env.model, idx) for idx in
                              self.mimo_actuated_joints]
         self.mimo_actuated_qpos = np.asarray(actuated_qpos_idx, dtype=np.int32)
         self.mimo_actuated_qvel = np.asarray(actuated_qvel_idx, dtype=np.int32)
@@ -215,9 +213,9 @@ class MuscleModel(ActuationModel):
         for this conversion are computed from fixed variables set
         """
         # Collect joint range from model, using springref as "neutral" position
-        self.phi_min = self.env.sim.model.jnt_range[self.mimo_actuated_joints, 0] - self.env.sim.model.qpos_spring[
+        self.phi_min = self.env.model.jnt_range[self.mimo_actuated_joints, 0] - self.env.model.qpos_spring[
             self.mimo_actuated_qpos].flatten()
-        self.phi_max = self.env.sim.model.jnt_range[self.mimo_actuated_joints, 1] - self.env.sim.model.qpos_spring[
+        self.phi_max = self.env.model.jnt_range[self.mimo_actuated_joints, 1] - self.env.model.qpos_spring[
             self.mimo_actuated_qpos].flatten()
         # Calculate values for muscle model
         self.moment_1 = (self.lce_max - self.lce_min + mimo_utils.EPS) / (
@@ -229,10 +227,10 @@ class MuscleModel(ActuationModel):
         )
         self.lce_2_ref = self.lce_min - self.moment_2 * self.phi_max
         # Adjust joint parameters: stiffness and damping
-        self.env.sim.model.jnt_stiffness[self.env.mimo_joints] = np.zeros_like(
-            self.env.sim.model.jnt_stiffness[self.env.mimo_joints])
-        mimo_dof_ids = self.env.sim.model.jnt_dofadr[self.env.mimo_joints]
-        self.env.sim.model.dof_damping[mimo_dof_ids] = self.env.sim.model.dof_damping[mimo_dof_ids] / 20
+        self.env.model.jnt_stiffness[self.env.mimo_joints] = np.zeros_like(
+            self.env.model.jnt_stiffness[self.env.mimo_joints])
+        mimo_dof_ids = self.env.model.jnt_dofadr[self.env.mimo_joints]
+        self.env.model.dof_damping[mimo_dof_ids] = self.env.model.dof_damping[mimo_dof_ids] / 20
         self._collect_muscle_parameters()
 
     def _collect_muscle_parameters(self):
@@ -244,11 +242,11 @@ class MuscleModel(ActuationModel):
         If there are no use user arguments, we print a warning and proceed with default values.
         If the values in the user arguments are invalid we raise ValueErrors.
         """
-        if self.env.sim.model.nuser_actuator >= 3:
+        if self.env.model.nuser_actuator >= 3:
             print("Reading Muscle parameters from XML")
-            vmax = self.env.sim.model.actuator_user[self.actuators, 0]
-            fmax_neg = self.env.sim.model.actuator_user[self.actuators, 1]
-            fmax_pos = self.env.sim.model.actuator_user[self.actuators, 2]
+            vmax = self.env.model.actuator_user[self.actuators, 0]
+            fmax_neg = self.env.model.actuator_user[self.actuators, 1]
+            fmax_pos = self.env.model.actuator_user[self.actuators, 2]
             self.vmax = vmax
             self.fmax = np.concatenate([fmax_neg, fmax_pos])
             if np.any(self.vmax < mimo_utils.EPS):
@@ -290,20 +288,20 @@ class MuscleModel(ActuationModel):
         """
         # Need sim timestep here rather than dt since we calculate this every physics step, while dt is the
         # duration of an environment step.
-        self.activity += self.env.sim.model.opt.timestep * (self.target_activity - self.activity) / self.tau
+        self.activity += self.env.model.opt.timestep * (self.target_activity - self.activity) / self.tau
         self.activity = np.clip(self.activity, 0, 1)
 
     def _update_virtual_lengths(self):
         """ Update the muscle lengths from current joint angles.
         """
-        self.lce_1 = (self.env.sim.data.qpos[self.mimo_actuated_qpos].flatten() - self.env.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()) * self.moment_1 + self.lce_1_ref
-        self.lce_2 = (self.env.sim.data.qpos[self.mimo_actuated_qpos].flatten() - self.env.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()) * self.moment_2 + self.lce_2_ref
+        self.lce_1 = (self.env.data.qpos[self.mimo_actuated_qpos].flatten() - self.env.model.qpos_spring[self.mimo_actuated_qpos].flatten()) * self.moment_1 + self.lce_1_ref
+        self.lce_2 = (self.env.data.qpos[self.mimo_actuated_qpos].flatten() - self.env.model.qpos_spring[self.mimo_actuated_qpos].flatten()) * self.moment_2 + self.lce_2_ref
 
     def _update_virtual_velocities(self):
         """ Update the muscle velocities from current joint angle velocities.
         """
-        self.lce_dot_1 = self.moment_1 * self.env.sim.data.qvel[self.mimo_actuated_qvel].flatten()
-        self.lce_dot_2 = self.moment_2 * self.env.sim.data.qvel[self.mimo_actuated_qvel].flatten()
+        self.lce_dot_1 = self.moment_1 * self.env.data.qvel[self.mimo_actuated_qvel].flatten()
+        self.lce_dot_2 = self.moment_2 * self.env.data.qvel[self.mimo_actuated_qvel].flatten()
 
     def _update_torque(self):
         """ Compute muscle torques.
@@ -312,13 +310,13 @@ class MuscleModel(ActuationModel):
         in a NEGATIVE torque, (as muscles pull, they don't push) and the joint velocity gives us the correct muscle
         fiber velocities.
         """
-        self.force_muscles_1 = self.fl(self.lce_1) * self.fv(self.lce_dot_1) * self.activity[:self.env.n_actuators] \
+        self.force_muscles_1 = self.fl(self.lce_1) * self.fv(self.lce_dot_1) * self.activity[:self.n_actuators] \
                                + self.fp(self.lce_1)
-        self.force_muscles_2 = self.fl(self.lce_2) * self.fv(self.lce_dot_2) * self.activity[self.env.n_actuators:] \
+        self.force_muscles_2 = self.fl(self.lce_2) * self.fv(self.lce_dot_2) * self.activity[self.n_actuators:] \
                                + self.fp(self.lce_2)
         if isinstance(self.fmax, np.ndarray):
-            torque = self.moment_1 * self.force_muscles_1 * self.fmax[:self.env.n_actuators] \
-                     + self.moment_2 * self.force_muscles_2 * self.fmax[self.env.n_actuators:]
+            torque = self.moment_1 * self.force_muscles_1 * self.fmax[:self.n_actuators] \
+                     + self.moment_2 * self.force_muscles_2 * self.fmax[self.n_actuators:]
         else:
             torque = self.moment_1 * self.force_muscles_1 * self.fmax + self.moment_2 * self.force_muscles_2 * self.fmax
         self.joint_torque = -torque
@@ -330,7 +328,7 @@ class MuscleModel(ActuationModel):
         to apply, then we output an action-vector that is 1 everywhere. Doing this allows us to keep the same XMLs and
         gym interfaces for different actuation models.
         """
-        self.env.sim.model.actuator_gear[self.actuators, 0] = self.joint_torque.copy()
+        self.env.model.actuator_gear[self.actuators, 0] = self.joint_torque.copy()
 
     def _compute_muscle_action(self, action=None, update_action=True):
         """ Take in the muscle action, compute all virtual quantities and set the correct torques.
@@ -424,8 +422,8 @@ class MuscleModel(ActuationModel):
         Returns:
             np.ndarray: A numpy array with applied torques for each motor.
         """
-        actuator_gear = self.env.sim.model.actuator_gear[self.actuators, 0]
-        control_input = self.env.sim.data.ctrl[self.actuators]
+        actuator_gear = self.env.model.actuator_gear[self.actuators, 0]
+        control_input = self.env.data.ctrl[self.actuators]
         return actuator_gear * control_input
 
     def collect_data_for_actuators(self):
@@ -436,19 +434,19 @@ class MuscleModel(ActuationModel):
             desired target muscle activity, actual current muscle activity, virtual muscle length, virtual muscle
             velocity, muscle force, FL factor, FV factor and the FP component for all muscles.
         """
-        actuator_qpos = self.env.sim.data.qpos[self.mimo_actuated_qpos].flatten()
-        actuator_qvel = self.env.sim.data.qvel[self.mimo_actuated_qvel].flatten()
+        actuator_qpos = self.env.data.qpos[self.mimo_actuated_qpos].flatten()
+        actuator_qvel = self.env.data.qvel[self.mimo_actuated_qvel].flatten()
 
         # This is the basic qpos adjusted for the springref parameter. This shifts the "neutral" position of the joint.
-        joint_qpos = actuator_qpos - self.env.sim.model.qpos_spring[self.mimo_actuated_qpos].flatten()
+        joint_qpos = actuator_qpos - self.env.model.qpos_spring[self.mimo_actuated_qpos].flatten()
 
-        actuator_gear = self.env.sim.model.actuator_gear[self.actuators, 0].flatten()
+        actuator_gear = self.env.model.actuator_gear[self.actuators, 0].flatten()
 
-        action_neg = self.target_activity[:self.env.n_actuators]
-        action_pos = self.target_activity[self.env.n_actuators:]
+        action_neg = self.target_activity[:self.n_actuators]
+        action_pos = self.target_activity[self.n_actuators:]
 
-        activity_neg = self.activity[:self.env.n_actuators]
-        activity_pos = self.activity[self.env.n_actuators:]
+        activity_neg = self.activity[:self.n_actuators]
+        activity_pos = self.activity[self.n_actuators:]
 
         lce_neg = self.lce_1
         lce_pos = self.lce_2

@@ -18,7 +18,6 @@ in :data:`REACH_XML`.
 import os
 import numpy as np
 import copy
-import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
 from mimoActuation.actuation import SpringDamperModel
@@ -38,31 +37,31 @@ class MIMoReachEnv(MIMoEnv):
 
     Due to the goal condition we do not use the :attr:`.goal` attribute or the interfaces associated with it. Instead,
     the reward and success conditions are computed directly from the model state, while
-    :meth:`~mimoEnv.envs.reach.MIMoReachEnv._sample_goal` and
-    :meth:`~mimoEnv.envs.reach.MIMoReachEnv._get_achieved_goal` are dummy functions.
+    :meth:`~mimoEnv.envs.reach.MIMoReachEnv.sample_goal` and
+    :meth:`~mimoEnv.envs.reach.MIMoReachEnv.get_achieved_goal` are dummy functions.
     """
     def __init__(self,
                  model_path=REACH_XML,
-                 initial_qpos={},
-                 n_substeps=2,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=None,
                  vision_params=None,
                  vestibular_params=None,
                  actuation_model=SpringDamperModel,
                  goals_in_observation=False,
-                 done_active=True):
+                 done_active=True,
+                 **kwargs,):
 
         super().__init__(model_path=model_path,
-                         initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
                          actuation_model=actuation_model,
                          goals_in_observation=goals_in_observation,
-                         done_active=done_active)
+                         done_active=done_active,
+                         **kwargs)
+
+        self.target_init_pos = copy.deepcopy(self.data.body('target').xpos)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         """ Computes the reward.
@@ -79,14 +78,14 @@ class MIMoReachEnv(MIMoEnv):
         Returns:
             float: The reward as described above.
         """
-        contact = self._is_success(achieved_goal, desired_goal)
-        fingers_pos = self.sim.data.get_body_xpos('right_fingers')
-        target_pos = self.sim.data.get_body_xpos('target')
+        contact = self.is_success(achieved_goal, desired_goal)
+        fingers_pos = self.data.body('right_fingers').xpos
+        target_pos = self.data.body('target').xpos
         distance = np.linalg.norm(fingers_pos - target_pos)
         reward = - distance + 100 * contact
         return reward
 
-    def _is_success(self, achieved_goal, desired_goal):
+    def is_success(self, achieved_goal, desired_goal):
         """ Determines the goal states.
 
         Args:
@@ -96,11 +95,11 @@ class MIMoReachEnv(MIMoEnv):
         Returns:
             bool: ``True`` if the ball is knocked out of position.
         """
-        target_pos = self.sim.data.get_body_xpos('target')
+        target_pos = self.data.body('target').xpos
         success = (np.linalg.norm(target_pos - self.target_init_pos) > 0.01)
         return success
 
-    def _is_failure(self, achieved_goal, desired_goal):
+    def is_failure(self, achieved_goal, desired_goal):
         """ Dummy function. Always returns `False`.
 
         Args:
@@ -112,7 +111,15 @@ class MIMoReachEnv(MIMoEnv):
         """
         return False
 
-    def _sample_goal(self):
+    def is_truncated(self):
+        """ Dummy function. Always returns `False`.
+
+        Returns:
+            bool: `False`
+        """
+        return False
+
+    def sample_goal(self):
         """ Dummy function. Returns an empty array.
 
         Returns:
@@ -120,7 +127,7 @@ class MIMoReachEnv(MIMoEnv):
         """
         return np.zeros((0,))
 
-    def _get_achieved_goal(self):
+    def get_achieved_goal(self):
         """ Dummy function. Returns an empty array.
 
         Returns:
@@ -128,43 +135,35 @@ class MIMoReachEnv(MIMoEnv):
         """
         return np.zeros((0,))
 
-    def _reset_sim(self):
+    def reset_model(self):
         """ Resets the simulation.
 
         We reset the simulation and then slightly move both MIMos arm and the ball randomly. The randomization is
         limited such that MIMo can always reach the ball.
 
         Returns:
-            bool: ``True``.
+            Dict: Observations after reset.
         """
 
-        self.sim.set_state(self.initial_state)
-        self.sim.forward()
+        self.set_state(self.init_qpos, self.init_qvel)
 
         # perform 10 random actions
         for _ in range(10):
             action = self.action_space.sample()
             self._set_action(action)
-            self.sim.step()
+            self._single_mujoco_step()
             self._step_callback()
 
         # reset target in random initial position and velocities as zero
-        qpos = self.sim.data.qpos
-        qpos[[-7, -6, -5]] = np.array([
-            self.initial_state.qpos[-7] + self.np_random.uniform(low=-0.1, high=0, size=1)[0],
-            self.initial_state.qpos[-6] + self.np_random.uniform(low=-0.2, high=0.1, size=1)[0],
-            self.initial_state.qpos[-5] + self.np_random.uniform(low=-0.1, high=0, size=1)[0]
-        ])
-        qvel = np.zeros(self.sim.data.qvel.shape)
+        self.data.qpos[-7] = self.init_qpos[-7] + self.np_random.uniform(low=-0.1, high=0, size=1)[0]
+        self.data.qpos[-6] = self.init_qpos[-6] + self.np_random.uniform(low=-0.2, high=0.1, size=1)[0]
+        self.data.qpos[-5] = self.init_qpos[-5] + self.np_random.uniform(low=-0.1, high=0, size=1)[0]
 
-        new_state = mujoco_py.MjSimState(
-            self.initial_state.time, qpos, qvel, self.initial_state.act, self.initial_state.udd_state
-        )
+        qvel = np.zeros(self.data.qvel.shape)
 
-        self.sim.set_state(new_state)
-        self.sim.forward()
-        self.target_init_pos = copy.deepcopy(self.sim.data.get_body_xpos('target'))
-        return True
+        self.set_state(self.data.qpos.copy(), qvel)
+        self.target_init_pos = copy.deepcopy(self.data.body('target').xpos)
+        return self._get_obs()
 
     def _step_callback(self):
         """ Adjusts the head and eye positions to track the target.
@@ -172,19 +171,20 @@ class MIMoReachEnv(MIMoEnv):
         Manually computes the joint positions required for the head and eyes to look at the target objects.
         """
         # manually set head and eye positions to look at target
-        target_pos = self.sim.data.get_body_xpos('target')
-        head_pos = self.sim.data.get_body_xpos('head')
+        target_pos = self.data.body('target').xpos
+        head_pos = self.data.body('head').xpos
         head_target_dif = target_pos - head_pos
         head_target_dist = np.linalg.norm(head_target_dif)
-        head_target_dif[2] = head_target_dif[2] - 0.067375  # extra difference to eyes height in head
+        head_target_dif[2] = head_target_dif[2] - 0.067375  # extra difference to height of eyes in head
         half_eyes_dist = 0.0245  # horizontal distance between eyes / 2
         eyes_target_dist = head_target_dist - 0.07  # remove distance from head center to eyes
-        self.sim.data.qpos[13] = np.arctan(head_target_dif[1] / head_target_dif[0])  # head - horizontal
-        self.sim.data.qpos[14] = np.arctan(-head_target_dif[2] / head_target_dif[0])  # head - vertical
-        self.sim.data.qpos[15] = 0  # head - side tild
-        self.sim.data.qpos[16] = np.arctan(-half_eyes_dist / eyes_target_dist)  # left eye -  horizontal
-        self.sim.data.qpos[17] = 0  # left eye - vertical
-        self.sim.data.qpos[17] = 0  # left eye - torsional
-        self.sim.data.qpos[19] = np.arctan(-half_eyes_dist / eyes_target_dist)  # right eye - horizontal
-        self.sim.data.qpos[20] = 0  # right eye - vertical
-        self.sim.data.qpos[21] = 0  # right eye - torsional
+
+        self.data.qpos[13] = np.arctan(head_target_dif[1] / head_target_dif[0])  # head - horizontal
+        self.data.qpos[14] = np.arctan(-head_target_dif[2] / head_target_dif[0])  # head - vertical
+        self.data.qpos[15] = 0  # head - side tilt
+        self.data.qpos[16] = np.arctan(-half_eyes_dist / eyes_target_dist)  # left eye -  horizontal
+        self.data.qpos[17] = 0  # left eye - vertical
+        self.data.qpos[17] = 0  # left eye - torsional
+        self.data.qpos[19] = np.arctan(-half_eyes_dist / eyes_target_dist)  # right eye - horizontal
+        self.data.qpos[20] = 0  # right eye - vertical
+        self.data.qpos[21] = 0  # right eye - torsional

@@ -64,12 +64,12 @@
 							<joint name="robot:right_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007" armature="0.001"/>
 							<site name="torque_right_wrist" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 							<geom type="box" size=".0281 .01 .0208" mass=".04315" pos=".005 0 .0208"/>
-							<geom type="cylinder" size=".01 .0278" mass=".01602" pos=".005 0 .0416" euler="0 90 0"/>
+							<geom type="cylinder" size=".0102 .0278" mass=".01602" pos=".005 0 .0416" euler="0 90 0"/>
 							<body name="right_fingers" pos="0 0 .0416"> <!-- Finger length is 5.14 cm, 1 cm overlap between palm and fingers -->
 								<joint name="robot:right_fingers" type="hinge" pos="0 0 0" axis="-1 0 0" springref="-40" range="-160 8" stiffness=".017" damping=".018" frictionloss=".0023" armature="0.0001"/>
 								<site name="torque_right_fingers" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-								<geom type="box" size=".0229 .01 .0207" mass=".03494" pos="0 0 .0207" friction="5 0.02 0.01"/>
-								<geom type="cylinder" size=".01 .023" mass=".01323" pos="0 0 .0414" euler="0 90 0" friction="5 0.02 0.01"/>
+								<geom type="box" size=".0228 .01 .0207" mass=".03494" pos="0 0 .0207" friction="5 0.02 0.01"/>
+								<geom type="cylinder" size=".0102 .023" mass=".01323" pos="0 0 .0414" euler="0 90 0" friction="5 0.02 0.01"/>
 							</body>
 						</body>
 					</body>
@@ -92,12 +92,12 @@
 							<joint name="robot:left_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007" armature="0.001"/>
 							<site name="torque_left_wrist" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 							<geom type="box" size=".0281 .01 .0208" mass=".04315" pos=".005 0 .0208"/>
-							<geom type="cylinder" size=".01 .0278" mass=".01602" pos=".005 0 .0416" euler="0 90 0"/>
+							<geom type="cylinder" size=".0102 .0278" mass=".01602" pos=".005 0 .0416" euler="0 90 0"/>
 							<body name="left_fingers" pos="0 0 .0416"> <!-- Finger length is 5.14 cm, 1 cm overlap between palm and fingers -->
 								<joint name="robot:left_fingers" type="hinge" pos="0 0 0" axis="1 0 0" springref="-40" range="-160 8" stiffness=".017" damping=".018" frictionloss=".0023" armature="0.0001"/>
 								<site name="torque_left_fingers" type="sphere" size="0.01" pos="0 0 0" group="4"/>
-								<geom type="box" size=".0229 .01 .0207" mass=".03494" pos="0 0 .0207" friction="5 0.02 0.01"/>
-								<geom type="cylinder" size=".01 .023" mass=".01323" pos="0 0 .0414" euler="0 90 0" friction="5 0.02 0.01"/>
+								<geom type="box" size=".0228 .01 .0207" mass=".03494" pos="0 0 .0207" friction="5 0.02 0.01"/>
+								<geom type="cylinder" size=".0102 .023" mass=".01323" pos="0 0 .0414" euler="0 90 0" friction="5 0.02 0.01"/>
 							</body>
 						</body>
 					</body>

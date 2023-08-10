@@ -14,7 +14,6 @@ Finally, there is an environment to demonstrate the adaptive compliance enabled 
 
 import numpy as np
 import os
-import mujoco_py
 
 from mimoEnv.envs.mimo_env import SCENE_DIRECTORY, MIMoEnv
 from mimoEnv.envs.dummy import MIMoDummyEnv
@@ -58,6 +57,17 @@ COMPLIANCE_INIT_POSITION = {"robot:right_shoulder_ad_ab": np.array([1.35]), }
 :meta hide-value:
 """
 
+COMPLIANCE_CAMERA_CONFIG={
+    "trackbodyid": 0,
+    "distance": 1.5,
+    "lookat": np.asarray([0, -0.3, 0.5]),
+    "elevation": 0,
+    "azimuth": 180,
+}
+""" Camera configuration looking straight at MIMo such that the shoulder position is clearly visible.
+
+:meta hide-value:
+"""
 
 class MIMoStaticMuscleTestEnv(MIMoDummyEnv):
     """ Environment for static muscle tests using the mitten hand version MIMo.
@@ -66,44 +76,30 @@ class MIMoStaticMuscleTestEnv(MIMoDummyEnv):
     """
     def __init__(self,
                  model_path=STATIC_TEST_XML,
-                 initial_qpos={},
-                 n_substeps=2,
-                 show_sensors=False,
-                 print_space_sizes=False,):
+                 default_camera_config={"azimuth": 135,},
+                 **kwargs
+                 ):
 
         super().__init__(model_path=model_path,
-                         initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
                          proprio_params=None,
                          touch_params=None,
                          vision_params=None,
                          vestibular_params=None,
                          actuation_model=MuscleModel,
-                         show_sensors=show_sensors,
-                         print_space_sizes=print_space_sizes,
                          goals_in_observation=False,
-                         done_active=False)
-
-    def _viewer_setup(self):
-        super()._viewer_setup()
-        self.viewer.cam.azimuth = 135
-
+                         done_active=False,
+                         default_camera_config=default_camera_config,
+                         **kwargs)
 
 class MIMoStaticMuscleTestV2Env(MIMoStaticMuscleTestEnv):
     """ Environment for static muscle tests using the full hand version MIMo.
     """
     def __init__(self,
                  model_path=STATIC_TEST_XML_V2,
-                 initial_qpos={},
-                 n_substeps=2,
-                 show_sensors=False,
-                 print_space_sizes=False,):
+                 **kwargs):
 
         super().__init__(model_path=model_path,
-                         initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
-                         show_sensors=show_sensors,
-                         print_space_sizes=print_space_sizes,)
+                         **kwargs)
 
 
 class MIMoVelocityMuscleTestEnv(MIMoStaticMuscleTestEnv):
@@ -111,16 +107,10 @@ class MIMoVelocityMuscleTestEnv(MIMoStaticMuscleTestEnv):
     """
     def __init__(self,
                  model_path=VELOCITY_TEST_XML,
-                 initial_qpos={},
-                 n_substeps=2,
-                 show_sensors=False,
-                 print_space_sizes=False,):
+                 **kwargs):
 
         super().__init__(model_path=model_path,
-                         initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
-                         show_sensors=show_sensors,
-                         print_space_sizes=print_space_sizes,)
+                         **kwargs)
 
 
 class MIMoVelocityMuscleTestV2Env(MIMoStaticMuscleTestEnv):
@@ -128,19 +118,13 @@ class MIMoVelocityMuscleTestV2Env(MIMoStaticMuscleTestEnv):
     """
     def __init__(self,
                  model_path=VELOCITY_TEST_XML_V2,
-                 initial_qpos={},
-                 n_substeps=2,
-                 show_sensors=False,
-                 print_space_sizes=False,):
+                 **kwargs):
 
         super().__init__(model_path=model_path,
-                         initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
-                         show_sensors=show_sensors,
-                         print_space_sizes=print_space_sizes,)
+                         **kwargs)
 
 
-class MIMoComplianceEnv(MIMoEnv):
+class MIMoComplianceEnv(MIMoDummyEnv):
     """ Test environment for adaptive compliance.
 
     In this environment we test the compliance behaviour of MIMos actuators by dropping a ball onto his outstretched
@@ -152,116 +136,32 @@ class MIMoComplianceEnv(MIMoEnv):
     def __init__(self,
                  model_path=COMPLIANCE_XML,
                  initial_qpos=COMPLIANCE_INIT_POSITION,
-                 n_substeps=2,
                  actuation_model=SpringDamperModel,
+                 default_camera_config=COMPLIANCE_CAMERA_CONFIG,
+                 **kwargs
                  ):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
                          proprio_params=None,
                          touch_params=None,
                          vision_params=None,
                          vestibular_params=None,
                          actuation_model=actuation_model,
-                         goals_in_observation=False,
-                         done_active=False)
+                         default_camera_config=default_camera_config,
+                         **kwargs)
 
-        joint_names = [self.sim.model.joint_id2name(joint_id) for joint_id in self.mimo_joints]
+        joint_names = [self.model.joint(joint_id).name for joint_id in self.mimo_joints]
         for joint_name in joint_names:
-            env_utils.lock_joint(self.sim.model, joint_name)
-        env_utils.unlock_joint(self.sim.model, "robot:right_shoulder_ad_ab")
-        env_utils.lock_joint(self.sim.model, "robot:right_hand1", joint_angle=-0.25)
+            env_utils.lock_joint(self.model, joint_name)
+        env_utils.unlock_joint(self.model, "robot:right_shoulder_ad_ab")
+        env_utils.lock_joint(self.model, "robot:right_hand1", joint_angle=-0.25)
         # Let sim settle for a few timesteps to allow weld and locks to settle
-        gravity = self.sim.model.opt.gravity[2]
-        self.sim.model.opt.gravity[2] = 0
+        gravity = self.model.opt.gravity[2]
+        self.model.opt.gravity[2] = 0
         self.do_simulation(np.zeros(self.action_space.shape), 2)
-        self.sim.model.opt.gravity[2] = gravity
-        self.init_qpos = self.sim.data.qpos.copy()
-
-    def _sample_goal(self):
-        """ Dummy function.
-
-        Returns:
-            np.ndarray: A size 0 dummy array.
-        """
-        return np.zeros((0,))
-
-    def _is_success(self, achieved_goal, desired_goal):
-        """ Dummy function.
-
-        Args:
-            achieved_goal (object): This argument is ignored.
-            desired_goal (object): This argument is ignored.
-
-        Returns:
-            bool: Always returns ``False``.
-        """
-        return False
-
-    def compute_reward(self, achieved_goal, desired_goal, info):
-        """ Dummy function.
-
-        Args:
-            achieved_goal (object): This argument is ignored.
-            desired_goal (object): This argument is ignored.
-            info (dict): This argument is ignored.
-
-        Returns:
-            int: Always returns 0.
-        """
-        return 0
-
-    def _reset_sim(self):
-        """ Reset to the initial position.
-
-        Returns:
-            bool: ``True``.
-        """
-        # set qpos as new initial position and velocity as zero
-        qpos = self.init_qpos
-        qvel = np.zeros(self.sim.data.qvel.shape)
-
-        new_state = mujoco_py.MjSimState(
-            self.initial_state.time, qpos, qvel, self.initial_state.act, self.initial_state.udd_state
-        )
-
-        self.sim.set_state(new_state)
-        self.sim.forward()
-
-        return True
-
-    def _is_failure(self, achieved_goal, desired_goal):
-        """ Dummy function that always returns ``False``.
-
-        Args:
-            achieved_goal (object): This parameter is ignored.
-            desired_goal (object): This parameter is ignored.
-
-        Returns:
-            bool: ``False``.
-        """
-        return False
-
-    def _get_achieved_goal(self):
-        """ Dummy function that returns an empty array.
-
-        Returns:
-            numpy.ndarray: An empty array.
-        """
-        return np.zeros(self.goal.shape)
-
-    def _viewer_setup(self):
-        """Initial configuration of the viewer. Setup to have a nice view of the ball dropping onto MIMos arm.
-        """
-        #self.viewer.cam.trackbodyid = 0  # id of the body to track
-        self.viewer.cam.distance = 1.5  # how much you "zoom in", smaller is closer
-        self.viewer.cam.lookat[0] = 0  # x,y,z offset from the object (works if trackbodyid=-1)
-        self.viewer.cam.lookat[1] = -0.3
-        self.viewer.cam.lookat[2] = 0.5  # 0.24 -0.04 .8
-        self.viewer.cam.elevation = 0
-        self.viewer.cam.azimuth = 180
-
+        self.model.opt.gravity[2] = gravity
+        self.init_qpos = self.data.qpos.copy()
 
 class MIMoComplianceMuscleEnv(MIMoComplianceEnv):
     """ Test environment for adaptive compliance.
@@ -269,12 +169,9 @@ class MIMoComplianceMuscleEnv(MIMoComplianceEnv):
     Same as :class:`.MIMoComplianceEnv`, but uses the muscle actuation model by default.
     """
     def __init__(self,
-                 model_path=COMPLIANCE_XML,
-                 initial_qpos=COMPLIANCE_INIT_POSITION,
-                 n_substeps=2,
+                 actuation_model=MuscleModel,
+                 **kwargs,
                  ):
 
-        super().__init__(model_path=model_path,
-                         initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
-                         actuation_model=MuscleModel)
+        super().__init__(actuation_model=actuation_model,
+                         **kwargs,)

@@ -6,7 +6,7 @@ A second implementation using direct positional control is :class:`~mimoActuatio
 """
 import numpy
 import numpy as np
-from gym import spaces
+from gymnasium import spaces
 
 from mimoEnv.utils import set_joint_locking_angle
 
@@ -39,19 +39,29 @@ class ActuationModel:
     - :meth:`.reset` should reset whatever internal quantities the model uses to the value at the start of the
       simulation.
 
+    Args:
+        env (MIMoEnv): The environment to which this model will be attached.
+        actuators (np.ndarray): An array with the actuators, by ID, to include in this model.
+
     Attributes:
         env (gym.Env): The environment to which this module will be attached.
         actuators (np.ndarray): The simulation motors, by ID, to include in this model.
+        n_actuators (int): The number of actuators controlled by this model.
+        action_space (spaces.Box): The action space for this model. This is set by :meth:`~.get_action_space`
     """
-    def __init__(self, env, actuators):
+    def __init__(self, env, actuators, *args):
         self.env = env
         self.actuators = actuators
+        self.n_actuators = self.actuators.shape[0]
+        self.action_space = self.get_action_space()
 
     def get_action_space(self):
         """ Determines the actuation space attribute for the gym environment.
 
+        Note that his action space must be a Box!
+
         Returns:
-            gym.spaces.Space: A gym spaces object with the actuation space.
+            gym.spaces.Box: A gym spaces object with the actuation space.
         """
         raise NotImplementedError
 
@@ -114,7 +124,7 @@ class SpringDamperModel(ActuationModel):
     def __init__(self, env, actuators):
         super().__init__(env, actuators)
         self.control_input = None
-        self.max_torque = self.env.sim.model.actuator_gear[self.actuators, 0]
+        self.max_torque = self.env.model.actuator_gear[self.actuators, 0]
 
     def get_action_space(self):
         """ Determines the actuation space attribute for the gym environment.
@@ -125,7 +135,7 @@ class SpringDamperModel(ActuationModel):
         Returns:
             gym.spaces.Space: The actuation space.
         """
-        bounds = self.env.sim.model.actuator_ctrlrange.copy().astype(np.float32)[self.actuators]
+        bounds = self.env.model.actuator_ctrlrange.copy().astype(np.float32)[self.actuators]
         low, high = bounds.T
         action_space = spaces.Box(low=low, high=high, dtype=np.float32)
         self.control_input = np.zeros(action_space.shape)  # Set initial control input to avoid NoneType Errors
@@ -142,8 +152,8 @@ class SpringDamperModel(ActuationModel):
         Args:
             action (numpy.ndarray): A numpy array with control values.
         """
-        self.control_input = np.clip(action, self.env.action_space.low, self.env.action_space.high)
-        self.env.sim.data.ctrl[self.actuators] = self.control_input
+        self.control_input = np.clip(action, self.action_space.low, self.action_space.high)
+        self.env.data.ctrl[self.actuators] = self.control_input
 
     def observations(self):
         """ Control input and output torque for each motor at this time step.
@@ -165,7 +175,7 @@ class SpringDamperModel(ActuationModel):
             float: The cost as described above.
         """
         per_actuator_cost = self.control_input * self.control_input * self.max_torque
-        return np.abs(per_actuator_cost).sum() / (self.env.n_actuators * self.max_torque.sum())
+        return np.abs(per_actuator_cost).sum() / (self.n_actuators * self.max_torque.sum())
 
     def simulation_torque(self):
         """ Computes the currently applied torque for each motor in the simulation.
@@ -173,8 +183,8 @@ class SpringDamperModel(ActuationModel):
         Returns:
             np.ndarray: An array with applied torques for each motor.
         """
-        actuator_gear = self.env.sim.model.actuator_gear[self.actuators, 0]
-        control_input = self.env.sim.data.ctrl[self.actuators]
+        actuator_gear = self.env.model.actuator_gear[self.actuators, 0]
+        control_input = self.env.data.ctrl[self.actuators]
         return actuator_gear * control_input
 
     def reset(self):
@@ -192,7 +202,8 @@ class PositionalModel(ActuationModel):
     associated with the actuators in the 'actuators' parameter. Note that this requires that there is an equality
     constraint in the XMLs for each actuated joint. This is true for MIMo by default.
 
-    In addition to the attributes from the base actuation class, there is one extra attribute:
+    In addition to the attributes from the base actuation class, there is three extra attributes.
+
     Attributes:
         control_input (np.ndarray): Contains the current control input.
         actuated_joints (np.npdarray): Contains an array of joint IDs associated with the actuators.
@@ -201,7 +212,7 @@ class PositionalModel(ActuationModel):
     def __init__(self, env, actuators):
         super().__init__(env, actuators)
         self.control_input = None
-        self.actuated_joints = self.env.sim.model.actuator_trnid[actuators, 0]
+        self.actuated_joints = self.env.model.actuator_trnid[actuators, 0]
         self.constraints = self.get_constraints()
 
     def get_constraints(self):
@@ -212,9 +223,9 @@ class PositionalModel(ActuationModel):
         """
         constraints = []
         # Iterate over all constraints, check that they belong to an actuated joint and are type 'joint'
-        for i in range(self.env.sim.model.neq):
-            if self.env.sim.model.eq_type[i] == 2 and self.env.sim.model.eq_obj1id[i] in self.actuated_joints:
-                self.env.sim.model.eq_active[i] = True
+        for i in range(self.env.model.neq):
+            if self.env.model.eq_type[i] == 2 and self.env.model.eq_obj1id[i] in self.actuated_joints:
+                self.env.model.eq_active[i] = True
                 constraints.append(i)
         return numpy.asarray(constraints)
 
@@ -226,7 +237,7 @@ class PositionalModel(ActuationModel):
         Returns:
             gym.space.Spaces: A gym spaces object with the actuation space.
         """
-        bounds = self.env.sim.model.jnt_range.copy().astype(np.float32)[self.actuated_joints]
+        bounds = self.env.model.jnt_range.copy().astype(np.float32)[self.actuated_joints]
         low, high = bounds.T
         action_space = spaces.Box(low=low, high=high, dtype=np.float32)
         self.control_input = np.zeros(action_space.shape)  # Set initial control input to avoid NoneType Errors
@@ -240,8 +251,8 @@ class PositionalModel(ActuationModel):
         Args:
             action (numpy.ndarray): A numpy array with desired joint positions.
         """
-        self.control_input = np.clip(action, self.env.action_space.low, self.env.action_space.high)
-        set_joint_locking_angle(self.env.sim.model, "", angle=self.control_input, constraint_id=self.constraints)
+        self.control_input = np.clip(action, self.action_space.low, self.action_space.high)
+        set_joint_locking_angle(self.env.model, "", angle=self.control_input, constraint_id=self.constraints)
 
     def observations(self):
         """ Returns the current control input, i.e. the locked positions.

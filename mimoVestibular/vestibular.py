@@ -7,9 +7,10 @@ A simple implementation treating using one 3D gyro and one 3D accelerometer is i
 """
 
 import numpy as np
-from mimoEnv.utils import get_sensor_addr
-
 from typing import Dict, List
+
+from mimoEnv.utils import get_sensor_addr
+from gymnasium.envs.mujoco import MujocoEnv
 
 
 class Vestibular:
@@ -24,7 +25,7 @@ class Vestibular:
     outputs should also be stored in :attr:`.sensor_outputs`.
 
     Attributes:
-        env (gym.Env): The environment to which this module will be attached.
+        env (MujocoEnv): The environment to which this module will be attached.
         vestibular_parameters (Dict): A dictionary containing the configuration. The exact from will depend on the
             specific implementation.
         sensor_outputs (np.ndarray): A list of outputs corresponding to the configuration dictionary. This should be
@@ -65,7 +66,7 @@ class SimpleVestibular(Vestibular):
     and the gyro, both located in the head.
 
     Attributes:
-        env (gym.Env): The environment to which this module should be attached.
+        env (MujocoEnv): The environment to which this module should be attached.
         vestibular_parameters (Dict[str, List[str]]): A dictionary containing the configuration.
         sensor_outputs (np.ndarray): A list of outputs corresponding to the configuration dictionary. This is populated
             by :meth:`.get_vestibular_obs`.
@@ -73,8 +74,8 @@ class SimpleVestibular(Vestibular):
     def __init__(self, env, vestibular_parameters):
         super().__init__(env, vestibular_parameters)
         self.sensors = self.vestibular_parameters["sensors"]
-        self.sensor_ids = [self.env.sim.model.sensor_name2id(name) for name in self.sensors]
-        self.sensor_addrs = np.asarray([get_sensor_addr(self.env.sim.model, idx) for idx in self.sensor_ids])
+        self.sensor_ids = [self.env.model.sensor(name).id for name in self.sensors]
+        self.sensor_addrs = np.asarray([get_sensor_addr(self.env.model, idx) for idx in self.sensor_ids])
 
     def get_vestibular_obs(self):
         """ Produce the vestibular sensor outputs.
@@ -84,5 +85,5 @@ class SimpleVestibular(Vestibular):
         Returns:
             np.ndarray: An array containing the concatenated sensor values.
         """
-        self.sensor_outputs = self.env.sim.data.sensordata[self.sensor_addrs].flatten()
+        self.sensor_outputs = self.env.data.sensordata[self.sensor_addrs].flatten()
         return np.asarray(self.sensor_outputs)

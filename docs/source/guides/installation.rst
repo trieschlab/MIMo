@@ -3,8 +3,6 @@ Installation
 
 Installation is very straight forward::
 
-    Install MuJoCo 2.10
-    Install mujoco-py 2.1
     Clone this repository
     pip install -r requirements.txt
     pip install -e .

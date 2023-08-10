@@ -102,7 +102,16 @@ Assorted functions
    :nosignatures:
 
    mimoEnv.utils.determine_geom_masses
-   
+
+Data fields
+-----------
+
+.. autodata:: mimoEnv.utils.MUJOCO_JOINT_SIZES
+   :no-value:
+
+.. autodata:: mimoEnv.utils.MUJOCO_DOF_SIZES
+   :no-value:
+
 Detail documentation
 ----------------------
 

@@ -6,8 +6,8 @@ NAME HERE @ LINK
 
 import os
 import math
+import gymnasium as gym
 import re
-import gym
 import time
 import copy
 import gc
@@ -22,62 +22,7 @@ import mimoEnv
 from mimoEnv.envs.mimo_env import DEFAULT_TOUCH_PARAMS, DEFAULT_TOUCH_PARAMS_V2
 from mimoEnv.envs.dummy import BENCHMARK_XML_V2, BENCHMARK_XML
 
-from dataclasses import dataclass
-
-
-@dataclass(unsafe_hash=True)
-class FunctionProfile:
-    ncalls: str
-    tottime: float
-    percall_tottime: float
-    cumtime: float
-    percall_cumtime: float
-    file_name: str
-    line_number: int
-
-
-@dataclass(unsafe_hash=True)
-class StatsProfile:
-    """Class for keeping track of an item in inventory."""
-    total_tt: float
-    func_profiles: Dict[str, FunctionProfile]
-
-
-def get_stats_profile(stats):
-    """This method returns an instance of StatsProfile, which contains a mapping
-    of function names to instances of FunctionProfile. Each FunctionProfile
-    instance holds information related to the function's profile such as how
-    long the function took to run, how many times it was called, etc...
-    """
-    func_list = stats.fcn_list[:] if stats.fcn_list else list(stats.stats.keys())
-    if not func_list:
-        return StatsProfile(0, {})
-
-    total_tt = float(pstats.f8(stats.total_tt))
-    func_profiles = {}
-    stats_profile = StatsProfile(total_tt, func_profiles)
-
-    for func in func_list:
-        cc, nc, tt, ct, callers = stats.stats[func]
-        file_name, line_number, func_name = func
-        ncalls = str(nc) if nc == cc else (str(nc) + '/' + str(cc))
-        tottime = float(pstats.f8(tt))
-        percall_tottime = -1 if nc == 0 else float(pstats.f8(tt / nc))
-        cumtime = float(pstats.f8(ct))
-        percall_cumtime = -1 if cc == 0 else float(pstats.f8(ct / cc))
-        func_profile = FunctionProfile(
-            ncalls,
-            tottime,  # time spent in this function alone
-            percall_tottime,
-            cumtime,  # time spent in the function plus all functions that this function called,
-            percall_cumtime,
-            file_name,
-            line_number
-        )
-        func_profiles[func_name] = func_profile
-
-    return stats_profile
-
+import pstats
 
 def run(env, max_steps):
     """ Runs an environment for a number of steps while taking random actions.
@@ -88,8 +33,8 @@ def run(env, max_steps):
     """
     for step in range(max_steps):
         action = env.action_space.sample()
-        obs, reward, done, info = env.step(action)
-        if done:
+        obs, reward, done, trunc, info = env.step(action)
+        if done or trunc:
             env.reset()
 
 
@@ -154,7 +99,7 @@ def benchmark(configurations, output_file):
         init_time = start - init_start
         runtime = end_time - start
 
-        stats_object = get_stats_profile(pstats.Stats(pr))
+        stats_object = pstats.Stats(pr).get_stats_profile()
 
         physics_time = stats_object.func_profiles["do_simulation"].cumtime
         if "_compute_muscle_action" in stats_object.func_profiles:

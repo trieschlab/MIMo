@@ -19,7 +19,6 @@ defined in :data:`SELFBODY_XML`.
 
 import os
 import numpy as np
-import mujoco_py
 
 from mimoEnv.envs.mimo_env import MIMoEnv, DEFAULT_PROPRIOCEPTION_PARAMS, SCENE_DIRECTORY
 import mimoEnv.utils as env_utils
@@ -107,12 +106,15 @@ class MIMoSelfBodyEnv(MIMoEnv):
     def __init__(self,
                  model_path=SELFBODY_XML,
                  initial_qpos=SITTING_POSITION,
-                 n_substeps=1,
+                 frame_skip=1,
                  proprio_params=DEFAULT_PROPRIOCEPTION_PARAMS,
                  touch_params=TOUCH_PARAMS,
                  vision_params=None,
                  vestibular_params=None,
                  actuation_model=SpringDamperModel,
+                 goals_in_observation=True,
+                 done_active=True,
+                 **kwargs,
                  ):
 
         self.target_geom = 0  # The geom on MIMo we are trying to touch
@@ -121,27 +123,28 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
-                         n_substeps=n_substeps,
+                         frame_skip=frame_skip,
                          proprio_params=proprio_params,
                          touch_params=touch_params,
                          vision_params=vision_params,
                          vestibular_params=vestibular_params,
                          actuation_model=actuation_model,
-                         goals_in_observation=True,
-                         done_active=True)
+                         goals_in_observation=goals_in_observation,
+                         done_active=done_active,
+                         **kwargs)
 
-        env_utils.set_joint_qpos(self.sim.model,
-                                 self.sim.data,
+        env_utils.set_joint_qpos(self.model,
+                                 self.data,
                                  "mimo_location",
                                  np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]))
         #  "mimo_location": np.array([0.0579584, -0.00157173, 0.0566738, 0.892294, -0.0284863, -0.450353, -0.0135029]),
         for joint_name in SITTING_POSITION:
-            env_utils.lock_joint(self.sim.model, joint_name, joint_angle=SITTING_POSITION[joint_name][0])
+            env_utils.lock_joint(self.model, joint_name, joint_angle=SITTING_POSITION[joint_name][0])
         # Let sim settle for a few timesteps to allow weld and locks to settle
         self.do_simulation(np.zeros(self.action_space.shape), 25)
-        self.init_sitting_qpos = self.sim.data.qpos.copy()
+        self.init_sitting_qpos = self.data.qpos.copy()
 
-    def _sample_goal(self):
+    def sample_goal(self):
         """Samples a new goal and returns it.
 
         The goal consists of a target geom that we try to touch, returned as a one-hot encoding.
@@ -160,10 +163,10 @@ class MIMoSelfBodyEnv(MIMoEnv):
         if isinstance(self.target_geom, int):
             target_geom_onehot[self.target_geom] = 1
 
-        self.target_body = self.sim.model.body_id2name(self.sim.model.geom_bodyid[self.target_geom])
+        self.target_body = self.model.body(self.model.geom(self.target_geom).bodyid).name
         return target_geom_onehot
 
-    def _is_success(self, achieved_goal, desired_goal):
+    def is_success(self, achieved_goal, desired_goal):
         """ We have succeeded when we have a touch sensation on the goal body.
 
         We ignore the :attr:`.goal` attribute in this for performance reasons and determine the success condition
@@ -211,8 +214,8 @@ class MIMoSelfBodyEnv(MIMoEnv):
         if info["is_success"]:
             reward = 500
         elif contact_with_fingers:
-            target_body_pos = self.sim.data.get_body_xpos(self.target_body)
-            fingers_pos = self.sim.data.get_body_xpos("right_fingers")
+            target_body_pos = self.data.body(self.target_body).xpos
+            fingers_pos = self.data.body("right_fingers").xpos
             distance = np.linalg.norm(fingers_pos - target_body_pos)
             reward = -distance
         else:
@@ -220,26 +223,19 @@ class MIMoSelfBodyEnv(MIMoEnv):
 
         return reward
 
-    def _reset_sim(self):
+    def reset_model(self):
         """ Reset to the initial sitting position.
 
         Returns:
-            bool: Always returns ``True``.
+            Dict: Observations after reset.
         """
         # set qpos as new initial position and velocity as zero
         qpos = self.init_sitting_qpos
-        qvel = np.zeros(self.sim.data.qvel.shape)
+        qvel = np.zeros(self.data.qvel.shape)
+        self.set_state(qpos, qvel)
+        return self._get_obs()
 
-        new_state = mujoco_py.MjSimState(
-            self.initial_state.time, qpos, qvel, self.initial_state.act, self.initial_state.udd_state
-        )
-
-        self.sim.set_state(new_state)
-        self.sim.forward()
-
-        return True
-
-    def _is_failure(self, achieved_goal, desired_goal):
+    def is_failure(self, achieved_goal, desired_goal):
         """ Dummy function that always returns ``False``.
 
         Args:
@@ -251,7 +247,15 @@ class MIMoSelfBodyEnv(MIMoEnv):
         """
         return False
 
-    def _get_achieved_goal(self):
+    def is_truncated(self):
+        """ Dummy function. Always returns ``False``.
+
+        Returns:
+            bool: ``False``.
+        """
+        return False
+
+    def get_achieved_goal(self):
         """ Dummy function that returns an empty array.
 
         Returns:
