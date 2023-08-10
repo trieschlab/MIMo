@@ -14,7 +14,7 @@ First install mujoco 2.10 and mujoco-py 2.1 following their instructions.
 Then clone this repository, install other dependencies with `pip install -r requirements.txt` and finally run `pip install -e .`
 
 > **Note**
-> A version using gym 0.26.2 and mujoco instead of mujoco-py is available on the branch migrate/mujoco_binds. Stable Baselines does not support that version of gym yet and so the demo scripts do not work on that branch.
+> A version using gymnasium 0.28.1 and the official mujoco wrappers instead of mujoco-py is available on the branch migrate/mujoco_binds.
 
 ## The MIMo environment
 
