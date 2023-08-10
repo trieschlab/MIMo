@@ -49,7 +49,7 @@ class ActuationModel:
         n_actuators (int): The number of actuators controlled by this model.
         action_space (spaces.Box): The action space for this model. This is set by :meth:`~.get_action_space`
     """
-    def __init__(self, env, actuators):
+    def __init__(self, env, actuators, *args):
         self.env = env
         self.actuators = actuators
         self.n_actuators = self.actuators.shape[0]

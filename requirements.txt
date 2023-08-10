@@ -1,13 +1,12 @@
 numpy
-gymnasium==0.28.1
-imageio
-glfw
-mujoco
 matplotlib
+imageio
 scipy
 trimesh
 cachetools
 CacheToolsUtils
 networkx
 rtree
+mujoco
+gymnasium==0.28.1
 opencv-python
