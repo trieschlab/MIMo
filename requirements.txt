@@ -9,4 +9,5 @@ networkx
 rtree
 mujoco
 gymnasium==0.28.1
+stable-baselines3>=2.0.0
 opencv-python
