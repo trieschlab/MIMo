@@ -49,3 +49,20 @@ We provide several sample environments with some simple tasks for demonstration 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
+## Citation
+
+You can cite MIMo as
+```
+@INPROCEEDINGS{9962192,
+  author={Mattern, Dominik and López, Francisco M. and Ernst, Markus R. and Aubret, Arthur and Triesch, Jochen},
+  booktitle={2022 IEEE International Conference on Development and Learning (ICDL)}, 
+  title={MIMo: A Multi-Modal Infant Model for Studying Cognitive Development in Humans and AIs}, 
+  year={2022},
+  volume={},
+  number={},
+  pages={23-29},
+  doi={10.1109/ICDL53763.2022.9962192}
+}
+```
+
