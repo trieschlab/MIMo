@@ -14,7 +14,7 @@ def main():
 
     env = gym.make("MIMoShowroom-v0", show_sensors=False, print_space_sizes=True)
 
-    max_steps = 2000
+    max_steps = 200
 
     _ = env.reset()
 
