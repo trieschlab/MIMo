@@ -86,7 +86,7 @@ class MIMoStandupEnv(MIMoEnv):
                  vision_params=None,
                  vestibular_params=DEFAULT_VESTIBULAR_PARAMS,
                  actuation_model=SpringDamperModel,
-                 ):
+                 **kwargs):
 
         super().__init__(model_path=model_path,
                          initial_qpos=initial_qpos,
@@ -97,7 +97,8 @@ class MIMoStandupEnv(MIMoEnv):
                          vestibular_params=vestibular_params,
                          actuation_model=actuation_model,
                          goals_in_observation=False,
-                         done_active=False)
+                         done_active=False,
+                         **kwargs)
 
         self.init_crouch_position = self.data.qpos.copy()
 
