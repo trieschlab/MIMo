@@ -7,7 +7,7 @@ cachetools
 CacheToolsUtils
 networkx
 rtree
-mujoco
+mujoco==2.3.7
 gymnasium==0.28.1
 stable-baselines3>=2.0.0
 opencv-python
