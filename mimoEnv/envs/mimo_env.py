@@ -728,8 +728,8 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
     def _is_done(self, achieved_goal, desired_goal, info):
         """ This function should determine if we reached the end of an episode. Dummy implementation.
 
-        By default, this function always returns `False`. If :attr:`.done_active` is set to `True`, instead returns
-        `True` if either :meth:`.is_success` or :meth:`.is_failure` return True.
+        By default, this function always returns ``False``. If :attr:`.done_active` is set to ``True``, instead returns
+        ``True`` if either :meth:`.is_success` or :meth:`.is_failure` return ``True``.
         The goal parameters are there to allow this class to be more easily overridden by subclasses, should this be
         required. They are ignored by default.
 

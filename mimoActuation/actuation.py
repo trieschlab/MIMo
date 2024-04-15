@@ -135,7 +135,7 @@ class SpringDamperModel(ActuationModel):
         Returns:
             gym.spaces.Space: The actuation space.
         """
-        bounds = self.env.model.actuator_ctrlrange.copy().astype(np.float32)[self.actuators]
+        bounds = self.env.model.actuator_forcerange.copy().astype(np.float32)[self.actuators]
         low, high = bounds.T
         action_space = spaces.Box(low=low, high=high, dtype=np.float32)
         self.control_input = np.zeros(action_space.shape)  # Set initial control input to avoid NoneType Errors
@@ -179,6 +179,11 @@ class SpringDamperModel(ActuationModel):
 
     def simulation_torque(self):
         """ Computes the currently applied torque for each motor in the simulation.
+
+        Note that this function will only be accurate for torque motors with linear response curves, a forcelimit
+        (such as those used in MIMo) and when using the :meth:`.action` function. If these conditions are not met, you
+        may also have to account for force limits, control limits and any non-linear motor response. Consider the
+        ``qrfc_actuator`` attribute in mjData if you want the total actuator torque on a given degree of freedom.
 
         Returns:
             np.ndarray: An array with applied torques for each motor.
