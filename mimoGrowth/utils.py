@@ -1,12 +1,9 @@
 """ This module store utility and helper functions. """
 
-from mimoGrowth.constants import AGE_GROUPS, RATIOS_MIMO_GEOMS, \
-    CHILDREN_MEASUREMENTS
+from mimoGrowth.constants import RATIOS_MIMO_GEOMS
 import re
 import os
 import numpy as np
-import pandas as pd
-from scipy.optimize import curve_fit
 import xml.etree.ElementTree as ET
 
 
@@ -34,65 +31,6 @@ def growth_function(x, a, b, c) -> float:
     """
 
     return a * np.log(x + b) + c
-
-
-def load_measurements() -> dict:
-    """
-    This function loads and returns relevant data from the measurements folder.
-    A single measurement list matches the length of the age list in the
-    constant.py file.
-
-    The original measurements can be found on the following website:
-    https://math.nist.gov/~SRessler/anthrokids/
-
-    Returns:
-        dict: Every key-value pair describes one body part and its growth.
-    """
-
-    path_script = os.path.dirname(os.path.realpath(__file__))
-    path_meas = os.path.join(path_script, "measurements/")
-
-    measurements = {}
-    for file_name in next(os.walk(path_meas))[2]:
-
-        df = pd.read_csv(path_meas + file_name)
-        children_meas = CHILDREN_MEASUREMENTS[file_name[:-4]]
-
-        measurements[file_name[:-4]] = {
-            "mean": df.MEAN.to_list() + [children_meas[0]],
-            "std": df["S.D."].tolist() + [children_meas[1]],
-        }
-
-    return measurements
-
-
-def approximate_growth_functions(measurements: dict) -> dict:
-    """
-    This function approximates a growth functions for each body part based
-    on the measurements.
-
-    Arguments:
-        measurements (dict): The measurements for all body parts.
-
-    Returns:
-        dict: A growth function for each body part.
-    """
-
-    config = {
-        "maxfev": 10000,
-        # Use bounds for the log function to avoid the issue of log(0).
-        "bounds": [(-np.inf, 0.1, -np.inf), (np.inf, np.inf, np.inf)]
-    }
-
-    functions = {}
-    for body_part, meas in measurements.items():
-
-        x, y = AGE_GROUPS, meas["mean"]
-        params = curve_fit(growth_function, x, y, **config)[0]
-
-        functions[body_part] = params
-
-    return functions
 
 
 def estimate_sizes(functions: dict, age: float) -> dict:

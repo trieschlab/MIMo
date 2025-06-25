@@ -50,6 +50,7 @@ from mimoGrowth.mujoco.geom_handler import calc_geom_params
 from mimoGrowth.mujoco.body_handler import calc_body_params
 from mimoGrowth.mujoco.motor_handler import calc_motor_params
 import mimoGrowth.utils as utils
+import json
 import os
 import datetime
 import xml.etree.ElementTree as ET
@@ -121,8 +122,11 @@ def calc_growth_params(
         dict: All relevant growth parameters.
     """
 
-    measurements = utils.load_measurements()
-    growth_functions = utils.approximate_growth_functions(measurements)
+    dirname = os.path.dirname(os.path.abspath(__file__))
+    path_growth_functions = os.path.join(dirname, "growth_functions.json")
+
+    with open(path_growth_functions) as f:
+        growth_functions = json.load(f)
 
     approx_sizes = utils.estimate_sizes(growth_functions, age)
 

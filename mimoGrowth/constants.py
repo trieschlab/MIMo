@@ -7,28 +7,29 @@ import numpy as np
 # the last one are from the infant measurements. The last entry is the mean age
 # of the first row from the children measurements.
 # This list will be used to approximate the growth functions.
-AGE_GROUPS = [1, 3, 7, 10, 13.5, 17.5, 21.5, 33]
+MEAN_MEASUREMENT_AGES = [1, 3, 7, 10, 13.5, 17.5, 21.5, 33]
 
-# Store children measurements. The first value is the mean and the second one
-# describes the standard deviation. These data points will be
-# used for the age of 33 months.
-CHILDREN_MEASUREMENTS = {
-    "ankle_circumference": (14.8, 1.0),
-    "calf_circumference": (20.6, 1.5),
-    "elbow_hand_length": (24.4, 1.6),
-    "foot_breadth": (6.1, 0.5),
-    "foot_length": (14.7, 1.1),
-    "forearm_circumference": (15.7, 1.0),
-    "hand_breadth": (5.1, 0.4),
-    "hand_length": (10.5, 0.7),
-    "head_circumference": (49.5, 1.7),
-    "hip_breadth": (18.0, 1.0),  # hip breadth at trochanter
-    "knee_sole_length": (27.0, 2.0),  # knee height
-    "maximum_fist_breadth": (5.8, 0.5),
-    "mid_thigh_circumference": (29.1, 2.5),  # upper thigh circumference
-    "rump_knee_length": (28.4, 1.9),  # buttock knee length
-    "shoulder_elbow_length": (18.5, 1.4),
-    "upper_arm_circumference": (15.8, 1.3),
+# Define which measurements we need for MIMo. The numbers indicate
+# the ID's from the website for the infant and children measurements.
+# Notice that a few times the measurements had different names, but described
+# essentially the same thing.
+MAPPING_MEASUREMENTS = {
+    "ankle_circumference": (584, 405),
+    "calf_circumference": (583, 397),
+    "elbow_hand_length": (563, 237),
+    "foot_breadth": (587, 421),
+    "foot_length": (586, 417),
+    "forearm_circumference": (564, 245),
+    "hand_breadth": (567, 265),
+    "hand_length": (566, 261),
+    "head_circumference": (557, 145),
+    "hip_breadth": (579, 361),  # Hip Breadth at Trochanter
+    "knee_sole_length": (582, 121),  # Knee Height
+    "maximum_fist_breadth": (569, 309),
+    "mid_thigh_circumference": (580, 381),  # Upper Thigh Circumference
+    "rump_knee_length": (577, 117),  # Buttock-Knee Length
+    "shoulder_elbow_length": (561, 221),
+    "upper_arm_circumference": (562, 229),
 }
 
 # Store ratios that describe the difference between measurements and the
