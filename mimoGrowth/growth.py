@@ -123,19 +123,22 @@ def calc_growth_params(
     """
 
     dirname = os.path.dirname(os.path.abspath(__file__))
-    path_growth_functions = os.path.join(dirname, "growth_functions.json")
+    path_growth_functions = os.path.join(dirname, "config/params.json")
 
     with open(path_growth_functions) as f:
         growth_functions = json.load(f)
 
-    approx_sizes = utils.estimate_sizes(growth_functions, age)
+    approx_sizes = {}
+    for body_part, params in growth_functions.items():
+        approx_sizes[body_part] = utils.growth_function(age, *params)
 
     if custom_measurements:
         approx_sizes.update(custom_measurements)
 
     approx_sizes = utils.format_sizes(approx_sizes)
 
-    base_values = utils.store_base_values(path_scene)
+    with open("mimoGrowth/config/baseline.json") as f:
+        base_values = json.load(f)
 
     params_geoms = calc_geom_params(approx_sizes, base_values)
     params_bodies = calc_body_params(params_geoms, age)

@@ -3,11 +3,14 @@
 import numpy as np
 
 
+# ...
+URL_ANTHROKIDS = "https://math.nist.gov/~SRessler/anthrokids/data1977/{id}.csv"
+
 # Store the mean values for the age groups on the website. All entries except
 # the last one are from the infant measurements. The last entry is the mean age
 # of the first row from the children measurements.
 # This list will be used to approximate the growth functions.
-MEAN_MEASUREMENT_AGES = [1, 3, 7, 10, 13.5, 17.5, 21.5, 33]
+MEAN_AGES_MEASUREMENTS = [1, 3, 7, 10, 13.5, 17.5, 21.5, 33]
 
 # Define which measurements we need for MIMo. The numbers indicate
 # the ID's from the website for the infant and children measurements.

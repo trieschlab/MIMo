@@ -1,10 +1,7 @@
 """ This module store utility and helper functions. """
 
 from mimoGrowth.constants import RATIOS_MIMO_GEOMS
-import re
-import os
 import numpy as np
-import xml.etree.ElementTree as ET
 
 
 def growth_function(x, a, b, c) -> float:
@@ -31,26 +28,6 @@ def growth_function(x, a, b, c) -> float:
     """
 
     return a * np.log(x + b) + c
-
-
-def estimate_sizes(functions: dict, age: float) -> dict:
-    """
-    This function uses the approximated functions and the given age
-    to estimate sizes for each body part.
-
-    Arguments:
-        functions (dict): The growth functions for all body parts.
-        age (float): The age of MIMo.
-
-    Returns:
-        dict: The predicted size for every body part at the given age.
-    """
-
-    sizes = {}
-    for body_part, params in functions.items():
-        sizes[body_part] = growth_function(age, *params)
-
-    return sizes
 
 
 def format_sizes(sizes: dict) -> dict:
@@ -166,57 +143,3 @@ def calc_volume(size: list, geom_type: str) -> float:
         raise ValueError(f"Unknown geom type '{geom_type}'.")
 
     return vol
-
-
-def store_base_values(path_scene: str) -> None:
-    """
-    This function stores relevant values of the original MIMo model before
-    the age is changed.
-
-    Arguments:
-        path_scene (str): The path to the MuJoCo scene.
-
-    Returns:
-        dict: All relevant values of MIMo.
-    """
-
-    base_values = {"geom": {}, "motor": {}}
-
-    tree_scene = ET.parse(path_scene)
-
-    includes = {}
-    for include in tree_scene.getroot().findall(".//include"):
-        key = "model" if "model" in include.attrib["file"] else "meta"
-        includes[key] = include
-
-    path_dir = os.path.dirname(path_scene)
-    path_model = os.path.join(path_dir, includes["model"].attrib["file"])
-    path_meta = os.path.join(path_dir, includes["meta"].attrib["file"])
-
-    tree_model = ET.parse(path_model)
-    tree_meta = ET.parse(path_meta)
-
-    for geom in tree_model.getroot().findall(".//geom"):
-
-        type_ = geom.attrib["type"]
-
-        size = re.sub(r"\s+", " ", geom.attrib["size"]).strip()
-        size = np.array(size.split(" "), dtype=float)
-
-        vol = calc_volume(size, type_)
-        density = float(geom.attrib["mass"]) / vol
-
-        base_values["geom"][geom.attrib["name"]] = {
-            "type": type_,
-            "size": size,
-            "vol": vol,
-            "density": density,
-        }
-
-    for motor in tree_meta.getroot().find("actuator").findall("motor"):
-
-        base_values["motor"][motor.attrib["name"]] = {
-            "gear": float(motor.attrib["gear"])
-        }
-
-    return base_values
