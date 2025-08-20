@@ -1,0 +1,666 @@
+{
+    "geoms": {
+        "lb": {
+            "type": "capsule",
+            "density": 1066.927581467891,
+            "vol": 0.0010857344210806325
+        },
+        "cb": {
+            "type": "capsule",
+            "density": 1066.9870648940628,
+            "vol": 0.0012413458827933445
+        },
+        "ub1": {
+            "type": "capsule",
+            "density": 919.3844087401999,
+            "vol": 0.0011836180705860808
+        },
+        "ub2": {
+            "type": "capsule",
+            "density": 924.1813407362051,
+            "vol": 0.0010278285852896654
+        },
+        "ub3": {
+            "type": "capsule",
+            "density": 919.2328058204266,
+            "vol": 0.0007851112312684204
+        },
+        "head": {
+            "type": "sphere",
+            "density": 1067.0844555490235,
+            "vol": 0.0016632235534598347
+        },
+        "geom:left_eye1": {
+            "type": "sphere",
+            "density": 1052.1255168017315,
+            "vol": 5.964117303299372e-06
+        },
+        "geom:right_eye1": {
+            "type": "sphere",
+            "density": 1052.1255168017315,
+            "vol": 5.964117303299372e-06
+        },
+        "right_uarm1": {
+            "type": "capsule",
+            "density": 1065.5428521577844,
+            "vol": 0.00025189038569070675
+        },
+        "right_larm": {
+            "type": "capsule",
+            "density": 1065.2743773829318,
+            "vol": 0.00017394579643906203
+        },
+        "geom:right_hand1": {
+            "type": "box",
+            "density": 922.8288393101561,
+            "vol": 4.6758399999999996e-05
+        },
+        "geom:right_hand2": {
+            "type": "cylinder",
+            "density": 881.5308266646764,
+            "vol": 1.8172932262179202e-05
+        },
+        "geom:right_fingers1": {
+            "type": "box",
+            "density": 925.3962200186455,
+            "vol": 3.7756800000000004e-05
+        },
+        "geom:right_fingers2": {
+            "type": "cylinder",
+            "density": 879.9374392398306,
+            "vol": 1.5035159785256176e-05
+        },
+        "left_uarm1": {
+            "type": "capsule",
+            "density": 1065.5428521577844,
+            "vol": 0.00025189038569070675
+        },
+        "left_larm": {
+            "type": "capsule",
+            "density": 1065.2743773829318,
+            "vol": 0.00017394579643906203
+        },
+        "geom:left_hand1": {
+            "type": "box",
+            "density": 922.8288393101561,
+            "vol": 4.6758399999999996e-05
+        },
+        "geom:left_hand2": {
+            "type": "cylinder",
+            "density": 881.5308266646764,
+            "vol": 1.8172932262179202e-05
+        },
+        "geom:left_fingers1": {
+            "type": "box",
+            "density": 925.3962200186455,
+            "vol": 3.7756800000000004e-05
+        },
+        "geom:left_fingers2": {
+            "type": "cylinder",
+            "density": 879.9374392398306,
+            "vol": 1.5035159785256176e-05
+        },
+        "geom:right_upper_leg1": {
+            "type": "capsule",
+            "density": 1066.7131399164894,
+            "vol": 0.0007497798330885983
+        },
+        "geom:right_lower_leg1": {
+            "type": "capsule",
+            "density": 998.3165370862175,
+            "vol": 0.0003346633934114087
+        },
+        "geom:right_lower_leg2": {
+            "type": "capsule",
+            "density": 996.7591728031454,
+            "vol": 0.00011637715825958031
+        },
+        "geom:right_foot1": {
+            "type": "cylinder",
+            "density": 834.6554231412872,
+            "vol": 3.856681345081371e-05
+        },
+        "geom:right_foot2": {
+            "type": "box",
+            "density": 835.7142857142857,
+            "vol": 7.000000000000001e-05
+        },
+        "geom:right_foot3": {
+            "type": "cylinder",
+            "density": 830.2661176794143,
+            "vol": 1.5272211800525447e-05
+        },
+        "geom:right_toes1": {
+            "type": "box",
+            "density": 785.2477731995806,
+            "vol": 1.3804559999999999e-05
+        },
+        "geom:right_toes2": {
+            "type": "cylinder",
+            "density": 780.4958409226547,
+            "vol": 1.5707963267948967e-05
+        },
+        "geom:left_upper_leg1": {
+            "type": "capsule",
+            "density": 1066.7131399164894,
+            "vol": 0.0007497798330885983
+        },
+        "geom:left_lower_leg1": {
+            "type": "capsule",
+            "density": 998.3165370862175,
+            "vol": 0.0003346633934114087
+        },
+        "geom:left_lower_leg2": {
+            "type": "capsule",
+            "density": 996.7591728031454,
+            "vol": 0.00011637715825958031
+        },
+        "geom:left_foot1": {
+            "type": "cylinder",
+            "density": 834.6554231412872,
+            "vol": 3.856681345081371e-05
+        },
+        "geom:left_foot2": {
+            "type": "box",
+            "density": 835.7142857142857,
+            "vol": 7.000000000000001e-05
+        },
+        "geom:left_foot3": {
+            "type": "cylinder",
+            "density": 830.2661176794143,
+            "vol": 1.5272211800525447e-05
+        },
+        "geom:left_toes1": {
+            "type": "box",
+            "density": 785.2477731995806,
+            "vol": 1.3804559999999999e-05
+        },
+        "geom:left_toes2": {
+            "type": "cylinder",
+            "density": 780.4958409226547,
+            "vol": 1.5707963267948967e-05
+        },
+        "geom:right_hand3": {
+            "type": "cylinder",
+            "density": 918.8432799264735,
+            "vol": 3.6643898622945035e-06
+        },
+        "geom:right_hand4": {
+            "type": "cylinder",
+            "density": 918.6858121022575,
+            "vol": 4.924425674592263e-06
+        },
+        "geom:right_ffknuckle1": {
+            "type": "capsule",
+            "density": 1046.7687006329002,
+            "vol": 2.5717238186166206e-06
+        },
+        "geom:right_ffmiddle1": {
+            "type": "capsule",
+            "density": 1039.4656427577358,
+            "vol": 1.4401630399523459e-06
+        },
+        "geom:right_ffdistal1": {
+            "type": "capsule",
+            "density": 1030.7810946403188,
+            "vol": 1.2524482712311309e-06
+        },
+        "geom:right_mfknuckle1": {
+            "type": "capsule",
+            "density": 1049.173573810269,
+            "vol": 3.130082649788388e-06
+        },
+        "geom:right_mfmiddle1": {
+            "type": "capsule",
+            "density": 1040.096062908436,
+            "vol": 1.6892670423988292e-06
+        },
+        "geom:right_mfdistal1": {
+            "type": "capsule",
+            "density": 1039.9028263661098,
+            "vol": 1.5030250523136166e-06
+        },
+        "geom:right_rfknuckle1": {
+            "type": "capsule",
+            "density": 1046.6714895722916,
+            "vol": 2.5452112019298513e-06
+        },
+        "geom:right_rfmiddle1": {
+            "type": "capsule",
+            "density": 1039.6010814850263,
+            "vol": 1.4197753602676098e-06
+        },
+        "geom:right_rfdistal1": {
+            "type": "capsule",
+            "density": 1031.3397050911822,
+            "vol": 1.2760102161330544e-06
+        },
+        "geom:right_lfmetacarpal1": {
+            "type": "box",
+            "density": 938.8854414027163,
+            "vol": 3.0664017919999997e-06
+        },
+        "geom:right_lfmetacarpal2": {
+            "type": "cylinder",
+            "density": 922.0137941011649,
+            "vol": 1.0714590240627203e-06
+        },
+        "geom:right_lfknuckle1": {
+            "type": "capsule",
+            "density": 1042.8943186652596,
+            "vol": 2.054858255189943e-06
+        },
+        "geom:right_lfmiddle1": {
+            "type": "capsule",
+            "density": 1030.4357245763642,
+            "vol": 1.2383111042899768e-06
+        },
+        "geom:right_lfdistal1": {
+            "type": "capsule",
+            "density": 1028.0171522119667,
+            "vol": 1.082666760574157e-06
+        },
+        "geom:right_thbase1": {
+            "type": "capsule",
+            "density": 1057.5948026606573,
+            "vol": 5.165494371054387e-06
+        },
+        "geom:right_thhub1": {
+            "type": "capsule",
+            "density": 1052.4649409507772,
+            "vol": 2.87040440251709e-06
+        },
+        "geom:right_thdistal1": {
+            "type": "capsule",
+            "density": 1046.5942744872139,
+            "vol": 2.397299565993997e-06
+        },
+        "geom:left_hand3": {
+            "type": "cylinder",
+            "density": 918.8432799264735,
+            "vol": 3.6643898622945035e-06
+        },
+        "geom:left_hand4": {
+            "type": "cylinder",
+            "density": 918.6858121022575,
+            "vol": 4.924425674592263e-06
+        },
+        "geom:left_ffknuckle1": {
+            "type": "capsule",
+            "density": 1046.7687006329002,
+            "vol": 2.5717238186166206e-06
+        },
+        "geom:left_ffmiddle1": {
+            "type": "capsule",
+            "density": 1039.4656427577358,
+            "vol": 1.4401630399523459e-06
+        },
+        "geom:left_ffdistal1": {
+            "type": "capsule",
+            "density": 1030.7810946403188,
+            "vol": 1.2524482712311309e-06
+        },
+        "geom:left_mfknuckle1": {
+            "type": "capsule",
+            "density": 1049.173573810269,
+            "vol": 3.130082649788388e-06
+        },
+        "geom:left_mfmiddle1": {
+            "type": "capsule",
+            "density": 1040.096062908436,
+            "vol": 1.6892670423988292e-06
+        },
+        "geom:left_mfdistal1": {
+            "type": "capsule",
+            "density": 1039.9028263661098,
+            "vol": 1.5030250523136166e-06
+        },
+        "geom:left_rfknuckle1": {
+            "type": "capsule",
+            "density": 1046.6714895722916,
+            "vol": 2.5452112019298513e-06
+        },
+        "geom:left_rfmiddle1": {
+            "type": "capsule",
+            "density": 1039.6010814850263,
+            "vol": 1.4197753602676098e-06
+        },
+        "geom:left_rfdistal1": {
+            "type": "capsule",
+            "density": 1031.3397050911822,
+            "vol": 1.2760102161330544e-06
+        },
+        "geom:left_lfmetacarpal1": {
+            "type": "box",
+            "density": 938.8854414027163,
+            "vol": 3.0664017919999997e-06
+        },
+        "geom:left_lfmetacarpal2": {
+            "type": "cylinder",
+            "density": 922.0137941011649,
+            "vol": 1.0714590240627203e-06
+        },
+        "geom:left_lfknuckle1": {
+            "type": "capsule",
+            "density": 1042.8943186652596,
+            "vol": 2.054858255189943e-06
+        },
+        "geom:left_lfmiddle1": {
+            "type": "capsule",
+            "density": 1030.4357245763642,
+            "vol": 1.2383111042899768e-06
+        },
+        "geom:left_lfdistal1": {
+            "type": "capsule",
+            "density": 1028.0171522119667,
+            "vol": 1.082666760574157e-06
+        },
+        "geom:left_thbase1": {
+            "type": "capsule",
+            "density": 1057.5948026606573,
+            "vol": 5.165494371054387e-06
+        },
+        "geom:left_thhub1": {
+            "type": "capsule",
+            "density": 1052.4649409507772,
+            "vol": 2.87040440251709e-06
+        },
+        "geom:left_thdistal1": {
+            "type": "capsule",
+            "density": 1046.5942744872139,
+            "vol": 2.397299565993997e-06
+        },
+        "geom:right_big_toe1": {
+            "type": "box",
+            "density": 840.1686033264979,
+            "vol": 5.266800000000001e-06
+        },
+        "geom:right_big_toe2": {
+            "type": "cylinder",
+            "density": 834.8207281646884,
+            "vol": 4.7123889803846896e-06
+        },
+        "geom:left_big_toe1": {
+            "type": "box",
+            "density": 840.1686033264979,
+            "vol": 5.266800000000001e-06
+        },
+        "geom:left_big_toe2": {
+            "type": "cylinder",
+            "density": 834.8207281646884,
+            "vol": 4.7123889803846896e-06
+        }
+    },
+    "motors": {
+        "act:hip_bend": {
+            "gear": 10.58
+        },
+        "act:hip_twist": {
+            "gear": 3.63
+        },
+        "act:hip_lean": {
+            "gear": 7.25
+        },
+        "act:head_swivel": {
+            "gear": 1.8
+        },
+        "act:head_tilt": {
+            "gear": 3.3
+        },
+        "act:head_tilt_side": {
+            "gear": 1.8
+        },
+        "act:left_eye_horizontal": {
+            "gear": 0.0054
+        },
+        "act:left_eye_vertical": {
+            "gear": 0.0054
+        },
+        "act:left_eye_torsional": {
+            "gear": 0.0037
+        },
+        "act:right_eye_horizontal": {
+            "gear": 0.0054
+        },
+        "act:right_eye_vertical": {
+            "gear": 0.0054
+        },
+        "act:right_eye_torsional": {
+            "gear": 0.0037
+        },
+        "act:right_shoulder_horizontal": {
+            "gear": 1.8
+        },
+        "act:right_shoulder_abduction": {
+            "gear": 4.0
+        },
+        "act:right_shoulder_internal": {
+            "gear": 2.5
+        },
+        "act:right_elbow": {
+            "gear": 3.6
+        },
+        "act:right_wrist_rotation": {
+            "gear": 0.7
+        },
+        "act:right_wrist_flexion": {
+            "gear": 1.24
+        },
+        "act:right_wrist_ulnar": {
+            "gear": 0.95
+        },
+        "act:right_fingers": {
+            "gear": 0.69
+        },
+        "act:left_shoulder_horizontal": {
+            "gear": 1.8
+        },
+        "act:left_shoulder_abduction": {
+            "gear": 4.0
+        },
+        "act:left_shoulder_internal": {
+            "gear": 2.5
+        },
+        "act:left_elbow": {
+            "gear": 3.6
+        },
+        "act:left_wrist_rotation": {
+            "gear": 0.7
+        },
+        "act:left_wrist_flexion": {
+            "gear": 1.24
+        },
+        "act:left_wrist_ulnar": {
+            "gear": 0.95
+        },
+        "act:left_fingers": {
+            "gear": 0.69
+        },
+        "act:right_hip_flex": {
+            "gear": 8.0
+        },
+        "act:right_hip_abduction": {
+            "gear": 6.24
+        },
+        "act:right_hip_rotation": {
+            "gear": 3.54
+        },
+        "act:right_knee": {
+            "gear": 10.0
+        },
+        "act:right_foot_flexion": {
+            "gear": 3.78
+        },
+        "act:right_foot_inversion": {
+            "gear": 1.16
+        },
+        "act:right_foot_rotation": {
+            "gear": 1.2
+        },
+        "act:right_toes": {
+            "gear": 0.33
+        },
+        "act:left_hip_flex": {
+            "gear": 8.0
+        },
+        "act:left_hip_abduction": {
+            "gear": 6.24
+        },
+        "act:left_hip_rotation": {
+            "gear": 3.54
+        },
+        "act:left_knee": {
+            "gear": 10.0
+        },
+        "act:left_foot_flexion": {
+            "gear": 3.78
+        },
+        "act:left_foot_inversion": {
+            "gear": 1.16
+        },
+        "act:left_foot_rotation": {
+            "gear": 1.2
+        },
+        "act:left_toes": {
+            "gear": 0.33
+        },
+        "act:right_ff_side": {
+            "gear": 0.05
+        },
+        "act:right_ff_knuckle": {
+            "gear": 0.0619
+        },
+        "act:right_ff_middle": {
+            "gear": 0.02063
+        },
+        "act:right_ff_distal": {
+            "gear": 0.01548
+        },
+        "act:right_mf_side": {
+            "gear": 0.05
+        },
+        "act:right_mf_knuckle": {
+            "gear": 0.117
+        },
+        "act:right_mf_middle": {
+            "gear": 0.039
+        },
+        "act:right_mf_distal": {
+            "gear": 0.02925
+        },
+        "act:right_rf_side": {
+            "gear": 0.05
+        },
+        "act:right_rf_knuckle": {
+            "gear": 0.078
+        },
+        "act:right_rf_middle": {
+            "gear": 0.026
+        },
+        "act:right_rf_distal": {
+            "gear": 0.0195
+        },
+        "act:right_lf_side": {
+            "gear": 0.05
+        },
+        "act:right_lf_meta": {
+            "gear": 0.064
+        },
+        "act:right_lf_knuckle": {
+            "gear": 0.0196
+        },
+        "act:right_lf_middle": {
+            "gear": 0.00653
+        },
+        "act:right_lf_distal": {
+            "gear": 0.0049
+        },
+        "act:right_thumb_side": {
+            "gear": 0.373
+        },
+        "act:right_thumb_add": {
+            "gear": 0.134
+        },
+        "act:right_thumb_pivot": {
+            "gear": 0.1
+        },
+        "act:right_thumb_middle": {
+            "gear": 0.126
+        },
+        "act:right_thumb_distal": {
+            "gear": 0.0945
+        },
+        "act:left_ff_side": {
+            "gear": 0.05
+        },
+        "act:left_ff_knuckle": {
+            "gear": 0.0619
+        },
+        "act:left_ff_middle": {
+            "gear": 0.02063
+        },
+        "act:left_ff_distal": {
+            "gear": 0.01548
+        },
+        "act:left_mf_side": {
+            "gear": 0.05
+        },
+        "act:left_mf_knuckle": {
+            "gear": 0.117
+        },
+        "act:left_mf_middle": {
+            "gear": 0.039
+        },
+        "act:left_mf_distal": {
+            "gear": 0.02925
+        },
+        "act:left_rf_side": {
+            "gear": 0.05
+        },
+        "act:left_rf_knuckle": {
+            "gear": 0.078
+        },
+        "act:left_rf_middle": {
+            "gear": 0.026
+        },
+        "act:left_rf_distal": {
+            "gear": 0.0195
+        },
+        "act:left_lf_side": {
+            "gear": 0.05
+        },
+        "act:left_lf_meta": {
+            "gear": 0.064
+        },
+        "act:left_lf_knuckle": {
+            "gear": 0.0196
+        },
+        "act:left_lf_middle": {
+            "gear": 0.00653
+        },
+        "act:left_lf_distal": {
+            "gear": 0.0049
+        },
+        "act:left_thumb_side": {
+            "gear": 0.373
+        },
+        "act:left_thumb_add": {
+            "gear": 0.134
+        },
+        "act:left_thumb_pivot": {
+            "gear": 0.1
+        },
+        "act:left_thumb_middle": {
+            "gear": 0.126
+        },
+        "act:left_thumb_distal": {
+            "gear": 0.0945
+        },
+        "act:right_big_toe": {
+            "gear": 0.165
+        },
+        "act:left_big_toe": {
+            "gear": 0.165
+        }
+    }
+}

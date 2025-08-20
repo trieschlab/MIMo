@@ -14,7 +14,8 @@ from gymnasium import spaces, utils
 from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
-from mimoGrowth.growth import adjust_mimo_to_age, delete_growth_scene
+from mimoGrowth.growth import adjust_mimo_to_age
+from mimoGrowth.scene import delete_growth_scene
 from mimoTouch.touch import TrimeshTouch, Touch
 from mimoVision.vision import SimpleVision, Vision
 from mimoVestibular.vestibular import SimpleVestibular, Vestibular

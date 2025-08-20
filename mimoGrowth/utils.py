@@ -1,123 +1,50 @@
-""" This module store utility and helper functions. """
+"""
+Utility functions that are used throughout various scripts.
 
-from mimoGrowth.constants import RATIOS_MIMO_GEOMS
+Includes:
+- `growth_function`: Defines the function type that is used to approximate
+    growth functions from the infant measurements.
+- `calc_volume`: Calculates the volume of a geom based on its size and type.
+- `mj_unit`: Converts one or more measurements to the expected MuJoCo format.
+"""
+
 import numpy as np
 
 
-def growth_function(x, a, b, c) -> float:
+def growth_function(x: float, a: float, b: float, c: float) -> float:
     """
-    This function represents the standard form of the growth functions.
+    Defines the function type that is used to approximate the growth functions
+    from the infant measurements. Rerun the `update.py` script so that the
+    changes take effect.
 
     By default, this is a logarithmic function. If you want to explore
     different types of approximations, simply modify the return statement
-    to use other mathematical expressions (e.g., a quadratic function).
+    to use other mathematical expressions. Notice that config values
+    (`update.py`) may need to be adjusted.
 
     Example: Use `a * x ** 2 + b * x + c` if you want to try a
     quadratic function.
 
-    Notice that the bounds in `approximate_growth_functions` should be
-    changed accordingly.
-
     Arguments:
         x (float): The input value for which the function is evaluated.
             This represents the age of MIMo and will be between 0 and 24.
-        a, b, c (float): Parameters, that will modify the function.
+        a,b,c (float): Parameters, that will modify the function.
 
     Returns:
-        float: The result of the function evaluation at the given `x`.
+        float: The result of the function evaluation at the given age.
     """
 
     return a * np.log(x + b) + c
 
 
-def format_sizes(sizes: dict) -> dict:
-    """
-    This function will format the estimated sizes.
-    Specifically, this means:
-    - Converting units to MuJoCo standards
-    - Group measurements so they can be associated with a geom
-    - Applying ratios
-
-    This list describes the high-level body parts and the
-    corresponding measurements:
-    - head      : Head Circumference
-    - upper_arm : [Upper Arm Circumference, Shoulder Elbow Length]
-    - lower_arm : [Forearm Circumference, Elbow Hand Length - Hand Length]
-    - hand      : [Hand Length, Hand Breadth, Maximum Fist Breadth]
-    - torso     : Hip Breadth
-    - upper_leg : [Mid Thigh Circumference, Rump Knee Length]
-    - lower_leg : [Calf Circumference, Ankle Circumference, Knee Sole Length]
-    - foot      : [Foot Length, Foot Breadth]
-
-    Arguments:
-        sizes (dict): The estimated sizes for all body parts.
-
-    Returns:
-        dict: The formatted sizes for all body parts.
-    """
-
-    # Use meter as unit and convert circumference to radius or
-    # split lengths in half. MuJoCo expects these units.
-    for body_part, meas in sizes.items():
-        sizes[body_part] = np.array(meas) / 100
-        sizes[body_part] /= 2 * np.pi if "circum" in body_part else 2
-
-    # Group the measurements. This will make later calculations easier.
-    # Notice that for some body parts we need to subtract the radius from the
-    # length since MuJoCo expects the half-length only of the cylinder part.
-    sizes = {
-        "head": [sizes["head_circumference"]],
-        "upper_arm": [
-            sizes["upper_arm_circumference"],
-            sizes["shoulder_elbow_length"] - sizes["upper_arm_circumference"]
-        ],
-        "lower_arm": [
-            sizes["forearm_circumference"],
-            (
-                sizes["elbow_hand_length"] -
-                sizes["hand_length"] -
-                sizes["forearm_circumference"]
-            )
-        ],
-        "hand": [
-            sizes["hand_length"],
-            sizes["hand_breadth"],
-            sizes["maximum_fist_breadth"]
-        ],
-        # For the torso we need to duplicate the size by five
-        # since the whole torso is made up of five capsules.
-        # Each capsule will be tweaked a little by the ratio later.
-        "torso": np.repeat(sizes["hip_breadth"], 5),
-        "upper_leg": [
-            sizes["mid_thigh_circumference"],
-            sizes["rump_knee_length"] - sizes["mid_thigh_circumference"]
-        ],
-        "lower_leg": [
-            sizes["calf_circumference"],
-            sizes["ankle_circumference"],
-            (
-                sizes["knee_sole_length"] -
-                sizes["calf_circumference"] / 2 -
-                sizes["ankle_circumference"] / 2
-            )
-        ],
-        "foot": [sizes["foot_length"], sizes["foot_breadth"]]
-    }
-
-    for body_part in sizes.keys():
-        sizes[body_part] *= np.array(RATIOS_MIMO_GEOMS[body_part])
-
-    return sizes
-
-
 def calc_volume(size: list, geom_type: str) -> float:
     """
-    This function returns the volume based on the size and type of a geom.
+    Calculates the volume of a geom based on its size and type.
 
     Arguments:
         size (list): The size of the geom.
         geom_type (str): The type of the geom. This needs to be one of the
-        following: 'sphere', 'capsule' or 'box'
+            following: 'sphere', 'capsule', or 'box'
 
     Returns:
         float: The volume of the geom.
@@ -143,3 +70,40 @@ def calc_volume(size: list, geom_type: str) -> float:
         raise ValueError(f"Unknown geom type '{geom_type}'.")
 
     return vol
+
+
+def mj_unit(nums: float | list, unit: str, measure: str) -> float | list:
+    """
+    Converts one ore more measurement to the format expected by MuJoCo.
+
+    Arguments:
+        nums (float | list): Numeric input value(s) to format.
+        unit (str): Unit of the input value(s). Must be `cm` or `mm`.
+        measure (str): Type of measurement. Must be `circ`, `len` or `diam`.
+
+    Returns:
+        (float | list): Converted value(s) in meters, scaled for MuJoCo use.
+    """
+
+    def convert(num):
+
+        if unit == "cm":
+            num /= 100
+        elif unit == "mm":
+            num /= 1000
+        else:
+            raise ValueError(f"Unknown unit: {unit}")
+
+        if measure == "circ":
+            num /= 2 * np.pi
+        elif measure in ["len", "diam", "breadth"]:
+            num /= 2
+        else:
+            raise ValueError(f"Unknown type: {measure}")
+
+        return num
+
+    if isinstance(nums, list):
+        return [convert(num) for num in nums]
+
+    return convert(nums)
