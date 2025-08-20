@@ -116,7 +116,8 @@ def get_version(path: str) -> str:
 
 
 def get_growth_params(
-        age: float, mimo_version: str, custom_measurements: dict) -> dict:
+        age: float, mimo_version: str,
+        custom_measurements: dict = None) -> dict:
     """
     Calculates all growth parameters for the given age and MIMo version.
     Parameters include:
@@ -125,9 +126,9 @@ def get_growth_params(
     - Gear values of motors.
 
     Arguments:
-        age (float): The age of MIMo.
+        age (float): The age of MIMo. Must be between 0 and 24.
         mimo_version (str): Version of MIMo. Must be 'v1' or 'v2'.
-        custom_measurements (dict): Custom measurements for MIMo.
+        custom_measurements (dict): Custom measurements for MIMo (optional).
 
     Returns:
         dict: All relevant growth parameters.
