@@ -662,7 +662,7 @@ SCHEMA_GEOMS_V2 = {
                 RATIOS_V2["toes_breadth_diff"]
             )
         ],
-        "pos": [sub(mul(FOOT_HEIGHT, 2), EPSILON)]
+        "pos": [mul(ref("geoms", "geom:left_toes1", "size", 0), 2)]
     },
     "geom:left_big_toe1": {
         "size": [
@@ -680,7 +680,7 @@ SCHEMA_GEOMS_V2 = {
                 RATIOS_V2["big_toe_breadth_diff"]
             )
         ],
-        "pos": [sub(mul(FOOT_HEIGHT, 2), EPSILON)]
+        "pos": [mul(ref("geoms", "geom:left_big_toe1", "size", 0), 2)]
     },
 
 }
@@ -866,16 +866,13 @@ SCHEMA_BODIES_V2 = {
     "left_toes": {
         "pos": [
             ref("geoms", "geom:left_foot3", "pos", 0),
-            ref("geoms", "geom:left_big_toe2", "size", 1),
+            mul("foot_breadth", 0.3)
         ],
     },
     "left_big_toe": {
         "pos": [
             ref("geoms", "geom:left_foot3", "pos", 0),
-            neg(add(
-                ref("geoms", "geom:left_big_toe2", "size", 1),
-                FOOT_HEIGHT
-            ))
+            neg(mul("foot_breadth", 0.7))
         ]
     }
 
