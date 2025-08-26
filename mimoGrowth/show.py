@@ -3,7 +3,7 @@ Shows the growth of MIMo. This module is for visual purposes only.
 """
 
 from mimoEnv.utils import set_joint_qpos
-from mimoGrowth.growth import get_growth_params
+from mimoGrowth.growth import get_growth_params, get_version
 import time
 import numpy as np
 import mujoco
@@ -30,7 +30,8 @@ def update_mimo(age: float, model: MjModel, data: MjData) -> None:
     """
 
     # Get the growth parameters for the given age.
-    growth_params = get_growth_params(age, "v1")
+    mimo_version = get_version("mimoEnv/assets/growth.xml")
+    growth_params = get_growth_params(age, mimo_version)
 
     # Update geoms.
     for geom_name, attributes in growth_params["geoms"].items():

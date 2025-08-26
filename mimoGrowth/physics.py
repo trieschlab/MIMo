@@ -98,10 +98,11 @@ def calc_motor_gear(params: dict, defaults: dict, mimo_version: str) -> None:
 
     params["motors"] = {}
 
+    mapping = MAPPING_MOTOR.copy()
     if mimo_version == "v2":
-        MAPPING_MOTOR.update(MAPPING_MOTOR_V2)
+        mapping.update(MAPPING_MOTOR_V2)
 
-    for geom, motors in MAPPING_MOTOR.items():
+    for geom, motors in mapping.items():
 
         # Calculate the volume of the geom. Notice that the growth params
         # already contain values based on the age.
