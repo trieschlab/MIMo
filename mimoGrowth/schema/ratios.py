@@ -139,9 +139,12 @@ RATIOS_V2 = {
 
     # === HAND ===
 
-    # This ratio describes the z-position of the hand body relative to the
-    # length of the lower arm geom.
-    "hand_pos": 0.11032 / (0.023 * 2 + 0.037 * 2),
+    # This ratio describes the position of the hand body relative to hand
+    # measurements or other body positions.
+    "hand_pos_x": 0.007 / MJ_HAND_BREADTH,
+    "hand_pos_y": 0.009 / .00584,  # hand height
+    "hand_pos_z": 0.11032 / (0.023 * 2 + 0.037 * 2),
+
 
     # The palm of MIMo is splitted into two geoms. This ratio describes the
     # proportion between the geoms and the actual infant measurement.
@@ -152,10 +155,9 @@ RATIOS_V2 = {
     # ratio that can be used at any age.
     "hand_height": .00584 / np.mean(mj_unit([9.3, 4.6], "cm", "len")),
 
-    # These ratios describe the length of the hand/palm geoms relative to the
+    # This ratios describe the length of the hand/palm geom relative to the
     # hand length measurement.
     "hand1_len": .02532 / MJ_HAND_LENGTH,
-    "hand2_len": .01292 / MJ_HAND_LENGTH,
 
     # This ratio describes the difference between the box geoms of the little
     # finger and essentially decides the size of the gap.
@@ -167,10 +169,11 @@ RATIOS_V2 = {
     "lf_body1": -0.01498 / MJ_HAND_BREADTH,
     "lf_body2": 0.0031 / MJ_HAND_BREADTH,
 
-    # thumb body position is custom
+    # These ratios describe the thumb body position relative to the
+    # hand breadth.
     "thumb_body1": 0.0123 / MJ_HAND_BREADTH,
-    "thumb_body2": 0.00423 / MJ_HAND_BREADTH,
-    "thumb_body3": -0.01602 / MJ_HAND_BREADTH,
+    "thumb_body2": 0.00423 / .00584,  # hand height
+    "thumb_body3": -0.01602 / MJ_HAND_LENGTH,
 
     # ...
     "thumb1": 0.01027 / MJ_HAND_BREADTH,
