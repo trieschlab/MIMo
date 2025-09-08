@@ -53,25 +53,19 @@ HAND_HEIGHT_V2 = mul(
     RATIOS_V2["hand_height"]
 )
 
-# These values describe the mean difference between the knuckle and middle or
-# distal geoms of all fingers and the thumb.
-KNUCKLE_TO_MIDDLE = 0.943
-KNUCKLE_TO_DISTAL = 0.911
-KNUCKLE_TO_MIDDLE_THUMB = 0.866
-KNUCKLE_TO_DISTAL_THUMB = 0.839
-
-# These values describe the difference between the middle finger diameter and
-# the diameter of the index/little finger. Notice that index finger and ring
-# finger are identical so we need no extra value there.
-MIDDLE_TO_INDEX = 0.9487
-MIDDLE_TO_LITTLE = 0.9136
+# ...
+PHA_SHRINK = 0.95
 
 # ...
-MIDDLE_FINGER_TO_HAND_LENGTH = 0.42
+LEN_MID_IDX = 0.9
+LEN_MID_LITTLE = 0.88
+DIAM_MID_IDX = 0.95
+DIAM_MID_LITTLE = 0.91
 
 # ...
-MIDDLE_TO_INDEX_LEN = .00992 / .011
-MIDDLE_TO_LITTLE_LEN = .00816 / .011
+PALM_RATIO = 0.53
+PALM_LEN = mul("hand_length", PALM_RATIO)
+FINGER_LEN = mul("hand_length", 1 - PALM_RATIO)
 
 # Define a small constant to subtract from some geom vectors so that the
 # individual parts won't have a visual overlap. This value is from the
@@ -402,7 +396,7 @@ SCHEMA_GEOMS_V2 = {
         "size": [
             mul("hand_breadth", RATIOS_V2["hand_breadth"]),
             HAND_HEIGHT_V2,
-            mul("hand_length", RATIOS_V2["hand1_len"])
+            sub(PALM_LEN, HAND_HEIGHT_V2)
         ],
         "pos": [0, 0, 0],
     },
@@ -444,40 +438,27 @@ SCHEMA_GEOMS_V2 = {
 
     "geom:left_ffknuckle1": {
         "size": [
-            mul("middle_finger_diameter", MIDDLE_TO_INDEX),
-            mul(
-                ref("geoms", "geom:left_mfknuckle1", "size", 1),
-                MIDDLE_TO_INDEX_LEN
-            )
+            mul("middle_finger_diameter", DIAM_MID_IDX),
+            mul(FINGER_LEN, 0.5, LEN_MID_IDX)
         ],
-        "pos": [
-            0,
-            0,
-            add(
-                ref("geoms", "geom:left_ffknuckle1", "size", 0),
-                ref("geoms", "geom:left_ffknuckle1", "size", 1),
-            )
-        ],
+        "pos": [0, 0, ref("geoms", "geom:left_ffknuckle1", "size", 1)],
     },
     "geom:left_ffmiddle1": {
         "size": [
-            mul(
-                ref("geoms", "geom:left_ffknuckle1", "size", 0),
-                KNUCKLE_TO_MIDDLE
-            ),
-            mul(ref("geoms", "geom:left_ffknuckle1", "size", 1), 0.5)
+            mul(ref("geoms", "geom:left_ffknuckle1", "size", 0), PHA_SHRINK),
+            mul(ref("geoms", "geom:left_ffknuckle1", "size", 1), 0.5),
         ],
-        "pos": [0, 0, ref("geoms", "geom:left_ffmiddle1", "size", 0),],
+        "pos": [0, 0, ref("geoms", "geom:left_ffmiddle1", "size", 1)],
     },
     "geom:left_ffdistal1": {
         "size": [
-            mul(
-                ref("geoms", "geom:left_ffknuckle1", "size", 0),
-                KNUCKLE_TO_DISTAL
+            mul(ref("geoms", "geom:left_ffmiddle1", "size", 0), PHA_SHRINK),
+            sub(
+                mul(ref("geoms", "geom:left_ffknuckle1", "size", 1), 0.5),
+                mul(ref("geoms", "geom:left_ffdistal1", "size", 0), 0.5),
             ),
-            mul(ref("geoms", "geom:left_ffknuckle1", "size", 1), 0.5)
         ],
-        "pos": [0, 0, ref("geoms", "geom:left_ffdistal1", "size", 0)],
+        "pos": [0, 0, ref("geoms", "geom:left_ffdistal1", "size", 1)],
     },
 
     # === MIDDLE FINGER ===
@@ -485,37 +466,37 @@ SCHEMA_GEOMS_V2 = {
     "geom:left_mfknuckle1": {
         "size": [
             "middle_finger_diameter",
-            mul(mul("hand_length", MIDDLE_FINGER_TO_HAND_LENGTH), 0.5)
+            mul(FINGER_LEN, 0.5)
         ],
         "pos": [
             0,
             0,
-            add(
-                ref("geoms", "geom:left_mfknuckle1", "size", 0),
-                ref("geoms", "geom:left_mfknuckle1", "size", 1),
-            )
+            ref("geoms", "geom:left_mfknuckle1", "size", 1)
         ],
     },
     "geom:left_mfmiddle1": {
         "size": [
-            mul("middle_finger_diameter", KNUCKLE_TO_MIDDLE),
-            mul(ref("geoms", "geom:left_mfknuckle1", "size", 1), 0.5)
+            mul(ref("geoms", "geom:left_mfknuckle1", "size", 0), PHA_SHRINK),
+            mul(ref("geoms", "geom:left_mfknuckle1", "size", 1), 0.5),
         ],
         "pos": [
             0,
             0,
-            ref("geoms", "geom:left_mfmiddle1", "size", 0),
+            ref("geoms", "geom:left_mfmiddle1", "size", 1)
         ],
     },
     "geom:left_mfdistal1": {
         "size": [
-            mul("middle_finger_diameter", KNUCKLE_TO_DISTAL),
-            mul(ref("geoms", "geom:left_mfknuckle1", "size", 1), 0.5)
+            mul(ref("geoms", "geom:left_mfmiddle1", "size", 0), PHA_SHRINK),
+            sub(
+                mul(ref("geoms", "geom:left_mfknuckle1", "size", 1), 0.5),
+                mul(ref("geoms", "geom:left_mfdistal1", "size", 0), 0.5),
+            ),
         ],
         "pos": [
             0,
             0,
-            ref("geoms", "geom:left_mfdistal1", "size", 0),
+            ref("geoms", "geom:left_mfdistal1", "size", 1)
         ]
     },
 
@@ -523,44 +504,27 @@ SCHEMA_GEOMS_V2 = {
 
     "geom:left_rfknuckle1": {
         "size": [
-            mul("middle_finger_diameter", MIDDLE_TO_INDEX),
-            mul(
-                ref("geoms", "geom:left_mfknuckle1", "size", 1),
-                MIDDLE_TO_INDEX_LEN
-            )
+            mul("middle_finger_diameter", DIAM_MID_IDX),
+            mul(FINGER_LEN, 0.5, LEN_MID_IDX)
         ],
-        "pos": [
-            0,
-            0,
-            add(
-                ref("geoms", "geom:left_rfknuckle1", "size", 0),
-                ref("geoms", "geom:left_rfknuckle1", "size", 1),
-            )
-        ],
+        "pos": [0, 0, ref("geoms", "geom:left_rfknuckle1", "size", 1)],
     },
     "geom:left_rfmiddle1": {
         "size": [
-            mul(
-                ref("geoms", "geom:left_rfknuckle1", "size", 0),
-                KNUCKLE_TO_MIDDLE
-            ),
-            mul(ref("geoms", "geom:left_rfknuckle1", "size", 1), 0.5)
+            mul(ref("geoms", "geom:left_rfknuckle1", "size", 0), PHA_SHRINK),
+            mul(ref("geoms", "geom:left_rfknuckle1", "size", 1), 0.5),
         ],
-        "pos": [
-            0,
-            0,
-            ref("geoms", "geom:left_rfmiddle1", "size", 0),
-        ],
+        "pos": [0, 0, ref("geoms", "geom:left_rfmiddle1", "size", 1)],
     },
     "geom:left_rfdistal1": {
         "size": [
-            mul(
-                ref("geoms", "geom:left_rfknuckle1", "size", 0),
-                KNUCKLE_TO_DISTAL
+            mul(ref("geoms", "geom:left_rfmiddle1", "size", 0), PHA_SHRINK),
+            sub(
+                mul(ref("geoms", "geom:left_rfknuckle1", "size", 1), 0.5),
+                mul(ref("geoms", "geom:left_rfdistal1", "size", 0), 0.5),
             ),
-            mul(ref("geoms", "geom:left_rfknuckle1", "size", 1), 0.5)
         ],
-        "pos": [0, 0, ref("geoms", "geom:left_rfdistal1", "size", 0),],
+        "pos": [0, 0, ref("geoms", "geom:left_rfdistal1", "size", 1)],
     },
 
     # === LITTLE FINGER ===
@@ -601,58 +565,48 @@ SCHEMA_GEOMS_V2 = {
     },
     "geom:left_lfknuckle1": {
         "size": [
-            mul("middle_finger_diameter", MIDDLE_TO_LITTLE),
-            mul(
-                ref("geoms", "geom:left_mfknuckle1", "size", 1),
-                MIDDLE_TO_LITTLE_LEN
-            )
+            mul("middle_finger_diameter", DIAM_MID_LITTLE),
+            mul(FINGER_LEN, 0.5, LEN_MID_LITTLE)
         ],
-        "pos": [
-            0,
-            0,
-            add(
-                ref("geoms", "geom:left_lfknuckle1", "size", 0),
-                ref("geoms", "geom:left_lfknuckle1", "size", 1)
-            )
-        ],
+        "pos": [0, 0, ref("geoms", "geom:left_lfknuckle1", "size", 1)],
     },
     "geom:left_lfmiddle1": {
         "size": [
-            mul(
-                ref("geoms", "geom:left_lfknuckle1", "size", 0),
-                KNUCKLE_TO_MIDDLE
-            ),
-            mul(ref("geoms", "geom:left_lfknuckle1", "size", 1), 0.5)
+            mul(ref("geoms", "geom:left_lfknuckle1", "size", 0), PHA_SHRINK),
+            mul(ref("geoms", "geom:left_lfknuckle1", "size", 1), 0.5),
         ],
-        "pos": [0, 0, ref("geoms", "geom:left_lfmiddle1", "size", 0)],
+        "pos": [0, 0, ref("geoms", "geom:left_lfmiddle1", "size", 1)],
     },
     "geom:left_lfdistal1": {
         "size": [
-            mul(
-                ref("geoms", "geom:left_lfknuckle1", "size", 0),
-                KNUCKLE_TO_DISTAL
+            mul(ref("geoms", "geom:left_lfmiddle1", "size", 0), PHA_SHRINK),
+            sub(
+                mul(ref("geoms", "geom:left_lfknuckle1", "size", 1), 0.5),
+                mul(ref("geoms", "geom:left_lfdistal1", "size", 0), 0.5),
             ),
-            mul(ref("geoms", "geom:left_lfknuckle1", "size", 1), 0.5)
         ],
-        "pos": [0, 0, ref("geoms", "geom:left_lfdistal1", "size", 0)],
+        "pos": [0, 0, ref("geoms", "geom:left_lfdistal1", "size", 1)],
     },
 
     # === THUMB ===
 
     "geom:left_thbase1": {
-        "size": ["thumb_diameter", mul("hand_breadth", RATIOS_V2["thumb1"])],
+        "size": [
+            "thumb_diameter",
+            mul(ref("geoms", "geom:left_mfknuckle1", "size", 1), 0.95)
+        ],
         "pos": [0, 0, ref("geoms", "geom:left_thbase1", "size", 1)],
     },
     "geom:left_thhub1": {
         "size": [
-            mul("thumb_diameter", KNUCKLE_TO_MIDDLE_THUMB),
+            mul(ref("geoms", "geom:left_thbase1", "size", 0), PHA_SHRINK),
             mul(ref("geoms", "geom:left_thbase1", "size", 1), 0.5)
         ],
         "pos": [0, 0, ref("geoms", "geom:left_thhub1", "size", 1)]
     },
     "geom:left_thdistal1": {
         "size": [
-            mul("thumb_diameter", KNUCKLE_TO_DISTAL_THUMB),
+            mul(ref("geoms", "geom:left_thhub1", "size", 0), PHA_SHRINK),
             mul(ref("geoms", "geom:left_thbase1", "size", 1), 0.5)
         ],
         "pos": [0, 0, ref("geoms", "geom:left_thdistal1", "size", 1)],
@@ -706,7 +660,7 @@ SCHEMA_BODIES_V2 = {
     "left_hand": {
         "pos": [
             mul("hand_breadth", RATIOS_V2["hand_pos_x"]),
-            0,  # mul(HAND_HEIGHT_V2, RATIOS_V2["hand_pos_y"]),
+            mul(HAND_HEIGHT_V2, RATIOS_V2["hand_pos_y"]),
             mul(add(
                 mul(ref("geoms", "left_larm", "size", 0), 2),
                 mul(ref("geoms", "left_larm", "size", 1), 2),
@@ -731,10 +685,7 @@ SCHEMA_BODIES_V2 = {
         "pos": [
             0,
             0,
-            add(
-                ref("geoms", "geom:left_ffmiddle1", "size", 1),
-                mul(ref("geoms", "geom:left_ffknuckle1", "size", 1), 2)
-            )
+            mul(ref("geoms", "geom:left_ffknuckle1", "size", 1), 2)
         ]
     },
     "left_ffdistal": {
@@ -758,10 +709,7 @@ SCHEMA_BODIES_V2 = {
         "pos": [
             0,
             0,
-            add(
-                ref("geoms", "geom:left_mfmiddle1", "size", 1),
-                mul(ref("geoms", "geom:left_mfknuckle1", "size", 1), 2)
-            )
+            mul(ref("geoms", "geom:left_mfknuckle1", "size", 1), 2)
         ]
     },
     "left_mfdistal": {
@@ -786,21 +734,10 @@ SCHEMA_BODIES_V2 = {
         ]
     },
     "left_rfmiddle": {
-        "pos": [
-            0,
-            0,
-            add(
-                ref("geoms", "geom:left_rfmiddle1", "size", 1),
-                mul(ref("geoms", "geom:left_rfknuckle1", "size", 1), 2)
-            )
-        ]
+        "pos": [0, 0, mul(ref("geoms", "geom:left_rfknuckle1", "size", 1), 2)]
     },
     "left_rfdistal": {
-        "pos": [
-            0,
-            0,
-            mul(ref("geoms", "geom:left_rfmiddle1", "size", 1), 2)
-        ]
+        "pos": [0, 0, mul(ref("geoms", "geom:left_rfmiddle1", "size", 1), 2)]
     },
 
     # === LITTLE FINGER ===
@@ -830,21 +767,10 @@ SCHEMA_BODIES_V2 = {
         ]
     },
     "left_lfmiddle": {
-        "pos": [
-            0,
-            0,
-            add(
-                ref("geoms", "geom:left_lfmiddle1", "size", 1),
-                mul(ref("geoms", "geom:left_lfknuckle1", "size", 1), 2)
-            )
-        ]
+        "pos": [0, 0, mul(ref("geoms", "geom:left_lfknuckle1", "size", 1), 2)]
     },
     "left_lfdistal": {
-        "pos": [
-            0,
-            0,
-            mul(ref("geoms", "geom:left_lfmiddle1", "size", 1), 2)
-        ]
+        "pos": [0, 0, mul(ref("geoms", "geom:left_lfmiddle1", "size", 1), 2)]
     },
 
     # === THUMB ===
@@ -857,18 +783,10 @@ SCHEMA_BODIES_V2 = {
         ]
     },
     "left_thhub": {
-        "pos": [
-            0,
-            0,
-            mul(ref("geoms", "geom:left_thbase1", "size", 1), 2)
-        ]
+        "pos": [0, 0, mul(ref("geoms", "geom:left_thbase1", "size", 1), 2)]
     },
     "left_thdistal": {
-        "pos": [
-            0,
-            0,
-            mul(ref("geoms", "geom:left_thhub1", "size", 1), 2)
-        ]
+        "pos": [0, 0, mul(ref("geoms", "geom:left_thhub1", "size", 1), 2)]
     },
 
     # === TOES ===

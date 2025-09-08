@@ -145,7 +145,6 @@ RATIOS_V2 = {
     "hand_pos_y": 0.009 / .00584,  # hand height
     "hand_pos_z": 0.11032 / (0.023 * 2 + 0.037 * 2),
 
-
     # The palm of MIMo is splitted into two geoms. This ratio describes the
     # proportion between the geoms and the actual infant measurement.
     "hand_breadth": 0.01712 / mj_unit(4.6, "cm", "len"),
@@ -154,10 +153,6 @@ RATIOS_V2 = {
     # original model and the mean of length/breadth measurement to compute a
     # ratio that can be used at any age.
     "hand_height": .00584 / np.mean(mj_unit([9.3, 4.6], "cm", "len")),
-
-    # This ratios describe the length of the hand/palm geom relative to the
-    # hand length measurement.
-    "hand1_len": .02532 / MJ_HAND_LENGTH,
 
     # This ratio describes the difference between the box geoms of the little
     # finger and essentially decides the size of the gap.
