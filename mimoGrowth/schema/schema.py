@@ -53,16 +53,21 @@ HAND_HEIGHT_V2 = mul(
     RATIOS_V2["hand_height"]
 )
 
-# ...
+# This factor describes how much the phalanxes should shrink towards the tip.
 PHA_SHRINK = 0.95
 
-# ...
+# These factors describes the difference in finger length relative to the
+# middle finger. Keep in mind that the index and ring finger are identical.
 LEN_MID_IDX = 0.9
 LEN_MID_LITTLE = 0.88
+
+# These factors describes the difference in finger diameter relative to the
+# middle finger. Keep in mind that the index and ring finger are identical.
 DIAM_MID_IDX = 0.95
 DIAM_MID_LITTLE = 0.91
 
-# ...
+# This ratio describes the proportions of palm and (middle) finger length
+# relative to the total hand length.
 PALM_RATIO = 0.53
 PALM_LEN = mul("hand_length", PALM_RATIO)
 FINGER_LEN = mul("hand_length", 1 - PALM_RATIO)

@@ -74,7 +74,7 @@
 
     </asset>
 
-    <include file="mimo/MIMo_meta.xml"></include>
+    <include file="mimo/MIMo_metav2.xml"></include>
 
     <worldbody>
 
@@ -85,7 +85,7 @@
 
         <body name="mimo_location" pos="0 0 0" euler="0 0 0">
             <freejoint name="mimo_location"/>
-            <include file="mimo/MIMo_model.xml"></include>
+            <include file="mimo/MIMo_modelv2.xml"></include>
         </body>
 
         <!-- The following geoms are used as a reference for age/size while MIMo is growing. -->

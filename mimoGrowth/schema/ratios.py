@@ -170,9 +170,6 @@ RATIOS_V2 = {
     "thumb_body2": 0.00423 / .00584,  # hand height
     "thumb_body3": -0.01602 / MJ_HAND_LENGTH,
 
-    # ...
-    "thumb1": 0.01027 / MJ_HAND_BREADTH,
-
     # === FOOT ===
 
     # These ratios describe how the breadth of toes and big toe relate to the
