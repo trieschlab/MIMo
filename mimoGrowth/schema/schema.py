@@ -68,7 +68,7 @@ DIAM_MID_LITTLE = 0.91
 
 # This ratio describes the proportions of palm and (middle) finger length
 # relative to the total hand length.
-PALM_RATIO = 0.53
+PALM_RATIO = 0.55
 PALM_LEN = mul("hand_length", PALM_RATIO)
 FINGER_LEN = mul("hand_length", 1 - PALM_RATIO)
 
@@ -540,15 +540,16 @@ SCHEMA_GEOMS_V2 = {
                 ref("geoms", "geom:left_hand2", "size", 0),
                 RATIOS_V2["little_finger"]
             ),
-            HAND_HEIGHT_V2,
-            ref("geoms", "geom:left_hand2", "size", 2)
+            add(HAND_HEIGHT_V2, EPSILON),
+            ref("geoms", "geom:left_hand2", "size", 2),
         ],
         "pos": [
             neg(add(
                 ref("geoms", "geom:left_hand1", "size", 0),
                 mul(ref("geoms", "geom:left_hand2", "size", 0), 2),
                 neg(ref("geoms", "geom:left_lfmetacarpal1", "size", 0)),
-                ref("bodies", "left_lfmetacarpal", "pos", 0)
+                ref("bodies", "left_lfmetacarpal", "pos", 0),
+                EPSILON
             )),
             0,
             neg(ref("bodies", "left_lfmetacarpal", "pos", 2))
@@ -557,7 +558,7 @@ SCHEMA_GEOMS_V2 = {
     "geom:left_lfmetacarpal2": {
         "size": [
             add(HAND_HEIGHT_V2, EPSILON),
-            ref("geoms", "geom:left_lfmetacarpal1", "size", 0)
+            sub(ref("geoms", "geom:left_lfmetacarpal1", "size", 0), EPSILON)
         ],
         "pos": [
             ref("geoms", "geom:left_lfmetacarpal1", "pos", 0),
@@ -598,21 +599,21 @@ SCHEMA_GEOMS_V2 = {
     "geom:left_thbase1": {
         "size": [
             "thumb_diameter",
-            mul(ref("geoms", "geom:left_mfknuckle1", "size", 1), 0.95)
+            mul(ref("geoms", "geom:left_mfknuckle1", "size", 1), 0.75)  # here
         ],
         "pos": [0, 0, ref("geoms", "geom:left_thbase1", "size", 1)],
     },
     "geom:left_thhub1": {
         "size": [
             mul(ref("geoms", "geom:left_thbase1", "size", 0), PHA_SHRINK),
-            mul(ref("geoms", "geom:left_thbase1", "size", 1), 0.5)
+            mul(ref("geoms", "geom:left_thbase1", "size", 1), 0.7)  # herer
         ],
         "pos": [0, 0, ref("geoms", "geom:left_thhub1", "size", 1)]
     },
     "geom:left_thdistal1": {
         "size": [
             mul(ref("geoms", "geom:left_thhub1", "size", 0), PHA_SHRINK),
-            mul(ref("geoms", "geom:left_thbase1", "size", 1), 0.5)
+            mul(ref("geoms", "geom:left_thbase1", "size", 1), 0.65)  # here
         ],
         "pos": [0, 0, ref("geoms", "geom:left_thdistal1", "size", 1)],
     },

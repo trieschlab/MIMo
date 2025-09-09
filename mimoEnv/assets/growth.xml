@@ -2,94 +2,110 @@
 
     <compiler inertiafromgeom="true" angle="degree"/>
     <option timestep="0.005" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic" impratio="1.0"/>
-    <size nconmax="1000" njmax="5000" nstack="10000000" nuser_cam="3"/>
+    <size nconmax="1000" njmax="5000" nstack="10000000"/>
 
     <visual>
-        <map force="0.1" zfar="30" znear="0.005"/>
-        <rgba haze="0.15 0.25 0.35 1"/>
-        <quality shadowsize="4096"/>
-        <global offwidth="800" offheight="800"/>
+        <map force="0.1" fogend="10" shadowclip="3" />
+        <headlight active="0" />
+        <quality shadowsize="0"/>
     </visual>
 
     <asset>
 
-        <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
+        <texture type="skybox" builtin="gradient" rgb1=".8 .8 .8" rgb2=".9 .9 .9" width="100" height="100"/>
+        <material name="mattransparent" reflectance="0" shininess="0" specular="0" rgba="1 1 1 0"/>
+        <texture name="texfloor" builtin="checker" height="100" width="100" rgb1="0.9 0.9 0.9" rgb2="0.9 0.9 0.9" type="2d" mark="edge" markrgb="0.7 0.7 0.7"/>
+        <material name="matfloor" reflectance="0" shininess="0" specular="0" texrepeat="25 25" texture="texfloor"/>
+        <texture name="texwall" type="2d" builtin="flat" height="100" width="100" rgb1="0.99 0.99 0.99"/>
+        <material name="matwall" reflectance="0" shininess="0" specular="0" texuniform="true" texture="texwall"/>
+        <texture name="texrug" type="cube" filefront="tex/base_rug.png" rgb1="0.6 0.6 0.6"/>
+        <material name="matrug" reflectance="0" shininess=".1" specular="0.5" texrepeat="50 50" texture="texrug"/>
 
-        <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
-        <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
-
-        <texture name="wall" type="2d" builtin="checker" width="100" height="100" rgb1="0.8 0.8 0.8" rgb2="1 1 1" markrgb="1 1 1"/>
-        <material name="wall" texture="wall" texrepeat="10 10" texuniform="true" reflectance="0.3"/>
+        <texture name="wall" type="2d" builtin="checker" width="100" height="100" rgb1="1 1 1" rgb2="0.8 0.8 0.8" markrgb="1 1 1"/>
+        <material name="wall" texture="wall" texrepeat="10 10" texuniform="true" reflectance="0"/>
 
         <texture name="age_0" type="cube" width="512" height="512" filedown="tex/age_ref/0.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_1" type="cube" width="512" height="512" filedown="tex/age_ref/1.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_2" type="cube" width="512" height="512" filedown="tex/age_ref/2.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_3" type="cube" width="512" height="512" filedown="tex/age_ref/3.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_4" type="cube" width="512" height="512" filedown="tex/age_ref/4.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_5" type="cube" width="512" height="512" filedown="tex/age_ref/5.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_6" type="cube" width="512" height="512" filedown="tex/age_ref/6.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_7" type="cube" width="512" height="512" filedown="tex/age_ref/7.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_8" type="cube" width="512" height="512" filedown="tex/age_ref/8.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_9" type="cube" width="512" height="512" filedown="tex/age_ref/9.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_10" type="cube" width="512" height="512" filedown="tex/age_ref/10.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_11" type="cube" width="512" height="512" filedown="tex/age_ref/11.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_12" type="cube" width="512" height="512" filedown="tex/age_ref/12.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_13" type="cube" width="512" height="512" filedown="tex/age_ref/13.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_14" type="cube" width="512" height="512" filedown="tex/age_ref/14.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_15" type="cube" width="512" height="512" filedown="tex/age_ref/15.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_16" type="cube" width="512" height="512" filedown="tex/age_ref/16.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_17" type="cube" width="512" height="512" filedown="tex/age_ref/17.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_18" type="cube" width="512" height="512" filedown="tex/age_ref/18.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_19" type="cube" width="512" height="512" filedown="tex/age_ref/19.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_20" type="cube" width="512" height="512" filedown="tex/age_ref/20.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_21" type="cube" width="512" height="512" filedown="tex/age_ref/21.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_22" type="cube" width="512" height="512" filedown="tex/age_ref/22.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_23" type="cube" width="512" height="512" filedown="tex/age_ref/23.png" rgb1="0.137 0.137 0.137"/>
-        <texture name="age_24" type="cube" width="512" height="512" filedown="tex/age_ref/24.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_0" texture="age_0"/>
+        <texture name="age_1" type="cube" width="512" height="512" filedown="tex/age_ref/1.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_1" texture="age_1"/>
+        <texture name="age_2" type="cube" width="512" height="512" filedown="tex/age_ref/2.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_2" texture="age_2"/>
+        <texture name="age_3" type="cube" width="512" height="512" filedown="tex/age_ref/3.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_3" texture="age_3"/>
+        <texture name="age_4" type="cube" width="512" height="512" filedown="tex/age_ref/4.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_4" texture="age_4"/>
+        <texture name="age_5" type="cube" width="512" height="512" filedown="tex/age_ref/5.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_5" texture="age_5"/>
+        <texture name="age_6" type="cube" width="512" height="512" filedown="tex/age_ref/6.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_6" texture="age_6"/>
+        <texture name="age_7" type="cube" width="512" height="512" filedown="tex/age_ref/7.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_7" texture="age_7"/>
+        <texture name="age_8" type="cube" width="512" height="512" filedown="tex/age_ref/8.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_8" texture="age_8"/>
+        <texture name="age_9" type="cube" width="512" height="512" filedown="tex/age_ref/9.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_9" texture="age_9"/>
+        <texture name="age_10" type="cube" width="512" height="512" filedown="tex/age_ref/10.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_10" texture="age_10"/>
+        <texture name="age_11" type="cube" width="512" height="512" filedown="tex/age_ref/11.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_11" texture="age_11"/>
+        <texture name="age_12" type="cube" width="512" height="512" filedown="tex/age_ref/12.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_12" texture="age_12"/>
+        <texture name="age_13" type="cube" width="512" height="512" filedown="tex/age_ref/13.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_13" texture="age_13"/>
+        <texture name="age_14" type="cube" width="512" height="512" filedown="tex/age_ref/14.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_14" texture="age_14"/>
+        <texture name="age_15" type="cube" width="512" height="512" filedown="tex/age_ref/15.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_15" texture="age_15"/>
+        <texture name="age_16" type="cube" width="512" height="512" filedown="tex/age_ref/16.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_16" texture="age_16"/>
+        <texture name="age_17" type="cube" width="512" height="512" filedown="tex/age_ref/17.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_17" texture="age_17"/>
+        <texture name="age_18" type="cube" width="512" height="512" filedown="tex/age_ref/18.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_18" texture="age_18"/>
+        <texture name="age_19" type="cube" width="512" height="512" filedown="tex/age_ref/19.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_19" texture="age_19"/>
+        <texture name="age_20" type="cube" width="512" height="512" filedown="tex/age_ref/20.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_20" texture="age_20"/>
+        <texture name="age_21" type="cube" width="512" height="512" filedown="tex/age_ref/21.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_21" texture="age_21"/>
+        <texture name="age_22" type="cube" width="512" height="512" filedown="tex/age_ref/22.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_22" texture="age_22"/>
+        <texture name="age_23" type="cube" width="512" height="512" filedown="tex/age_ref/23.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_23" texture="age_23"/>
+        <texture name="age_24" type="cube" width="512" height="512" filedown="tex/age_ref/24.png" rgb1="0.137 0.137 0.137"/>
         <material name="age_24" texture="age_24"/>
 
     </asset>
 
-    <include file="mimo/MIMo_metav2.xml"></include>
+    <include file="mimo/MIMo_meta.xml"></include>
 
     <worldbody>
 
-        <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
+        <light pos="0 0 5" dir="0 0 -1" directional="true" ambient="0.2 0.2 0.2" diffuse="0.1 0.1 0.1" specular="0 0 0"/>
+        <light pos="2 2 2" dir="-1 -1 -1" directional="true" ambient="0.05 0.05 0.05" diffuse="0.2 0.2 0.2" specular="0.3 0.3 0.3" castshadow="false"/>
+        <light pos="2 -2 2" dir="-1 1 -1" directional="true" ambient="0.05 0.05 0.05" diffuse="0.2 0.2 0.2" specular="0.3 0.3 0.3" castshadow="false"/>
+        <light pos="-2 2 2" dir="1 -1 -1" directional="true" ambient="0.05 0.05 0.05" diffuse="0.2 0.2 0.2" specular="0.3 0.3 0.3" castshadow="false"/>
+        <light pos="-2 -2 2" dir="1 1 -1" directional="true" ambient="0.05 0.05 0.05" diffuse="0.2 0.2 0.2" specular="0.3 0.3 0.3" castshadow="false"/>
 
-        <light directional="false" diffuse=".4 .4 .4" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="false"/>
-        <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".75 .75 .75" specular="0.3 0.3 0.3" pos="3 0 5" dir="0 0 -1"/>
+        <light mode="targetbodycom" target="upper_body" directional="false" diffuse=".25 .25 .25" specular="0.3 0.3 0.3" pos="3 0 5" dir="0 0 -1"/>
 
-        <body name="mimo_location" pos="0 0 0" euler="0 0 0">
+        <camera name="corner" pos="3 -3 3" fovy="20" mode="targetbody" target="mimo_location"/>
+        <camera name="top" pos="0 0 2" euler="0 0 90" mode="fixed"/>
+        <camera name="side1" pos="1.5 0 .5" euler="90 90 0" mode="fixed"/>
+        <camera name="side2" pos="0 -1.8 .5" euler="-90 180 180" mode="fixed"/>
+        <camera name="human" pos="0.9 0 1.7" mode="targetbody" target="head"/>
+        <camera name="hand" pos="0.15 -0.3 0.4" mode="targetbody" target="right_hand"/>
+
+        <geom name="transparent" size="2 2 .0001" type="plane"  material="mattransparent" pos="0 0 0" conaffinity="1"/>
+        <geom name="floor" size="2 2 .01" type="plane"  material="matfloor" pos="0 0 -0.01" conaffinity="1"/>
+        <geom name="rug" size="1 .0045" material="matrug" type="cylinder" pos="0 0 -0.005" euler="0 0 0" conaffinity="1"/>
+
+        <body name="mimo_location" pos="0 0 0.33" euler="0 0 0">
             <freejoint name="mimo_location"/>
-            <include file="mimo/MIMo_modelv2.xml"></include>
+            <include file="mimo/MIMo_model.xml"></include>
         </body>
 
-        <!-- The following geoms are used as a reference for age/size while MIMo is growing. -->
-        <body name="growth_references" pos="0 0 0">
+        <body name="growth_references" pos="0 0 -2">
             <geom name="ref_size" type="box" material="wall" size="0.5 0.5 0.01" pos="-0.1 0 0.5" euler="0 90 0"/>
             <geom name="ref_age" type="box" material="age_0" size="0.05 0.05 0.05" pos="0.05 0.3 0.05" euler="0 0 60"/>
         </body>
