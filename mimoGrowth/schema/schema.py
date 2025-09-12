@@ -68,7 +68,7 @@ DIAM_MID_LITTLE = 0.91
 
 # This ratio describes the proportions of palm and (middle) finger length
 # relative to the total hand length.
-PALM_RATIO = 0.55
+PALM_RATIO = 0.5
 PALM_LEN = mul("hand_length", PALM_RATIO)
 FINGER_LEN = mul("hand_length", 1 - PALM_RATIO)
 

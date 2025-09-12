@@ -77,7 +77,7 @@
 
     </asset>
 
-    <include file="mimo/MIMo_meta.xml"></include>
+    <include file="mimo/MIMo_metav2.xml"></include>
 
     <worldbody>
 
@@ -102,10 +102,10 @@
 
         <body name="mimo_location" pos="0 0 0.33" euler="0 0 0">
             <freejoint name="mimo_location"/>
-            <include file="mimo/MIMo_model.xml"></include>
+            <include file="mimo/MIMo_modelv2.xml"></include>
         </body>
 
-        <body name="growth_references" pos="0 0 -2">
+        <body name="growth_references" pos="0 0 0">
             <geom name="ref_size" type="box" material="wall" size="0.5 0.5 0.01" pos="-0.1 0 0.5" euler="0 90 0"/>
             <geom name="ref_age" type="box" material="age_0" size="0.05 0.05 0.05" pos="0.05 0.3 0.05" euler="0 0 60"/>
         </body>
