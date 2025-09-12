@@ -7,3 +7,5 @@ mimoEnv/imgs/*
 mimoEnv/models/*
 mimoEnv/benchmarks
 mimoGrowth/log.txt
+test*
+models*

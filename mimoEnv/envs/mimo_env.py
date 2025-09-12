@@ -147,8 +147,10 @@ DEFAULT_TOUCH_PARAMS_V2 = {
 
 
 DEFAULT_VISION_PARAMS = {
-    "eye_left": {"width": 256, "height": 256},
-    "eye_right": {"width": 256, "height": 256},
+    "eye_left": {"width": 256, "height": 256, "fovy":60,
+                 "acuity":False, "foveation":False},
+    "eye_right": {"width": 256, "height": 256, "fovy":60,
+                  "acuity":False, "foveation":False},
 }
 """ Default vision parameters.
 
@@ -294,8 +296,11 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
 
     def __init__(self,
                  model_path,
+                 age=None,
                  initial_qpos=None,
                  frame_skip=2,
+                 sensory_delay=0,
+                 motor_delay=0,
                  render_mode=None,
                  camera_id=None,
                  camera_name=None,
@@ -317,7 +322,6 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         self.frame_skip = frame_skip
 
         self.age = age
-
         self.proprio_params = proprio_params
         self.touch_params = touch_params
         self.vision_params = vision_params
@@ -330,6 +334,8 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
 
         self.goals_in_observation = goals_in_observation
         self.done_active = done_active
+        self.sensory_delay = sensory_delay
+        self.motor_delay = motor_delay
 
         # Here we have most MIMo specific attributes. These are populated during _initialize_simulation, which is
         # called by MujocoEnv during its initialization.
@@ -423,6 +429,11 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
 
         By default, the actuation space contains only MIMos actuators.
         """
+
+        # If motor delays, creates empty action history
+        if self.motor_delay > 0:
+            self._action_history = []
+
         self.action_space = self.actuation_model.get_action_space()
 
     def _set_observation_space(self):
@@ -447,6 +458,10 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
                 -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype=np.float64)
             spaces_dict["achieved_goal"] = spaces.Box(
                 -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype=np.float64)
+
+        # If sensory delays, creates empty observation history
+        if self.sensory_delay > 0:
+            self._obs_history = []
 
         self.observation_space = spaces.Dict(spaces_dict)
 
@@ -551,7 +566,26 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         Args:
             action (numpy.ndarray): A numpy array with control values.
         """
+        # If motor delays, return delayed action
+        if self.motor_delay > 0:
+            action = self._delayed_action(action)
         self.actuation_model.action(action)
+
+    def _delayed_action(self, action):
+        """ Stores current action and returns a past one.
+
+        Args:
+            action (numpy.ndarray): A numpy array with control values.
+
+        Returns:
+            numpy.ndarray: Action array from self.motor_delay timesteps in the past.
+        """
+        # Store current action
+        self._action_history.append(action)
+        # Get oldest action from history
+        if len(self._action_history) < self.motor_delay:
+            return self._action_history[0]
+        return self._action_history.pop(0)
 
     def do_simulation(self, action, n_frames):
         """ Step simulation forward for `n_frames` number of steps.
@@ -646,6 +680,11 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         self.mujoco_renderer = MujocoRenderer(
             self.model, self.data, default_camera_config
         )
+        # If sensorimotor delays, reset histories
+        if self.sensory_delay > 0:
+            self._obs_history = []
+        if self.motor_delay > 0:
+            self._action_history = []
 
     def get_proprio_obs(self):
         """ Collects and returns the outputs of the proprioceptive system.
@@ -726,7 +765,29 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
             observation_dict["achieved_goal"] = copy.deepcopy(achieved_goal)
             observation_dict["desired_goal"] = copy.deepcopy(self.goal)
 
+        if self.sensory_delay == 0:
+            return observation_dict
+        else:
+            # If sensory delays, return delayed observations
+            return self._delayed_observation(observation_dict)
+
         return observation_dict
+
+    def _delayed_observation(self, observation):
+        """ Stores current observation and returns a past one.
+
+        Args:
+            observation (dict): Current observation dictionary for all active modalities.
+
+        Returns:
+            Dict: Observation dictionary from self.delay timesteps in the past.
+        """
+        # Store current observation
+        self._obs_history.append(observation)
+        # Get oldest observation from history
+        if len(self._obs_history) < self.sensory_delay:
+            return self._obs_history[0]
+        return self._obs_history.pop(0)
 
     def swap_facial_expression(self, emotion):
         """ Changes MIMos facial texture.

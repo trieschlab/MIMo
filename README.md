@@ -1,6 +1,6 @@
 # MIMo
 
-<img src="/docs/source/imgs/showroom.png" width="400" align="right">
+<img src="/docs/source/imgs/growth.png" width="400" align="right">
 
 MIMo is a platform for the research of the cognitive development of infants. It consists of a [Gymnasium](https://github.com/Farama-Foundation/Gymnasium) environment using [MuJoCo](https://mujoco.readthedocs.io) for the physical simulation and multiple modules that can produce simulated sensory input for vision, touch, proprioception and the vestibular system.
 
@@ -52,17 +52,28 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Citation
 
-You can cite MIMo as
+If you use MIMo for your research, please cite the following paper:
 ```
-@INPROCEEDINGS{9962192,
-  author={Mattern, Dominik and López, Francisco M. and Ernst, Markus R. and Aubret, Arthur and Triesch, Jochen},
-  booktitle={2022 IEEE International Conference on Development and Learning (ICDL)}, 
-  title={MIMo: A Multi-Modal Infant Model for Studying Cognitive Development in Humans and AIs}, 
-  year={2022},
-  volume={},
-  number={},
-  pages={23-29},
-  doi={10.1109/ICDL53763.2022.9962192}
+@article{mattern2024mimo,
+  title={MIMo: A Multimodal Infant Model for Studying Cognitive Development},
+  author={Mattern, Dominik and Schumacher, Pierre and L{\'o}pez, Francisco M and Raabe, Marcel C and Ernst, Markus R and Aubret, Arthur and Triesch, Jochen},
+  journal={IEEE Transactions on Cognitive and Developmental Systems},
+  volume={16},
+  number={4},
+  pages={1291--1301},
+  year={2024},
+  publisher={IEEE}
 }
 ```
 
+If you use any of the functionality of MIMo-v2, such as body growth, developing visual acuity, or sensorimotor delays, please also include the following citation:
+```
+@inproceedings{lopez2025mimo,
+  title={MIMo Grows! Simulating Body and Sensory Development in a Multimodal Infant Model},
+  author={L{\'o}pez, Francisco M and Lenz, Miles and Fedozzi, Marco G and Aubret, Arthur and Triesch, Jochen},
+  booktitle={2025 IEEE International Conference on Development and Learning (ICDL)},  
+  pages={1 -- 6},
+  year={2025},
+  organization={IEEE}
+}
+```
