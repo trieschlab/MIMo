@@ -8,11 +8,13 @@ Includes:
 """
 
 import os
+import re
+import copy
 import numpy as np
 import xml.etree.ElementTree as ET
 
-
-def create_growth_scene(growth_params: dict, path_scene: str) -> None:
+def create_growth_scene(growth_params: dict, path_scene: str,
+                        long_format: bool = True) -> None:
     """
     Creates a duplicate of the provided scene and the associated model and
     meta files, where MIMo is adjusted to the specified age.
@@ -85,35 +87,89 @@ def create_growth_scene(growth_params: dict, path_scene: str) -> None:
     tree_model.write(temp_path(path_model))
     tree_meta.write(temp_path(path_meta))
 
-    # Update the include attributes.
-    for include in includes.values():
-        include.attrib["file"] = temp_path(include.attrib["file"])
+    if long_format is False:
+         
+        # Update the include attributes.
+        for include in includes.values():
+            include.attrib["file"] = temp_path(include.attrib["file"])
+        
+        # Save the new scene.
+        path_growth_scene = temp_path(path_scene)
+        tree_scene.write(path_growth_scene)
 
-    # Save the new scene.
-    path_growth_scene = temp_path(path_scene)
-    tree_scene.write(path_growth_scene)
+    else:
+        # Replace each <include file="..."> in the original scene text with the referenced file
+            
+        def _read_text(path):
+            """Read file contents, strip XML decl and outer <mujoco> ... </mujoco> lines."""
+            with open(path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+
+            cleaned = []
+            for line in lines:
+                lstrip = line.lstrip()
+                if lstrip.startswith("<mujoco") or lstrip.startswith("</mujoco"):
+                    continue  # skip MuJoCo root lines
+                cleaned.append(line)
+            txt = "".join(cleaned)
+
+            # Remove leading XML declaration if present
+            txt = re.sub(r'^\s*<\?xml[^>]*\?>\s*', '', txt, flags=re.IGNORECASE)
+            return txt
+
+        # Load the original scene *text*
+        with open(path_scene, "r", encoding="utf-8") as f:
+            scene_txt = f.read()
+
+        # For each include, inline the contents of its temp file
+        for inc in includes.values():
+            inc_rel = inc.attrib["file"]
+            inc_abs = temp_path(os.path.join(path_dir, inc_rel))
+
+            # Regex that matches the include by its file path (self-closing or paired)
+            # Keeps it simple: <include ... file="inc_rel" .../> or <include ... file="inc_rel" ...></include>
+            pattern = re.compile(
+                rf"""(?P<indent>[ \t]*)<include\b[^>]*\bfile=(?P<q>["']){re.escape(inc_rel)}(?P=q)[^>]*?/?>\s*(?:</include\s*>)?""",
+                re.IGNORECASE
+            )
+
+            # Replacement text: raw contents of the included file (no extra indentation)
+            inc_txt = _read_text(inc_abs)
+
+            # Do the substitution everywhere this include appears
+            scene_txt, n_subs = pattern.subn(lambda m: inc_txt, scene_txt)
+
+        # Write the self-contained scene to a *_temp.xml alongside the original
+        path_growth_scene = temp_path(path_scene)
+        with open(path_growth_scene, "w", encoding="utf-8") as f:
+            f.write(scene_txt)
+
+        # Remove the temporary files
+        os.remove(temp_path(path_model))
+        os.remove(temp_path(path_meta))
 
     return path_growth_scene
 
 
-def delete_growth_scene(path_scene: str) -> None:
+
+def delete_growth_scene(growth_path_scene: str) -> None:
     """
     Deletes the temporary growth scene and all associated files like the model
     and meta file.
 
     Arguments:
-        path_scene (str): Path to the growth scene which will be deleted.
+        growth_path_scene (str): Path to the growth scene which will be deleted.
     """
 
-    root_scene = ET.parse(path_scene).getroot()
+    root_scene = ET.parse(growth_path_scene).getroot()
 
     # Remove the model and meta file.
     for include in root_scene.findall(".//include"):
 
         path_file = include.attrib["file"]
-        path_file_full = os.path.join(os.path.dirname(path_scene), path_file)
+        path_file_full = os.path.join(os.path.dirname(growth_path_scene), path_file)
 
         os.remove(path_file_full)
 
     # Remove the scene file.
-    os.remove(path_scene)
+    os.remove(growth_path_scene)
