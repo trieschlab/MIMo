@@ -133,6 +133,18 @@ RATIOS = {
     "foot_len": 0.035 / MJ_FOOT_LEN,
     "toes_len": 0.007 / MJ_FOOT_LEN,
 
+    # These ratios describe the positions of the BODY_25 keypoints relative to
+    # the sizes of the geoms where they are located.
+    "BODY_25:Nose_x": .0685 / .0735,     # head size
+    "BODY_25:Nose_z": .0435 / .0735,     # head size
+    "BODY_25:Ear_y": .0625 / .0735,     # head size
+    "BODY_25:Ear_z": .0575 / .0735,      # head size
+    "BODY_25:Ankle_z": 0.005 / 0.01,  # foot height
+    "BODY_25:Heel_x": .02 / .035,      # foot length
+    "BODY_25:BigToe_x": 0.011 / 0.035,   # foot length
+    "BODY_25:SmallToe_x": 0.010 / 0.035,   # foot length
+    "BODY_25:Toes_y": 0.012 / 0.025,   # foot width
+
 }
 
 RATIOS_V2 = {

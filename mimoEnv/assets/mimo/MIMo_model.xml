@@ -6,13 +6,14 @@
 		<!-- Whole body height is 77.8 cm -->
 		<geom name="lb" type="capsule" size=".048 .043" mass="1.1584" material="pants_down" pos="-.002 0 0.005" euler="90 0 0"/>
 		<site name="lowerBody_center" type="sphere" size=".01 .01 .01" pos="0 0 0"/>
+		<site name="BODY_25:MidHip" type="sphere" size=".005" pos="0.005 0 -0.007" rgba="0 0 0 1"/>
 		<body name="lower_body" pos="0.002 0 0.076">
 			<joint name="robot:hip_lean1" type="hinge" pos="0 0 -.05" axis="1 0 0" range="-14 14" stiffness="3.38" damping="0.77" frictionloss=".049" armature="0.01"/>
 			<joint name="robot:hip_rot1" type="hinge" pos="0 0 -.05" axis="0 0 1" range="-18 18" stiffness="1.45" damping="0.29" frictionloss=".018" armature="0.01"/>
 			<joint name="robot:hip_bend1" type="hinge" pos="0 0 -0.05" axis="0 1 0" range="-17 30.5" stiffness="2.20" damping="0.84" frictionloss="0.040" armature="0.01"/>
 			<site name="torque_lb" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 			<geom name="cb" type="capsule" size=".053 .035" mass="1.3245" material="pants_up" contype="0" pos="0.005 0 -.008" euler="90 0 0"/>
-				
+			
 			<body name="upper_body" pos="-.002 0 0.091">
 				<joint name="robot:hip_lean2" type="hinge" pos="0 0 -.05" axis="1 0 0" range="-27 27" stiffness="1.69" damping="0.38" frictionloss=".024" armature="0.01"/>
 				<joint name="robot:hip_rot2" type="hinge" pos="0 0 -.05" axis="0 0 1" range="-18 18" stiffness="1.45" damping="0.29" frictionloss=".018" armature="0.01"/>
@@ -22,6 +23,7 @@
 				<geom name="ub2" type="capsule" size=".048 .039" mass="0.9499" material="top_middle" pos="0.004 0 0.03" euler="90 0 0"/>
 				
 				<body name="chest" pos="0 0 0.09">
+					<site name="BODY_25:Neck" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 					<joint name="robot:chest_lean" type="hinge" pos="0 0 0" axis="1 0 0" range="-9 9" stiffness="1.69" damping="0.38" frictionloss=".024" armature="0.01"/>
 					<joint name="robot:chest_rot" type="hinge" pos="0 0 0" axis="0 0 1" range="-18 18" stiffness="1.45" damping="0.29" frictionloss=".018" armature="0.01"/>
 					<site name="torque_chest" type="sphere" size="0.01" pos="0 0 0" group="4"/>
@@ -29,16 +31,19 @@
 				
 					<body name="right_upper_arm" pos="-.005 -0.105 .003" euler="170 0 0">
 						<!-- Arm length is 31.36cm -->
+						<site name="BODY_25:RShoulder" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 						<joint name="robot:right_shoulder_horizontal" type="hinge" pos="0 -.024 0" axis="0 1 -4" range="-28 118" stiffness=".09" damping=".05" frictionloss=".0009" armature="0.004"/>
 						<joint name="robot:right_shoulder_ad_ab" type="hinge" pos="0 0 0" axis="-1 0 0" range="-84 183" stiffness=".11" damping=".10" frictionloss=".0014" armature="0.004"/>
 						<joint name="robot:right_shoulder_rotation" type="hinge" pos="0 0 0" axis="0 0 -1" range="-99 67" stiffness=".12" damping=".07" frictionloss=".0008" armature="0.004"/>
 						<site name="torque_right_shoulder" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<geom name="right_uarm1" type="capsule" material="top_sleeve" size="0.024 0.0536" mass=".2684" pos="0 0 .0536" euler="0 0 0"/>
 						<body name="right_lower_arm" pos="0 0 .1076" euler="0 0 0">
+							<site name="BODY_25:RElbow" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 							<joint name="robot:right_elbow" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-20" range="-146 5" stiffness=".13" damping=".11" frictionloss=".030" armature="0.002"/>
 							<site name="torque_right_elbow" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 							<geom name="right_larm" type="capsule" size=".023 0.037" mass=".1853" pos="0 0 .037"/>
 							<body name="right_hand" pos="0 -.007 .087" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
+								<site name="BODY_25:RWrist" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 								<joint name="robot:right_hand1" type="hinge" pos="0 .007 0" axis="0 0 -1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007" armature="0.001"/>
 								<joint name="robot:right_hand2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007" armature="0.001"/>
 								<joint name="robot:right_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007" armature="0.001"/>
@@ -57,16 +62,19 @@
 					
 					<body name="left_upper_arm" pos="-.005 0.105 .003" euler="-170 0 0">
 						<!-- Arm length is 31.36cm -->
+						<site name="BODY_25:LShoulder" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 						<joint name="robot:left_shoulder_horizontal" type="hinge" pos="0 .024 0" axis="0 1 4" range="-28 118" stiffness=".09" damping=".05" frictionloss=".0009" armature="0.004"/>
 						<joint name="robot:left_shoulder_ad_ab" type="hinge" pos="0 0 0" axis="1 0 0" range="-84 183" stiffness=".11" damping=".10" frictionloss=".0014" armature="0.004"/>
 						<joint name="robot:left_shoulder_rotation" type="hinge" pos="0 0 0" axis="0 0 1" range="-99 67" stiffness=".12" damping=".07" frictionloss=".0008" armature="0.004"/>
 						<site name="torque_left_shoulder" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<geom name="left_uarm1" type="capsule" material="top_sleeve" size="0.024 0.0536" mass=".2684" pos="0 0 .0536" euler="0 0 0"/>
 						<body name="left_lower_arm" pos="0 0 .1076" euler="0 0 0">
+							<site name="BODY_25:LElbow" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 							<joint name="robot:left_elbow" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-20" range="-146 5" stiffness=".13" damping=".11" frictionloss=".030" armature="0.002"/>
 							<site name="torque_left_elbow" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 							<geom name="left_larm" type="capsule" size=".023 0.037" mass=".1853" pos="0 0 .037"/>
 							<body name="left_hand" pos="0 .007 .087" euler="0 0 0"> <!-- Hand length is 9.3, Palm length is 5.16 -->
+								<site name="BODY_25:LWrist" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 								<joint name="robot:left_hand1" type="hinge" pos="0 .007 0" axis="0 0 1" springref="-20" range="-90 90" stiffness=".22" damping=".03" frictionloss=".007" armature="0.001"/>
 								<joint name="robot:left_hand2" type="hinge" pos="0 0 0" axis="1 0 0" range="-92 86" stiffness=".33" damping=".11" frictionloss=".007" armature="0.001"/>
 								<joint name="robot:left_hand3" type="hinge" pos="0 0 0" axis="0 1 0" range="-53 48" stiffness=".38" damping=".11" frictionloss=".007" armature="0.001"/>
@@ -91,6 +99,7 @@
 					<joint name="robot:head_tilt" type="hinge" pos="0 0 0.0123" axis="0 1 0" range="-70 81" stiffness=".45" damping=".53" frictionloss=".018" armature="0.005"/>
 					<joint name="robot:head_tilt_side" type="hinge" pos="0 0 0.0245" axis="1 0 0" range="-70 70" stiffness=".37" damping=".29" frictionloss=".018" armature="0.005"/>
 					<body name="left_eye" pos=".07 .0245 .067375">
+						<site name="BODY_25:LEye" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 						<site name="torque_left_eye" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<joint name="robot:left_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 1" range="-45 45" stiffness=".00065" damping=".00042" frictionloss=".000054" armature=".0002"/>
 						<joint name="robot:left_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".00065" damping=".00042" frictionloss=".000054" armature=".0002"/>
@@ -99,6 +108,7 @@
 						<camera name="eye_left" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
 					</body>
 					<body name="right_eye" pos=".07 -.0245 .067375">
+						<site name="BODY_25:REye" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 						<site name="torque_right_eye" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<joint name="robot:right_eye_horizontal" type="hinge" pos="0 0 0" axis="0 0 -1" range="-45 45" stiffness=".00065" damping=".00042" frictionloss=".000054" armature=".0002"/>
 						<joint name="robot:right_eye_vertical" type="hinge" pos="0 0 0" axis="0 -1 0" range="-47 33" stiffness=".00065" damping=".00042" frictionloss=".000054" armature=".0002"/>
@@ -106,8 +116,10 @@
 						<geom name="geom:right_eye1" type="sphere" material="eye_right" size=".01125" mass=".006275" pos="0 0 0"/>
 						<camera name="eye_right" mode="fixed" fovy="60" pos="0.01125 0 0" euler="90 -90 0"/>
 					</body>
+					<site name="BODY_25:Nose" type="sphere" size=".005" pos=".0685 0 0.0435" rgba="0 0 0 1"/>
+					<site name="BODY_25:LEar" type="sphere" size=".005" pos="0.01 .0525 0.0575" rgba="0 0 0 1"/>
+					<site name="BODY_25:REar" type="sphere" size=".005" pos="0.01 -.0525 0.0575" rgba="0 0 0 1"/>
 				</body>
-
 			</body>
 		</body>
 			
@@ -117,10 +129,12 @@
 			<joint name="robot:right_hip2" type="hinge" pos="0 0 0" axis="1 0 0" range="-51 17" stiffness="3.51" damping="1.99" frictionloss=".062" armature=".005"/>
 			<joint name="robot:right_hip3" type="hinge" pos="0 0 0" axis="0 0 -1" range="-32 41" stiffness="2.16" damping="0.75" frictionloss=".027" armature=".005"/>
 			<site name="torque_right_hip" type="sphere" size="0.01" pos="0 0 0" group="4"/>
+			<site name="BODY_25:RHip" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 			<geom name="geom:right_upper_leg1" type="capsule" material="pants_leg" contype="2" conaffinity="3" size=".037 .0625" mass=".7998" pos="0 0 -.0645" euler="0 0 0"/>
 			<body name="right_lower_leg" pos="0 0 -.135">
 				<joint name="robot:right_knee" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-30" range="-145 4" stiffness="1.63" damping="0.53" frictionloss=".065" armature=".003"/>
 				<site name="torque_right_knee" type="sphere" size="0.01" pos="0 0 0" group="4"/>
+				<site name="BODY_25:RKnee" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 				<geom name="geom:right_lower_leg1" type="capsule" size=".029 .044" mass=".3341" pos="0 0 -.044" euler="0 0 0"/>
 				<geom name="geom:right_lower_leg2" type="capsule" size=".021 .028" mass=".1160" pos="0 0 -.134" euler="0 0 0"/>
 				<body name="right_foot" pos="0 0 -.177">
@@ -128,6 +142,8 @@
 					<joint name="robot:right_foot2" type="hinge" pos="0 0 .015" axis="1 0 0" range="-33 31" stiffness="0.96" damping="0.37" frictionloss=".011" armature=".0025"/>
 					<joint name="robot:right_foot3" type="hinge" pos="0 0 .015" axis="0 0 1" range="-20 30" stiffness="1.15" damping="0.38" frictionloss=".012" armature=".002"/>
 					<site name="torque_right_ankle" type="sphere" size="0.01" pos="0 0 0" group="4"/>
+					<site name="BODY_25:RAnkle" type="sphere" size=".005" pos="0 0 0.015" rgba="0 0 0 1"/>
+					<site name="BODY_25:RHeel" type="sphere" size=".005" pos="-0.02 0 0" rgba="0 0 0 1"/>
 					<geom name="geom:right_foot1" type="cylinder" size=".0249 .0099" mass=".03219" pos="-0.016 0 0" euler="0 0 0"/>
 					<geom name="geom:right_foot2" type="box" size=".035  .025 .01" mass=".05850" pos="0.019 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 					<geom name="geom:right_foot3" type="cylinder" size=".0099 .0248" mass=".01268" pos=".054 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
@@ -136,6 +152,8 @@
 						<site name="torque_right_toes" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<geom name="geom:right_toes1" type="box" size=".007 .0249 .0099" mass=".01084" pos=".007 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 						<geom name="geom:right_toes2" type="cylinder" size=".01 .025" mass=".01226" pos=".014 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+						<site name="BODY_25:RBigToe" type="sphere" size=".005" pos=".011 0.012 0" rgba="0 0 0 1"/>
+						<site name="BODY_25:RSmallToe" type="sphere" size=".005" pos=".010 -0.012 0" rgba="0 0 0 1"/>
 					</body>
 				</body>
 			</body>
@@ -143,6 +161,7 @@
 			
 		<body name="left_upper_leg" pos="0.005 .051 -.007">
 			<!-- leg length is 32.9 cm -->
+			<site name="BODY_25:LHip" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 			<joint name="robot:left_hip1" type="hinge" pos="0 0 0" axis="0 1 0" springref="-10" range="-133 20" stiffness="1.72" damping="1.27" frictionloss=".08" armature=".005"/>
 			<joint name="robot:left_hip2" type="hinge" pos="0 0 0" axis="-1 0 0" range="-51 17" stiffness="3.51" damping="1.99" frictionloss=".062" armature=".005"/>
 			<joint name="robot:left_hip3" type="hinge" pos="0 0 0" axis="0 0 1" range="-32 41" stiffness="2.16" damping="0.75" frictionloss=".027" armature=".005"/>
@@ -151,6 +170,7 @@
 			<body name="left_lower_leg" pos="0 0 -.135">
 				<joint name="robot:left_knee" type="hinge" pos="0 0 0" axis="0 -1 0" springref="-30" range="-145 4" stiffness="1.63" damping="0.53" frictionloss=".065" armature=".003"/>
 				<site name="torque_left_knee" type="sphere" size="0.01" pos="0 0 0" group="4"/>
+				<site name="BODY_25:LKnee" type="sphere" size=".005" pos="0 0 0" rgba="0 0 0 1"/>
 				<geom name="geom:left_lower_leg1" type="capsule" size=".029 .044" mass=".3341" pos="0 0 -.044" euler="0 0 0"/>
 				<geom name="geom:left_lower_leg2" type="capsule" size=".021 .028" mass=".1160" pos="0 0 -.134" euler="0 0 0"/>
 				<body name="left_foot" pos="0 0 -.177">
@@ -158,6 +178,8 @@
 					<joint name="robot:left_foot2" type="hinge" pos="0 0 .015" axis="-1 0 0" range="-33 31" stiffness="0.96" damping="0.37" frictionloss=".011" armature=".0025"/>
 					<joint name="robot:left_foot3" type="hinge" pos="0 0 .015" axis="0 0 -1" range="-20 30" stiffness="1.15" damping="0.38" frictionloss=".012" armature=".002"/>
 					<site name="torque_left_ankle" type="sphere" size="0.01" pos="0 0 0" group="4"/>
+					<site name="BODY_25:LAnkle" type="sphere" size=".005" pos="0 0 0.015" rgba="0 0 0 1"/>
+					<site name="BODY_25:LHeel" type="sphere" size=".005" pos="-0.02 0 0" rgba="0 0 0 1"/>
 					<geom name="geom:left_foot1" type="cylinder" size=".0249 .0099" mass=".03219" pos="-0.016 0 0" euler="0 0 0"/>
 					<geom name="geom:left_foot2" type="box" size=".035  .025 .01" mass=".05850" pos="0.019 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 					<geom name="geom:left_foot3" type="cylinder" size=".0099 .0248" mass=".01268" pos=".054 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
@@ -166,6 +188,8 @@
 						<site name="torque_left_toes" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 						<geom name="geom:left_toes1" type="box" size=".007 .0249 .0099" mass=".01084" pos=".007 0 0" euler="0 0 0" friction="2 0.02 0.01"/>
 						<geom name="geom:left_toes2" type="cylinder" size=".01 .025" mass=".01226" pos=".014 0 0" euler="90 0 0" friction="2 0.02 0.01"/>
+						<site name="BODY_25:LBigToe" type="sphere" size=".005" pos=".011 -0.012 0" rgba="0 0 0 1"/>
+						<site name="BODY_25:LSmallToe" type="sphere" size=".005" pos=".010 0.012 0" rgba="0 0 0 1"/>
 					</body>
 				</body>
 			</body>

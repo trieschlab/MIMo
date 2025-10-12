@@ -450,6 +450,128 @@ SCHEMA_JOINTS = {
 
 }
 
+SCHEMA_SITES = {
+
+    # === VESTIBULAR ===
+    "vestibular": {
+        "pos": [0.01, 0, ref("geoms", "head", "size", 0)]
+    },
+
+    # === BODY_25 ===
+    "BODY_25:Nose": {
+        "pos": [
+            mul(ref("geoms", "head", "size", 0), RATIOS["BODY_25:Nose_x"]),
+            0.,
+            mul(ref("geoms", "head", "size", 0), RATIOS["BODY_25:Nose_z"])
+        ]
+    },
+    "BODY_25:Neck": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:RShoulder": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:RElbow": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:RWrist": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:LShoulder": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:LElbow": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:LWrist": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:MidHip": {
+        "pos": [0.005, 0, -0.007]
+    },
+    "BODY_25:RHip": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:RKnee": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:RAnkle": {
+        "pos": [
+            ref("joints", "robot:left_foot3", "pos", 0),
+            ref("joints", "robot:left_foot3", "pos", 1),
+            ref("joints", "robot:left_foot3", "pos", 2)
+        ]  
+    },
+    "BODY_25:LHip": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:LKnee": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:LAnkle": {
+        "pos": [
+            ref("joints", "robot:left_foot3", "pos", 0),
+            ref("joints", "robot:left_foot3", "pos", 1),
+            ref("joints", "robot:left_foot3", "pos", 2)
+        ]  
+    },
+    "BODY_25:REye": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:LEye": {
+        "pos": [0., 0., 0.]
+    },
+    "BODY_25:REar": {
+        "pos": [
+            0.01,
+            neg(mul(ref("geoms", "head", "size", 0), RATIOS["BODY_25:Ear_y"])),
+            mul(ref("geoms", "head", "size", 0), RATIOS["BODY_25:Ear_z"])
+        ]
+    },
+    "BODY_25:LEar": {
+        "pos": [
+            0.01,
+            mul(ref("geoms", "head", "size", 0), RATIOS["BODY_25:Ear_y"]),
+            mul(ref("geoms", "head", "size", 0), RATIOS["BODY_25:Ear_z"])
+        ]
+    },
+    "BODY_25:LBigToe": {
+        "pos": [
+            mul(ref("geoms", "geom:left_foot2", "size", 0), RATIOS["BODY_25:BigToe_x"]),
+            neg(mul(ref("geoms", "geom:left_foot2", "size", 1), RATIOS["BODY_25:Toes_y"])),
+            0
+        ]
+    },
+    "BODY_25:LSmallToe": {
+        "pos": [
+            mul(ref("geoms", "geom:left_foot2", "size", 0), RATIOS["BODY_25:SmallToe_x"]),
+            mul(ref("geoms", "geom:left_foot2", "size", 1), RATIOS["BODY_25:Toes_y"]),
+            0
+        ]
+    },
+    "BODY_25:LHeel": {
+        "pos": [neg(mul(ref("geoms", "geom:left_foot2", "size", 0)), RATIOS["BODY_25:Heel_x"]), 0,0]
+    },
+    "BODY_25:RBigToe": {
+        "pos": [
+            mul(ref("geoms", "geom:left_foot2", "size", 0), RATIOS["BODY_25:BigToe_x"]),
+            mul(ref("geoms", "geom:left_foot2", "size", 1), RATIOS["BODY_25:Toes_y"]),
+            0
+        ]
+    },
+    "BODY_25:RSmallToe": {
+        "pos": [
+            mul(ref("geoms", "geom:left_foot2", "size", 0), RATIOS["BODY_25:SmallToe_x"]),
+            neg(mul(ref("geoms", "geom:left_foot2", "size", 1), RATIOS["BODY_25:Toes_y"])),
+            0
+        ]
+    },
+    "BODY_25:RHeel": {
+        "pos": [neg(mul(ref("geoms", "geom:left_foot2", "size", 0)), RATIOS["BODY_25:Heel_x"]), 0,0]
+    },
+}
+
+
 SCHEMA_GEOMS_V2 = {
 
     # === HAND ===
@@ -896,10 +1018,40 @@ SCHEMA_JOINTS_V2 = {
 
 }
 
+SCHEMA_SITES_V2 = {
+    "BODY_25:RWrist": {
+        "pos": [
+            ref("joints","robot:left_hand3","pos", 0),
+            ref("joints","robot:left_hand3","pos", 1),
+            ref("joints","robot:left_hand3","pos", 2),
+        ]   
+    },
+    "BODY_25:LWrist": {
+        "pos": [
+            ref("joints","robot:left_hand3","pos", 0),
+            ref("joints","robot:left_hand3","pos", 1),
+            ref("joints","robot:left_hand3","pos", 2),
+        ]   
+    },
+    "BODY_25:LBigToe": {
+        "pos": [0, 0, 0]
+    },
+    "BODY_25:LSmallToe": {
+        "pos": [0, mul(ref("geoms", "geom:left_toes1", "size", 1), 0.45), 0]
+    },
+    "BODY_25:RBigToe": {
+        "pos": [0, 0, 0]
+    },
+    "BODY_25:RSmallToe": {
+        "pos": [0, neg(mul(ref("geoms", "geom:left_toes1", "size", 1), 0.45)), 0]
+    },
+}
+
 SCHEMA = {
     "geoms": SCHEMA_GEOMS,
     "bodies": SCHEMA_BODIES,
-    "joints": SCHEMA_JOINTS
+    "joints": SCHEMA_JOINTS,
+    "sites": SCHEMA_SITES
 }
 
 # Merge the schema dicts for MIMo_v2. Note that if a key appears
@@ -907,7 +1059,8 @@ SCHEMA = {
 SCHEMA_V2 = {
     "geoms": SCHEMA_GEOMS | SCHEMA_GEOMS_V2,
     "bodies": SCHEMA_BODIES | SCHEMA_BODIES_V2,
-    "joints": SCHEMA_JOINTS | SCHEMA_JOINTS_V2
+    "joints": SCHEMA_JOINTS | SCHEMA_JOINTS_V2,
+    "sites": SCHEMA_SITES | SCHEMA_SITES_V2,
 }
 
 # Remove entries from schema_v2 that are not overwritten and
