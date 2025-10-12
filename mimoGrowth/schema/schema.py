@@ -366,7 +366,11 @@ SCHEMA_BODIES = {
     # === UPPER / LOWER LEG ===
 
     "left_upper_leg": {
-        "pos": [0.005, ref("geoms", "ub1", "size", 0), -0.007]
+        "pos": [
+            0.005,
+            mul(ref("geoms", "lb", "size", 1), RATIOS["uleg_shift"]),
+            -0.007
+        ]
     },
     "left_lower_leg": {
         "pos": [

@@ -119,6 +119,10 @@ RATIOS = {
     # length of the geom.
     "uleg_pos": -0.0645 / 0.0625,
 
+    # This ratio describes the y-pos shift of the upper leg body relative
+    # to the lower body (lb) geom size.
+    "uleg_shift": 0.051 / 0.043,
+
     # These ratios describe the length of the lower leg geoms relative to the
     # knee-sole length from the infant measurements.
     "lleg1_len": 0.044 / MJ_KNEE_SOLE_LEN,
