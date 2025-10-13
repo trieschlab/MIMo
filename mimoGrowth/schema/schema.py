@@ -318,6 +318,7 @@ SCHEMA_BODIES = {
             add(
                 ref("geoms", "ub3", "size", 0),
                 ref("bodies", "chest", "pos", 2),
+                ref("geoms", "neck", "size", 0)
             )
         ]
     },
