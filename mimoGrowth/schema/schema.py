@@ -102,7 +102,7 @@ SCHEMA_GEOMS = {
         "pos": [0, 0, 0]
     },
 
-    # === HEAD & EYES ===
+    # === HEAD ===
 
     "head": {
         "size": [mul("head_circumference", RATIOS["head"])],
@@ -115,6 +115,21 @@ SCHEMA_GEOMS = {
     "geom:left_eye1": {
         "size": [mul(ref("geoms", "head", "size", 0), RATIOS["eye"])],
         "pos": [0, 0, 0]
+    },
+    "neck": {
+        "size": [
+            mul(ref("geoms", "head", "size", 0), 0.25),
+            1e-6
+        ],
+        "pos": [
+            0,
+            0,
+            add(
+                ref("bodies", "chest", "pos", 2),
+                ref("geoms", "ub3", "size", 0),
+                ref("geoms", "neck", "size", 1)
+            )
+        ]
     },
 
     # === UPPER / LOWER ARM ===
@@ -316,9 +331,9 @@ SCHEMA_BODIES = {
             0,
             0,
             add(
-                ref("geoms", "ub3", "size", 0),
                 ref("bodies", "chest", "pos", 2),
-                ref("geoms", "neck", "size", 0)
+                ref("geoms", "ub3", "size", 0),
+                mul(ref("geoms", "neck", "size", 1), 2)
             )
         ]
     },

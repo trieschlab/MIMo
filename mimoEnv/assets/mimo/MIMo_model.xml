@@ -21,7 +21,8 @@
 				<site name="torque_ub" type="sphere" size="0.01" pos="0 0 0" group="4"/>
 				<geom name="ub1" type="capsule" size=".052 .035" mass="1.0882" material="top_down" pos="0.007 0 -.032" euler="90 0 0"/>
 				<geom name="ub2" type="capsule" size=".048 .039" mass="0.9499" material="top_middle" pos="0.004 0 0.03" euler="90 0 0"/>
-				
+				<geom name="neck" type="capsule" size="1e-6 1e-6" mass="0" material="skin" pos="0 0 0" euler="0 0 0"/>
+
 				<body name="chest" pos="0 0 0.09">
 					<site name="BODY_25:Neck" type="sphere" size=".005 .005 .005" pos="0 0 0" rgba="0 0 0 1"/>
 					<joint name="robot:chest_lean" type="hinge" pos="0 0 0" axis="1 0 0" range="-9 9" stiffness="1.69" damping="0.38" frictionloss=".024" armature="0.01"/>
