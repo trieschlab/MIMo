@@ -133,54 +133,56 @@ def update_params() -> None:
 
 def update_defaults() -> None:
     """
-    Update the stored default values from the original MIMo model. Values from
+    Update the stored default values from the original MIMo models. Values from
     both MIMo versions will be stored. It is assumed that the MIMo files are
     within the `mimoEnv/assets/mimo/` directory.
     """
 
-    defaults = {"geoms": {}, "motors": {}}
+    defaults = {
+        "geoms": {"v1": {}, "v2": {}},
+        "motors": {"v1": {}, "v2": {}}
+    }
 
     root_model = ET.parse(DIR_MIMO + "MIMo_model.xml").getroot()
     root_model_v2 = ET.parse(DIR_MIMO + "MIMo_modelv2.xml").getroot()
     root_meta = ET.parse(DIR_MIMO + "MIMo_meta.xml").getroot()
     root_meta_v2 = ET.parse(DIR_MIMO + "MIMo_metav2.xml").getroot()
 
-    # Merge geoms from both MIMo versions.
-    geoms = root_model.findall(".//geom")
-    geoms += root_model_v2.findall(".//geom")
+    def store_geom_values(geoms, version):
 
-    # Merge motors from both MIMo versions.
-    motors = root_meta.find("actuator").findall("motor")
-    motors += root_meta_v2.find("actuator").findall("motor")
+        for geom in geoms:
 
-    for geom in geoms:
+            name = geom.attrib["name"]
+            type_ = geom.attrib["type"]
 
-        name = geom.attrib["name"]
-        if name in defaults["geoms"]:
-            continue
+            # Convert the size data type from string to an array.
+            size = re.sub(r"\s+", " ", geom.attrib["size"]).strip()
+            size = np.array(size.split(" "), dtype=float)
 
-        type_ = geom.attrib["type"]
+            vol = calc_volume(size, type_)
+            density = float(geom.attrib["mass"]) / vol
 
-        # Convert the size data type from string to an array.
-        size = re.sub(r"\s+", " ", geom.attrib["size"]).strip()
-        size = np.array(size.split(" "), dtype=float)
+            defaults["geoms"][version][name] = {
+                "type": type_,
+                "density": density,
+                "vol": vol
+            }
 
-        vol = calc_volume(size, type_)
-        density = float(geom.attrib["mass"]) / vol
+    def store_motor_values(motors, version):
 
-        defaults["geoms"][name] = {
-            "type": type_,
-            "density": density,
-            "vol": vol
-        }
+        for motor in motors:
 
-    for motor in motors:
+            name = motor.attrib["name"]
 
-        name = motor.attrib["name"]
+            defaults["motors"][version][name] = {
+                "gear": float(motor.attrib["gear"])
+            }
 
-        defaults["motors"][name] = {
-            "gear": float(motor.attrib["gear"])
-        }
+    store_geom_values(root_model.findall(".//geom"), "v1")
+    store_geom_values(root_model_v2.findall(".//geom"), "v2")
+
+    store_motor_values(root_meta.find("actuator").findall("motor"), "v1")
+    store_motor_values(root_meta_v2.find("actuator").findall("motor"), "v2")
 
     store_data(defaults, "defaults")
 

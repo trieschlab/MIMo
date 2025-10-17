@@ -186,7 +186,7 @@ def get_growth_params(
         defaults = json.load(f)
 
     # Calculate and add mass for geoms and gear values for motors.
-    calc_geom_masses(growth_params, defaults)
+    calc_geom_masses(growth_params, defaults, mimo_version)
     calc_motor_gear(growth_params, defaults, mimo_version)
 
     # Mirror the left elements in order get the right elements.

@@ -107,26 +107,29 @@ def calc_motor_gear(params: dict, defaults: dict, mimo_version: str) -> None:
 
         # Calculate the volume of the geom. Notice that the growth params
         # already contain values based on the age.
-        type_ = defaults["geoms"][geom]["type"]
+        type_ = defaults["geoms"][mimo_version][geom]["type"]
         size = params["geoms"][geom]["size"]
         vol = calc_volume(size, type_)
 
         # Get the volume of the same geom in the original model.
-        base_vol = defaults["geoms"][geom]["vol"]
+        base_vol = defaults["geoms"][mimo_version][geom]["vol"]
 
         for motor in motors:
+
+            if motor not in defaults["motors"][mimo_version]:
+                continue
 
             # Compute a ratio that describes the relationship between geom
             # volume and gear value in the original model. Use this ratio to
             # compute a gear value for the current geom size.
-            base_gear = defaults["motors"][motor]["gear"]
+            base_gear = defaults["motors"][mimo_version][motor]["gear"]
             ratio = base_gear / base_vol
             gear = ratio * vol
 
             params["motors"][motor] = {"gear": gear}
 
 
-def calc_geom_masses(params: dict, defaults: dict) -> None:
+def calc_geom_masses(params: dict, defaults: dict, mimo_version: str) -> None:
     """
     Calculates the mass of every geom based on the size, type, and density from
     the default model. The mass will be inserted into the 'params' dict.
@@ -135,13 +138,16 @@ def calc_geom_masses(params: dict, defaults: dict) -> None:
         params (dict): Growth parameters containing the geom size.
         defaults (dict): Default values from the original model containing
             geom type and density.
+        mimo_version (str): Version of the MIMo model. Must be 'v1' or 'v2'.
     """
+
+    default_geoms = defaults["geoms"][mimo_version]
 
     for geom_name, attributes in params["geoms"].items():
 
         # Calculate the volume.
-        geom_type = defaults["geoms"][geom_name]["type"]
+        geom_type = default_geoms[geom_name]["type"]
         vol = calc_volume(attributes["size"], geom_type)
 
         # Calculate and store mass with the density.
-        attributes["mass"] = vol * defaults["geoms"][geom_name]["density"]
+        attributes["mass"] = vol * default_geoms[geom_name]["density"]
