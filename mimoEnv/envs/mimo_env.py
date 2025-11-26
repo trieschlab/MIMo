@@ -368,6 +368,10 @@ class MIMoEnv(MujocoEnv, utils.EzPickle):
         if age is not None:
             delete_growth_scene(model_path)
 
+        # Perform one step to initialize everything:
+        self._single_mujoco_step()
+        self._set_initial_position(self._initial_qpos)
+
         self._env_setup()
 
         self.goal = self.sample_goal()
