@@ -21,7 +21,7 @@ import copy
 
 from mimoEnv.envs.mimo_env import MIMoEnv, SCENE_DIRECTORY, DEFAULT_PROPRIOCEPTION_PARAMS
 from mimoActuation.actuation import SpringDamperModel
-
+import mimoEnv.utils as mimo_utils
 
 REACH_XML = os.path.join(SCENE_DIRECTORY, "reach_scene.xml")
 """ Path to the reach scene.
@@ -155,9 +155,10 @@ class MIMoReachEnv(MIMoEnv):
             self._step_callback()
 
         # reset target in random initial position and velocities as zero
-        self.data.qpos[-7] = self.init_qpos[-7] + self.np_random.uniform(low=-0.1, high=0, size=1)[0]
-        self.data.qpos[-6] = self.init_qpos[-6] + self.np_random.uniform(low=-0.2, high=0.1, size=1)[0]
-        self.data.qpos[-5] = self.init_qpos[-5] + self.np_random.uniform(low=-0.1, high=0, size=1)[0]
+        target_qpos_adr = mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("target_joint").id)
+        self.data.qpos[target_qpos_adr[0]] = self.init_qpos[target_qpos_adr[0]] + self.np_random.uniform(-0.1, 0.0)
+        self.data.qpos[target_qpos_adr[1]] = self.init_qpos[target_qpos_adr[1]] + self.np_random.uniform(-0.2, 0.1)
+        self.data.qpos[target_qpos_adr[2]] = self.init_qpos[target_qpos_adr[2]] + self.np_random.uniform(-0.1, 0.0)
 
         qvel = np.zeros(self.data.qvel.shape)
 
@@ -171,20 +172,28 @@ class MIMoReachEnv(MIMoEnv):
         Manually computes the joint positions required for the head and eyes to look at the target objects.
         """
         # manually set head and eye positions to look at target
-        target_pos = self.data.body('target').xpos
-        head_pos = self.data.body('head').xpos
-        head_target_dif = target_pos - head_pos
-        head_target_dist = np.linalg.norm(head_target_dif)
-        head_target_dif[2] = head_target_dif[2] - 0.067375  # extra difference to height of eyes in head
-        half_eyes_dist = 0.0245  # horizontal distance between eyes / 2
-        eyes_target_dist = head_target_dist - 0.07  # remove distance from head center to eyes
+        target_pos = self.data.body("target").xpos.copy()
+        head_pos = self.data.body("head").xpos.copy()
 
-        self.data.qpos[13] = np.arctan(head_target_dif[1] / head_target_dif[0])  # head - horizontal
-        self.data.qpos[14] = np.arctan(-head_target_dif[2] / head_target_dif[0])  # head - vertical
-        self.data.qpos[15] = 0  # head - side tilt
-        self.data.qpos[16] = np.arctan(-half_eyes_dist / eyes_target_dist)  # left eye -  horizontal
-        self.data.qpos[17] = 0  # left eye - vertical
-        self.data.qpos[17] = 0  # left eye - torsional
-        self.data.qpos[19] = np.arctan(-half_eyes_dist / eyes_target_dist)  # right eye - horizontal
-        self.data.qpos[20] = 0  # right eye - vertical
-        self.data.qpos[21] = 0  # right eye - torsional
+        head_target_dif = target_pos - head_pos
+        head_target_dif[2] -= 0.067375   # eye height offset inside head
+
+        half_eyes_dist = 0.0245
+        eyes_target_dist = np.linalg.norm(head_target_dif) - 0.07
+
+        # safer than arctan(y/x)
+        head_horizontal = np.arctan2(head_target_dif[1], head_target_dif[0])
+        head_vertical = np.arctan2(-head_target_dif[2], head_target_dif[0])
+        eye_horizontal = np.arctan2(-half_eyes_dist, eyes_target_dist)
+
+        self.data.qpos[mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("robot:head_swivel").id)]   = head_horizontal
+        self.data.qpos[mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("robot:head_tilt").id)]     = head_vertical
+        self.data.qpos[mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("robot:head_tilt_side").id)]= 0.0
+
+        self.data.qpos[mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("robot:left_eye_horizontal").id)] = eye_horizontal
+        self.data.qpos[mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("robot:left_eye_vertical").id)]   = 0.0
+        self.data.qpos[mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("robot:left_eye_torsional").id)]  = 0.0
+
+        self.data.qpos[mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("robot:right_eye_horizontal").id)] = eye_horizontal
+        self.data.qpos[mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("robot:right_eye_horizontal").id)] = 0.0
+        self.data.qpos[mimo_utils.get_joint_qpos_addr(self.model, self.model.joint("robot:right_eye_horizontal").id)] = 0.0
