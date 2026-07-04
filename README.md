@@ -39,7 +39,7 @@ All the sensor modules follow the same pattern. They are initialized with a MuJo
 
 ## Sample Environments
 
-We provide several sample environments with some simple tasks for demonstration purposes. These come with both an openAI environment in `mimoEnv/envs` as well as simple training scripts using stable-baselines3, in `mimoEnv`. These environments include:
+We provide several sample environments with some simple tasks for demonstration purposes. These come with both an openAI environment as well as simple training scripts using stable-baselines3 in `src/mimo_infant/simulation/envs`. These environments include:
 
   1. `reach` - A stripped down version where MIMo is tasked with reaching for a ball hovering in front of him. By default, only the proprioceptive sensors are used. MIMo can only move his right arm and his head is manually fixed to track the ball. The initial position of both the ball and MIMo is slightly randomized.
   2. `standup` - MIMo is tasked with standing up. At the start he is in a low crouch with his hands gripping the bars of a crib. Proprioception and the vestibular sensors are included by default.

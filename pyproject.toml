@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mimo-infant"
+version = "3.0.0"
+description = "MIMo-v3: the multimodal infant model"
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+authors = [
+    { name = "Francisco M. López" },
+    { name = "Dominik Mattern" },
+    { name = "Miles Lenz" },
+    { name = "Pierre Schumacher" },
+]
+
+# Add this once the repository has a finalized LICENSE file.
+# license = { file = "LICENSE" }
+
+[project.urls]
+Homepage = "https://github.com/trieschlab/MIMo"
+Repository = "https://github.com/trieschlab/MIMo"
+Issues = "https://github.com/trieschlab/MIMo/issues"
+
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.2",
+    "twine>=5.0",
+    "pytest>=8.0",
+    "ruff>=0.8",
+]
+
+docs = []
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mimo_infant*"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.package-data]
+"mimo_infant" = [
+    "**/*.xml",
+    "**/*.stl",
+    "**/*.obj",
+    "**/*.mtl",
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.json",
+    "**/*.txt",
+    "**/*.yaml",
+    "**/*.yml",
+    "**/*.npy",
+    "**/*.npz",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
