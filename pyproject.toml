@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mimo-infant"
 version = "3.0.0"
-description = "MIMo-v3: the multimodal infant model"
+description = "MIMo3: the multimodal infant model"
 readme = "README.md"
 requires-python = ">=3.10"
 dynamic = ["dependencies"]
