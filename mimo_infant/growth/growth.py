@@ -58,6 +58,7 @@ from mimo_infant.growth.physics import calc_geom_masses, calc_motor_gear
 from mimo_infant.growth.scene import create_growth_scene
 import os
 import re
+import copy
 import json
 import logging
 import datetime
@@ -215,7 +216,8 @@ def get_growth_params(
         sizes[body_part] = mj_unit(size, unit, measure)
 
     # Select schema based on the version of MIMo.
-    schema = SCHEMA_V2 if mimo_version == "v2" else SCHEMA
+    schema_base = SCHEMA_V2 if mimo_version == "v2" else SCHEMA
+    schema = copy.deepcopy(schema_base)
 
     # Update the schema based on the custom geom sizes.
     if custom:
@@ -248,7 +250,7 @@ def get_growth_params(
 
 def adjust_mimo_to_age(
         age: float, path_scene: str,
-        custom: dict = None, create_log: bool = True) -> str:
+        custom: dict = None, create_log: bool = False) -> str:
     """
     Creates a temporary duplicate of the provided scene where MIMo is adjusted
     to the provided age.
@@ -266,7 +268,7 @@ def adjust_mimo_to_age(
             of the geom in meters. All conventions for geoms follow the
             official MuJoCo specifications.
 
-        create_log (bool): If log files should be created. Default is true.
+        create_log (bool): If log files should be created. Default is False.
 
     Returns:
         str: The path to the growth scene. Use this path to load the model.

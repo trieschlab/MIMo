@@ -65,8 +65,7 @@ def create_growth_scene(
 
 
 def delete_growth_scene(growth_path_scene: str) -> None:
-    """Delete a temporary growth scene and associated temporary include files.
-    """
+    """Delete a temporary growth scene and associated temporary include files."""
     if not os.path.exists(growth_path_scene):
         return
 
@@ -83,10 +82,17 @@ def delete_growth_scene(growth_path_scene: str) -> None:
         else:
             path_file_full = os.path.join(scene_dir, path_file)
 
-        if os.path.exists(path_file_full):
+        # Delete generated temporary XMLs.
+        if (
+            os.path.exists(path_file_full)
+            and os.path.basename(path_file_full).endswith("_temp.xml")
+        ):
             os.remove(path_file_full)
 
-    if os.path.exists(growth_path_scene):
+    if (
+        os.path.exists(growth_path_scene)
+        and os.path.basename(growth_path_scene).endswith("_temp.xml")
+    ):
         os.remove(growth_path_scene)
 
 
