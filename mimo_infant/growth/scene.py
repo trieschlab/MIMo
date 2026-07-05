@@ -1,185 +1,399 @@
 """
-Functions for creating and deleting the MuJoCo XML files.
+Functions for creating and deleting MuJoCo XML growth scenes.
 
-Includes:
-- `create_growth_scene`: Creates a new scene, as well as model and meta files,
-    where MIMo is adjusted to the specified age.
-- `delete_growth_scene`: Deletes the growth scene and associated files.
+Supports two scene formats:
+
+1. Original include-based scenes
+   The scene contains <include file="...model...xml"> and
+   <include file="...meta...xml"> tags.
+
+2. Expanded scenes
+   The scene already contains the model, meta, actuators, sensors, etc.
+
+In both cases, create_growth_scene(...) returns the path to a temporary grown
+scene XML file, using the suffix "_temp.xml".
 """
+
+from __future__ import annotations
 
 import os
 import re
-import copy
-import numpy as np
 import xml.etree.ElementTree as ET
 
-def create_growth_scene(growth_params: dict, path_scene: str,
-                        long_format: bool = True) -> None:
+import numpy as np
+
+
+def create_growth_scene(
+    growth_params: dict,
+    path_scene: str,
+    long_format: bool = True,
+) -> str:
+    """Create a grown duplicate of the provided scene.
+
+    Args:
+        growth_params:
+            Growth parameters produced by the growth pipeline.
+        path_scene:
+            Path to the MuJoCo scene XML.
+        long_format:
+            If True, include-based scenes are converted into a self-contained
+            grown scene. If False, temporary grown model/meta files are kept and
+            referenced by the grown scene.
+
+    Returns:
+        Path to the temporary grown scene XML.
     """
-    Creates a duplicate of the provided scene and the associated model and
-    meta files, where MIMo is adjusted to the specified age.
-
-    These new files use the same name with the additional suffix '_temp' and
-    will be stored in the same folders as the original files.
-
-    Arguments:
-        growth_params (dict): The growth parameters.
-        path_scene (str): The path to the MuJoCo scene.
-    """
-
     tree_scene = ET.parse(path_scene)
+    root_scene = tree_scene.getroot()
 
-    # Get the names of model and meta file via the include attribute.
-    includes = {}
-    for include in tree_scene.getroot().findall(".//include"):
-        key = "model" if "model" in include.attrib["file"] else "meta"
-        includes[key] = include
+    includes = _find_model_meta_includes(root_scene)
 
-    # Define the model and meta file path.
-    path_dir = os.path.dirname(path_scene)
-    path_model = os.path.join(path_dir, includes["model"].attrib["file"])
-    path_meta = os.path.join(path_dir, includes["meta"].attrib["file"])
+    if includes["model"] is None or includes["meta"] is None:
+        return _create_growth_scene_from_expanded_tree(
+            growth_params=growth_params,
+            tree_scene=tree_scene,
+            path_scene=path_scene,
+        )
 
-    tree_model = ET.parse(path_model)
-    tree_meta = ET.parse(path_meta)
+    return _create_growth_scene_from_includes(
+        growth_params=growth_params,
+        tree_scene=tree_scene,
+        path_scene=path_scene,
+        includes=includes,
+        long_format=long_format,
+    )
 
-    for geom in tree_model.getroot().findall(".//geom"):
 
-        name = geom.attrib["name"]
+def delete_growth_scene(growth_path_scene: str) -> None:
+    """Delete a temporary growth scene and associated temporary include files.
+    """
+    if not os.path.exists(growth_path_scene):
+        return
 
-        size = growth_params["geoms"][name]["size"]
-        geom.attrib["size"] = " ".join(np.array(size, dtype=str))
+    root_scene = ET.parse(growth_path_scene).getroot()
+    scene_dir = os.path.dirname(os.path.abspath(growth_path_scene))
 
-        pos = growth_params["geoms"][name]["pos"]
-        geom.attrib["pos"] = " ".join(np.array(pos, dtype=str))
-
-        mass = growth_params["geoms"][name]["mass"]
-        geom.attrib["mass"] = str(mass)
-
-    for body in tree_model.getroot().findall(".//body"):
-
-        name = body.attrib["name"]
-
-        pos = growth_params["bodies"][name]["pos"]
-        body.attrib["pos"] = " ".join(np.array(pos, dtype=str))
-
-    for joint in tree_model.getroot().findall(".//joint"):
-
-        name = joint.attrib["name"]
-
-        if name not in growth_params["joints"]:
+    for include in root_scene.findall(".//include"):
+        path_file = include.attrib.get("file")
+        if not path_file:
             continue
 
-        pos = growth_params["joints"][name]["pos"]
-        joint.attrib["pos"] = " ".join(np.array(pos, dtype=str))
+        if os.path.isabs(path_file):
+            path_file_full = path_file
+        else:
+            path_file_full = os.path.join(scene_dir, path_file)
 
-    for site in tree_model.getroot().findall(".//site"):
+        if os.path.exists(path_file_full):
+            os.remove(path_file_full)
 
-        name = site.attrib["name"]
+    if os.path.exists(growth_path_scene):
+        os.remove(growth_path_scene)
 
-        if name not in growth_params["sites"]:
-            continue
 
-        pos = growth_params["sites"][name]["pos"]
-        site.attrib["pos"] = " ".join(np.array(pos, dtype=str))
+def _create_growth_scene_from_expanded_tree(
+    *,
+    growth_params: dict,
+    tree_scene: ET.ElementTree,
+    path_scene: str,
+) -> str:
+    """Apply growth directly to a self-contained expanded scene XML."""
+    root_scene = tree_scene.getroot()
 
-    for motor in tree_meta.getroot().find("actuator").findall(".//motor"):
+    _apply_growth_to_model_tree(root_scene, growth_params)
+    _apply_growth_to_meta_tree(root_scene, growth_params)
 
-        name = motor.attrib["name"]
-
-        gear = growth_params["motors"][name]["gear"]
-        motor.attrib["gear"] = str(gear)
-
-    def temp_path(path):
-        return path.replace(".xml", "_temp.xml")
-
-    # Save the new model and meta files.
-    tree_model.write(temp_path(path_model))
-    tree_meta.write(temp_path(path_meta))
-
-    if long_format is False:
-         
-        # Update the include attributes.
-        for include in includes.values():
-            include.attrib["file"] = temp_path(include.attrib["file"])
-        
-        # Save the new scene.
-        path_growth_scene = temp_path(path_scene)
-        tree_scene.write(path_growth_scene)
-
-    else:
-        # Replace each <include file="..."> in the original scene text with the referenced file
-            
-        def _read_text(path):
-            """Read file contents, strip XML decl and outer <mujoco> ... </mujoco> lines."""
-            with open(path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-
-            cleaned = []
-            for line in lines:
-                lstrip = line.lstrip()
-                if lstrip.startswith("<mujoco") or lstrip.startswith("</mujoco"):
-                    continue  # skip MuJoCo root lines
-                cleaned.append(line)
-            txt = "".join(cleaned)
-
-            # Remove leading XML declaration if present
-            txt = re.sub(r'^\s*<\?xml[^>]*\?>\s*', '', txt, flags=re.IGNORECASE)
-            return txt
-
-        # Load the original scene *text*
-        with open(path_scene, "r", encoding="utf-8") as f:
-            scene_txt = f.read()
-
-        # For each include, inline the contents of its temp file
-        for inc in includes.values():
-            inc_rel = inc.attrib["file"]
-            inc_abs = temp_path(os.path.join(path_dir, inc_rel))
-
-            # Regex that matches the include by its file path (self-closing or paired)
-            # Keeps it simple: <include ... file="inc_rel" .../> or <include ... file="inc_rel" ...></include>
-            pattern = re.compile(
-                rf"""(?P<indent>[ \t]*)<include\b[^>]*\bfile=(?P<q>["']){re.escape(inc_rel)}(?P=q)[^>]*?/?>\s*(?:</include\s*>)?""",
-                re.IGNORECASE
-            )
-
-            # Replacement text: raw contents of the included file (no extra indentation)
-            inc_txt = _read_text(inc_abs)
-
-            # Do the substitution everywhere this include appears
-            scene_txt, n_subs = pattern.subn(lambda m: inc_txt, scene_txt)
-
-        # Write the self-contained scene to a *_temp.xml alongside the original
-        path_growth_scene = temp_path(path_scene)
-        with open(path_growth_scene, "w", encoding="utf-8") as f:
-            f.write(scene_txt)
-
-        # Remove the temporary files
-        os.remove(temp_path(path_model))
-        os.remove(temp_path(path_meta))
+    path_growth_scene = _temp_path(path_scene)
+    tree_scene.write(path_growth_scene)
 
     return path_growth_scene
 
 
+def _create_growth_scene_from_includes(
+    *,
+    growth_params: dict,
+    tree_scene: ET.ElementTree,
+    path_scene: str,
+    includes: dict[str, ET.Element | None],
+    long_format: bool = True,
+) -> str:
+    """Apply growth to classic include-based scene/model/meta files."""
+    path_dir = os.path.dirname(os.path.abspath(path_scene))
 
-def delete_growth_scene(growth_path_scene: str) -> None:
+    path_model = _resolve_include_path(
+        includes["model"].attrib["file"],
+        base_dir=path_dir,
+    )
+    path_meta = _resolve_include_path(
+        includes["meta"].attrib["file"],
+        base_dir=path_dir,
+    )
+
+    tree_model = ET.parse(path_model)
+    tree_meta = ET.parse(path_meta)
+
+    _apply_growth_to_model_tree(tree_model.getroot(), growth_params)
+    _apply_growth_to_meta_tree(tree_meta.getroot(), growth_params)
+
+    path_model_temp = _temp_path(path_model)
+    path_meta_temp = _temp_path(path_meta)
+
+    tree_model.write(path_model_temp)
+    tree_meta.write(path_meta_temp)
+
+    if not long_format:
+        return _write_include_based_temp_scene(
+            tree_scene=tree_scene,
+            path_scene=path_scene,
+            includes=includes,
+            path_model_temp=path_model_temp,
+            path_meta_temp=path_meta_temp,
+            path_dir=path_dir,
+        )
+
+    try:
+        return _write_long_format_temp_scene(
+            path_scene=path_scene,
+            includes=includes,
+            path_model_temp=path_model_temp,
+            path_meta_temp=path_meta_temp,
+            path_dir=path_dir,
+        )
+    finally:
+        if os.path.exists(path_model_temp):
+            os.remove(path_model_temp)
+        if os.path.exists(path_meta_temp):
+            os.remove(path_meta_temp)
+
+
+def _write_include_based_temp_scene(
+    *,
+    tree_scene: ET.ElementTree,
+    path_scene: str,
+    includes: dict[str, ET.Element | None],
+    path_model_temp: str,
+    path_meta_temp: str,
+    path_dir: str,
+) -> str:
+    """Write a temporary scene that still references temporary model/meta XMLs."""
+    model_include = includes["model"]
+    meta_include = includes["meta"]
+
+    model_include.attrib["file"] = _include_path_for_scene(
+        path_model_temp,
+        scene_dir=path_dir,
+    )
+    meta_include.attrib["file"] = _include_path_for_scene(
+        path_meta_temp,
+        scene_dir=path_dir,
+    )
+
+    path_growth_scene = _temp_path(path_scene)
+    tree_scene.write(path_growth_scene)
+
+    return path_growth_scene
+
+
+def _write_long_format_temp_scene(
+    *,
+    path_scene: str,
+    includes: dict[str, ET.Element | None],
+    path_model_temp: str,
+    path_meta_temp: str,
+    path_dir: str,
+) -> str:
+    """Write a self-contained temporary scene by inlining grown model/meta XMLs."""
+    with open(path_scene, "r", encoding="utf-8") as f:
+        scene_txt = f.read()
+
+    replacements = {
+        includes["model"].attrib["file"]: path_model_temp,
+        includes["meta"].attrib["file"]: path_meta_temp,
+    }
+
+    for include_file, temp_file in replacements.items():
+        include_txt = _read_xml_fragment_text(temp_file)
+
+        pattern = re.compile(
+            rf"""(?P<indent>[ \t]*)<include\b[^>]*\bfile=(?P<q>["']){re.escape(include_file)}(?P=q)[^>]*?/?>\s*(?:</include\s*>)?""",
+            re.IGNORECASE,
+        )
+
+        scene_txt, _ = pattern.subn(lambda _match: include_txt, scene_txt)
+
+        # If the include path in the scene is relative but the replacement above
+        # did not match due to normalization differences, also try the absolute
+        # include path.
+        abs_include = _resolve_include_path(include_file, base_dir=path_dir)
+        if abs_include != include_file:
+            pattern_abs = re.compile(
+                rf"""(?P<indent>[ \t]*)<include\b[^>]*\bfile=(?P<q>["']){re.escape(abs_include)}(?P=q)[^>]*?/?>\s*(?:</include\s*>)?""",
+                re.IGNORECASE,
+            )
+            scene_txt, _ = pattern_abs.subn(lambda _match: include_txt, scene_txt)
+
+    path_growth_scene = _temp_path(path_scene)
+
+    with open(path_growth_scene, "w", encoding="utf-8") as f:
+        f.write(scene_txt)
+
+    return path_growth_scene
+
+
+def _apply_growth_to_model_tree(root: ET.Element, growth_params: dict) -> None:
+    """Apply grown geom/body/joint/site parameters to an XML tree.
     """
-    Deletes the temporary growth scene and all associated files like the model
-    and meta file.
+    worldbody = root.find("worldbody")
 
-    Arguments:
-        growth_path_scene (str): Path to the growth scene which will be deleted.
+    if worldbody is None:
+        # This can happen when the function is called on a standalone model
+        # fragment whose root is already effectively the model body subtree.
+        search_root = root
+    else:
+        search_root = worldbody
+
+    for geom in search_root.findall(".//geom"):
+        name = geom.attrib.get("name")
+        if name not in growth_params.get("geoms", {}):
+            continue
+
+        geom_params = growth_params["geoms"][name]
+
+        if "size" in geom_params:
+            geom.attrib["size"] = _array_attr(geom_params["size"])
+
+        if "pos" in geom_params:
+            geom.attrib["pos"] = _array_attr(geom_params["pos"])
+
+        if "mass" in geom_params:
+            geom.attrib["mass"] = str(geom_params["mass"])
+
+    for body in search_root.findall(".//body"):
+        name = body.attrib.get("name")
+        if name not in growth_params.get("bodies", {}):
+            continue
+
+        body_params = growth_params["bodies"][name]
+
+        if "pos" in body_params:
+            body.attrib["pos"] = _array_attr(body_params["pos"])
+
+    # Important: only physical joints under <worldbody>, not equalities or other.
+    for joint in search_root.findall(".//joint"):
+        name = joint.attrib.get("name")
+        if name not in growth_params.get("joints", {}):
+            continue
+
+        joint_params = growth_params["joints"][name]
+
+        if "pos" in joint_params:
+            joint.attrib["pos"] = _array_attr(joint_params["pos"])
+
+    for site in search_root.findall(".//site"):
+        name = site.attrib.get("name")
+        if name not in growth_params.get("sites", {}):
+            continue
+
+        site_params = growth_params["sites"][name]
+
+        if "pos" in site_params:
+            site.attrib["pos"] = _array_attr(site_params["pos"])
+            
+
+def _apply_growth_to_meta_tree(root: ET.Element, growth_params: dict) -> None:
+    """Apply grown motor gear values to an XML tree.
     """
+    motor_params = growth_params.get("motors", {})
 
-    root_scene = ET.parse(growth_path_scene).getroot()
+    for motor in root.findall(".//motor"):
+        name = motor.attrib.get("name")
+        if name not in motor_params:
+            continue
 
-    # Remove the model and meta file.
+        gear = motor_params[name].get("gear")
+        if gear is None:
+            continue
+
+        motor.attrib["gear"] = str(gear)
+
+
+def _find_model_meta_includes(root_scene: ET.Element) -> dict[str, ET.Element | None]:
+    """Find model/meta include tags if present.
+    """
+    includes: dict[str, ET.Element | None] = {
+        "model": None,
+        "meta": None,
+    }
+
     for include in root_scene.findall(".//include"):
+        file_attr = include.attrib.get("file", "")
+        filename = os.path.basename(file_attr).lower()
 
-        path_file = include.attrib["file"]
-        path_file_full = os.path.join(os.path.dirname(growth_path_scene), path_file)
+        if not filename.endswith(".xml"):
+            continue
 
-        os.remove(path_file_full)
+        if "meta" in filename:
+            includes["meta"] = include
+            continue
 
-    # Remove the scene file.
-    os.remove(growth_path_scene)
+        if (
+            "model" in filename
+            or filename in {"mimo.xml", "mimo_model.xml", "mimo_modelv2.xml"}
+        ):
+            includes["model"] = include
+            continue
+
+    return includes
+
+
+def _resolve_include_path(path_file: str, *, base_dir: str) -> str:
+    """Resolve an include path relative to a scene directory."""
+    if os.path.isabs(path_file):
+        return path_file
+
+    return os.path.abspath(os.path.join(base_dir, path_file))
+
+
+def _include_path_for_scene(path_file: str, *, scene_dir: str) -> str:
+    """Return a path suitable for writing into an include tag.
+    """
+    try:
+        return os.path.relpath(path_file, scene_dir)
+    except ValueError:
+        return path_file
+
+
+def _read_xml_fragment_text(path: str) -> str:
+    """Read XML contents without XML declaration or outer <mujoco> tags."""
+    with open(path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    cleaned = []
+
+    for line in lines:
+        stripped = line.lstrip()
+
+        if stripped.startswith("<?xml"):
+            continue
+
+        if stripped.startswith("<mujoco") or stripped.startswith("</mujoco"):
+            continue
+
+        cleaned.append(line)
+
+    txt = "".join(cleaned)
+    txt = re.sub(r"^\s*<\?xml[^>]*\?>\s*", "", txt, flags=re.IGNORECASE)
+
+    return txt
+
+
+def _array_attr(values) -> str:
+    """Convert a vector-like value to a MuJoCo XML attribute string."""
+    return " ".join(np.array(values, dtype=str))
+
+
+def _temp_path(path: str) -> str:
+    """Return the temporary growth path for an XML file."""
+    if path.endswith(".xml"):
+        return path[:-4] + "_temp.xml"
+
+    return path + "_temp.xml"
