@@ -87,53 +87,46 @@ def log(age: float, path_scene: str) -> None:
 
     open(path_log, "a").write(f"[{timestamp}] {message}\n")
 
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
 
 def get_version(path: str) -> str:
-    """Return the version of the MIMo model in a scene XML.
-
-    Supports both:
-
-    1. Original include-based scenes containing:
-        <include file="...MIMo_model.xml">
-        <include file="...MIMo_modelv2.xml">
-
-    2. Expanded/self-contained scenes where the MIMo model has already been
-       inlined into the scene XML.
+    """
+    Return the MIMo model version used by a scene.
     """
     root_scene = ET.parse(path).getroot()
-    scene_dir = Path(path).resolve().parent
 
-    # First try the original include-based mechanism.
+    model_versions = []
+
+    # First pass: MIMo model include filenames.
     for include in root_scene.findall(".//include"):
-        include_file = include.attrib.get("file", "")
-        filename = Path(include_file).name.lower()
+        filename = Path(include.attrib.get("file", "")).name
 
-        if filename in {"mimo_model.xml", "mimo_modelv1.xml"}:
-            return "v1"
+        if filename == "MIMo_model.xml":
+            model_versions.append("v1")
 
-        if filename in {"mimo_modelv2.xml"}:
-            return "v2"
+        elif filename == "MIMo_modelv2.xml":
+            model_versions.append("v2")
 
-        # If the include is ambiguous, try to inspect the included file.
-        include_path = Path(include_file)
-        if not include_path.is_absolute():
-            include_path = scene_dir / include_path
+    if model_versions:
+        versions = set(model_versions)
 
-        if include_path.exists():
-            try:
-                included_root = ET.parse(include_path).getroot()
-                inferred = _infer_version_from_xml_tree(included_root)
-                if inferred is not None:
-                    return inferred
-            except ET.ParseError:
-                pass
+        if len(versions) > 1:
+            raise ValueError(
+                f"Inconsistent MIMo model includes in {path}: {sorted(versions)}"
+            )
 
-    # If no useful include exists, infer from the expanded XML itself.
+        return model_versions[0]
+
+    # If there is no MIMo_model included infer from XML tree.
     inferred = _infer_version_from_xml_tree(root_scene)
+
     if inferred is not None:
         return inferred
 
     raise ValueError(f"Could not infer MIMo version from {path}.")
+
 
 def _infer_version_from_xml_tree(root: ET.Element) -> str | None:
     """Infer MIMo version from names present in an XML tree.
