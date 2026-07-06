@@ -91,16 +91,32 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 
-def get_version(path: str) -> str:
-    """
-    Return the MIMo model version used by a scene.
-    """
-    root_scene = ET.parse(path).getroot()
+from pathlib import Path
+import xml.etree.ElementTree as ET
 
+
+def get_version(path: str, mimo_version: str | None = None) -> str:
+    """
+    Return the MIMo version used by a scene.
+
+    Args:
+        path: Path to the scene XML.
+        mimo_version: Optional explicit override, "v1" or "v2".
+
+    Returns:
+        "v1" or "v2".
+    """
+    if mimo_version is not None:
+        if mimo_version not in {"v1", "v2"}:
+            raise ValueError("mimo_version must be either 'v1' or 'v2'.")
+        return mimo_version
+
+    root = ET.parse(path).getroot()
+
+    # Original include-based detection.
     model_versions = []
 
-    # First pass: MIMo model include filenames.
-    for include in root_scene.findall(".//include"):
+    for include in root.findall(".//include"):
         filename = Path(include.attrib.get("file", "")).name
 
         if filename == "MIMo_model.xml":
@@ -119,47 +135,55 @@ def get_version(path: str) -> str:
 
         return model_versions[0]
 
-    # If there is no MIMo_model included infer from XML tree.
-    inferred = _infer_version_from_xml_tree(root_scene)
+    # 2. Expanded XML detection.
+    inferred = infer_expanded_xml_version(root)
 
-    if inferred is not None:
-        return inferred
+    if inferred is None:
+        raise ValueError(
+            f"Could not infer MIMo version from expanded XML {path}. "
+            "Pass mimo_version='v1' or mimo_version='v2' explicitly."
+        )
 
-    raise ValueError(f"Could not infer MIMo version from {path}.")
+    return inferred
 
 
-def _infer_version_from_xml_tree(root: ET.Element) -> str | None:
-    """Infer MIMo version from names present in an XML tree.
+def infer_expanded_xml_version(root: ET.Element) -> str | None:
     """
-    xml_names = {
-        elem.attrib["name"]
-        for elem in root.iter()
-        if "name" in elem.attrib
+    Infer MIMo version from an expanded XML tree by scoring schema matches.
+    """
+    xml_names_by_tag = {
+        "geom": set(),
+        "body": set(),
+        "joint": set(),
+        "site": set(),
     }
 
-    v1_names = (
-        set(SCHEMA["geoms"])
-        | set(SCHEMA["bodies"])
-        | set(SCHEMA["joints"])
-        | set(SCHEMA["sites"])
-    )
+    for tag in xml_names_by_tag:
+        for elem in root.findall(f".//{tag}"):
+            name = elem.attrib.get("name")
+            if name is not None:
+                xml_names_by_tag[tag].add(name)
 
-    v2_names = (
-        set(SCHEMA_V2["geoms"])
-        | set(SCHEMA_V2["bodies"])
-        | set(SCHEMA_V2["joints"])
-        | set(SCHEMA_V2["sites"])
-    )
+    scores = {}
 
-    v2_only = v2_names - v1_names
+    for version, schema in {"v1": SCHEMA, "v2": SCHEMA_V2}.items():
+        score = 0
 
-    if xml_names & v2_only:
+        score += len(xml_names_by_tag["geom"] & set(schema["geoms"]))
+        score += len(xml_names_by_tag["body"] & set(schema["bodies"]))
+        score += len(xml_names_by_tag["joint"] & set(schema["joints"]))
+        score += len(xml_names_by_tag["site"] & set(schema["sites"]))
+
+        scores[version] = score
+
+    if scores["v2"] > scores["v1"]:
         return "v2"
 
-    if xml_names & v1_names:
+    if scores["v1"] > scores["v2"]:
         return "v1"
 
-    return None
+    # Default to v1
+    return "v1"
 
 
 def get_growth_params(
@@ -242,8 +266,12 @@ def get_growth_params(
 
 
 def adjust_mimo_to_age(
-        age: float, path_scene: str,
-        custom: dict = None, create_log: bool = False) -> str:
+        age: float,
+        path_scene: str,
+        mimo_version: str | None = None,
+        custom: dict = None,
+        create_log: bool = True,
+    ) -> str:
     """
     Creates a temporary duplicate of the provided scene where MIMo is adjusted
     to the provided age.
@@ -251,6 +279,7 @@ def adjust_mimo_to_age(
     Arguments:
         age (float): The age of MIMo. Possible values are between 0 and 24.
         path_scene (str): The path to the MuJoCo scene.
+        mimo_version (str): Version of MIMo. Must be 'v1' or 'v2'.
         custom (dict): Custom geom sizes for MIMo. Default is None.
 
             The dict keys need to be tuples in the form of `(geom_name, index)`
@@ -278,7 +307,7 @@ def adjust_mimo_to_age(
         message = f"The Age'{age}' is invalid. Must be between 0 and 24."
         raise ValueError(message)
 
-    mimo_version = get_version(path_scene)
+    mimo_version = get_version(path_scene, mimo_version)
 
     params = get_growth_params(age, mimo_version, custom)
 
