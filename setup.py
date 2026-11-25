@@ -1,11 +1,10 @@
 from setuptools import setup
-import pkg_resources
 
 with open('requirements.txt') as requirements_txt:
     install_requires = [
-        str(requirement)
-        for requirement
-        in pkg_resources.parse_requirements(requirements_txt)
+        line.strip()
+        for line in requirements_txt
+        if line.strip() and not line.startswith('#')
     ]
 
 setup(
